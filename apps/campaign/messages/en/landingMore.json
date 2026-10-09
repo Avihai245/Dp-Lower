@@ -1,1 +1,350 @@
-{}
+{
+  "cta": {
+    "check": "Check your eligibility",
+    "advisor": "Speak with an AI Advisor"
+  },
+  "rating": {
+    "value": "4.9",
+    "reviews": "380+ Google reviews"
+  },
+  "process": {
+    "eyebrow": "How the eligibility check works",
+    "title": "The first step takes two minutes.",
+    "lede": "No documents, no payment, no phone call. Six questions about who left and when, then you see which route your answers point to.",
+    "steps": [
+      {
+        "title": "Answer a few questions",
+        "body": "Where your family came from, who left, and roughly when. Nothing you need to look up."
+      },
+      {
+        "title": "Understand your potential path",
+        "body": "Your answers indicate which citizenship route may be relevant to your family."
+      },
+      {
+        "title": "Continue your application",
+        "body": "If you want to go on, you start providing what our lawyers need to review the case."
+      }
+    ]
+  },
+  "ctaBand": {
+    "title": "Could you qualify?",
+    "lede": "Start with a few questions about your family history. You'll see your potential route at the end.",
+    "imageAlt": "A young couple walking through a European city street in daylight"
+  },
+  "team": {
+    "eyebrow": "Who you are trusting",
+    "title": "The people who will handle your case.",
+    "p1": "The same lawyers and researchers who assess your eligibility prepare and file your case.",
+    "p2": "Most clients come to us with a story rather than a file: a grandmother's city, a surname that changed, a date nobody wrote down. Reconstructing that is the work.",
+    "photoAlt": "The Decker Pex Levi team at the firm's offices",
+    "outsideAlt": "The Decker Pex Levi team outside the office",
+    "caption": "Decker Pex Levi · Tel Aviv. The citizenship practice sits inside a full-service firm, so a case that turns into litigation or a consular appeal stays in the same building."
+  },
+  "video": {
+    "eyebrow": "In our own words",
+    "title": "How these cases actually run.",
+    "lede": "The law, the records, and what we do on your behalf, from the lawyers who file these cases.",
+    "play": "Play video",
+    "iframeTitle": "Decker Pex Levi: how these cases actually run"
+  },
+  "why": {
+    "eyebrow": "Why Decker Pex Levi",
+    "title": "Expertise you can point at.",
+    "items": [
+      {
+        "title": "One practice, both countries",
+        "body": "German and Austrian citizenship cases are assessed side by side, so you are not told to go elsewhere halfway through."
+      },
+      {
+        "title": "We do the records research",
+        "body": "Registry entries, archive files and certificates are located on your behalf. Most clients start with almost nothing."
+      },
+      {
+        "title": "A named person on your case",
+        "body": "You know who is handling your application and you get an answer within two business days."
+      },
+      {
+        "title": "Honest about the outcome",
+        "body": "If your family history does not fit either route, we tell you at the eligibility stage rather than after you have paid."
+      }
+    ]
+  },
+  "fees": {
+    "eyebrow": "Fees",
+    "title": "What this costs.",
+    "lede": "The eligibility check and the call with a lawyer are free. If we take the case on, you know the fee before any work starts.",
+    "cta": "Get a quote after the check",
+    "note": "Fee model to be confirmed by the firm before launch.",
+    "items": [
+      {
+        "title": "The quote follows the review",
+        "body": "A lawyer reads your case first, so the figure you receive reflects your actual records rather than an average."
+      },
+      {
+        "title": "A fixed professional fee, agreed upfront",
+        "body": "If we take your case on, the fee is set out in writing before any work begins. There are no hidden costs and no hourly surprises."
+      },
+      {
+        "title": "Third-party costs shown separately",
+        "body": "Archive searches, translations, apostilles and consular fees are charged at cost and listed in advance."
+      }
+    ]
+  },
+  "faq": {
+    "eyebrow": "Before you start",
+    "title": "Questions people ask first.",
+    "lede": "If yours is not here, the lawyer on your free consultation call will answer it directly.",
+    "items": [
+      {
+        "q": "Can I qualify through a grandparent or great-grandparent?",
+        "a": "Often, yes. Both the German and the Austrian provisions can reach beyond the generation that left, and the German rules in particular have widened in recent years. How far back the line can go depends on which route applies and on the specific facts, which is what the eligibility check begins to establish."
+      },
+      {
+        "q": "Do I need to speak German?",
+        "a": "No. There is no language requirement for these descent-based routes, and we correspond with you in English throughout."
+      },
+      {
+        "q": "Do I have to give up my current citizenship?",
+        "a": "Generally no. These routes are designed for descendants and do not normally require you to renounce another citizenship, though your own country's rules on dual nationality also apply."
+      },
+      {
+        "q": "What if I do not have my ancestor's documents?",
+        "a": "That is the usual starting point. Most clients arrive with a name, a city and an approximate date. Locating birth, marriage and emigration records is part of the work we do for you."
+      },
+      {
+        "q": "How do I know whether Germany or Austria applies to me?",
+        "a": "The eligibility check works this out from your answers. If your family history touches both countries, both routes are considered."
+      },
+      {
+        "q": "Does this apply if my ancestor left before the war rather than during it?",
+        "a": "It can. What matters is the reason for leaving and the loss of citizenship that followed, not only the date. Families who left under pressure in the years before 1939 are within the scope of these provisions, and the eligibility check asks about the circumstances for that reason."
+      },
+      {
+        "q": "Can my children also receive citizenship?",
+        "a": "In many cases yes, and this is one of the main reasons families begin. Whether it passes on, and whether it needs to be claimed in a particular order, depends on the route and on each child's own circumstances. We set this out for your family specifically once the case is reviewed."
+      },
+      {
+        "q": "What is the difference between the German and the Austrian route?",
+        "a": "They rest on different laws. The German provisions restore citizenship to those who lost it through persecution and to their descendants; the Austrian provision opens citizenship to descendants of people who were persecuted and left Austria. The evidence each authority expects differs, which is why we assess both in-house."
+      },
+      {
+        "q": "How long does the process take?",
+        "a": "It varies with the route, the records and the authority's own processing times. The slow part is usually the archives: requests to German and Austrian registries can take months to come back. After reviewing your case a lawyer gives you a realistic estimate for your specific file rather than a general figure."
+      },
+      {
+        "q": "What happens after the eligibility check?",
+        "a": "You see which route your answers point to and can begin the application straight away. A lawyer then reviews your case and writes back with the records still needed and a realistic timeline."
+      }
+    ]
+  },
+  "finalCta": {
+    "eyebrow": "The first step",
+    "title": "Your family history may be worth exploring.",
+    "lede": "A few questions about who left and when. That's the whole first step, and it's free.",
+    "assurance": "No payment · No obligation · Your details stay private"
+  },
+  "footer": {
+    "logoAlt": "Decker Pex Levi",
+    "navLabel": "Footer",
+    "nav": {
+      "paths": "Germany & Austria",
+      "process": "How it works",
+      "team": "Our team",
+      "faq": "Questions",
+      "signIn": "Track my application"
+    },
+    "disclaimer": "Decker Pex Levi · German & Austrian citizenship practice. The eligibility check is an initial indication based on your answers and is not legal advice. Decker Pex Levi does not guarantee eligibility or the granting of citizenship. Every case is assessed on its own records.",
+    "credit": "Site developed by <a>Sabatier Group LLC</a> · AI Digital Marketing Solutions",
+    "privacy": "Privacy policy"
+  },
+  "mobileCta": {
+    "label": "Check your eligibility"
+  },
+  "chat": {
+    "launcherTitle": "Prefer a conversation?",
+    "launcherSub": "Chat with us, no forms",
+    "panelLabel": "Chat with Decker Pex Levi",
+    "name": "Decker Pex Levi",
+    "close": "Close chat",
+    "statusIdle": "Usually replies instantly",
+    "statusQuestion": "Question {n} of {total}",
+    "statusDone": "All questions answered",
+    "progress": "Progress",
+    "intro1": "Hello. I'm the assistant at Decker Pex Levi, the German and Austrian citizenship practice.",
+    "intro2": "If you'd rather talk than fill in a form, I can walk you through it here. Six short questions about your family, then you'll see what your history may point to.",
+    "intro3": "No documents and no personal details at this stage.",
+    "start": "Yes, let's check my eligibility",
+    "about": "What will you ask me?",
+    "aboutAnswer": "Which country your family left, which relative it was, roughly when they left, whether they were forced to leave, what records the family still has, and where you live today. Plain answers are enough. \"I'm not sure\" is a normal answer here.",
+    "startOnly": "Fine, let's start",
+    "finished": "That's everything we need. Let's look at your result.",
+    "seeResult": "See my result",
+    "back": "Back",
+    "continueForm": "Continue in the form"
+  },
+  "advisor": {
+    "close": "Close",
+    "kicker": "Request a call",
+    "title": "We'll call you back.",
+    "body": "Leave your name and phone number and a member of our team will call you back to talk about your family history and the eligibility check. It is an initial conversation, not legal advice.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "+1 212 555 0134",
+    "phoneError": "Please enter a phone number we can reach you on.",
+    "rateLimited": "Too many requests from this device. Please try again in a few minutes.",
+    "failed": "We could not send your request. Please check your connection and try again.",
+    "submit": "Call me back",
+    "sending": "Sending…",
+    "fine": "By requesting a call you agree that a member of our team may call you on this number. This is an initial eligibility conversation, not legal advice.",
+    "receivedKicker": "Request received",
+    "receivedTitle": "We'll call you shortly.",
+    "receivedBody": "A member of our team will call the number you gave us. Please keep your phone nearby.",
+    "receivedClose": "Close",
+    "doneKicker": "Call requested",
+    "doneTitle": "We will call you on",
+    "doneBody": "A member of our team will call this number shortly. Please keep your phone nearby.",
+    "doneRetry": "Use a different number",
+    "doneHint": "Wrong number? Send your request again with the right one."
+  },
+  "privacy": {
+    "metaTitle": "Privacy policy | Decker Pex Levi Law Offices",
+    "metaDescription": "How Decker Pex Levi collects, uses and protects personal information.",
+    "homeLink": "Back to the home page",
+    "logoAlt": "Decker Pex Levi",
+    "title": "Privacy policy",
+    "updated": "How Decker Pex Levi collects, uses, holds and protects personal information · Last updated September 2026",
+    "lede": "This document sets out the privacy policy of Decker Pex Levi, Advocates and Notaries, and explains how we collect, use, hold and protect the personal information of website users, clients, suppliers and anyone else who is in contact with us. The firm attaches great importance to protecting your privacy and acts in accordance with the Protection of Privacy Law, 5741-1981, Amendment 13 to that law, and the regulations made under it. By using the website https://lawoffice.org.il, or by contacting the firm in any other way (telephone, email, forms, mailing list, meeting and so on), you signify your agreement to this policy.",
+    "sections": [
+      {
+        "title": "1. Information we collect",
+        "paras": [
+          "We collect only what the matter requires."
+        ],
+        "bullets": [
+          "Identifying details: full name and identity or passport number",
+          "Contact details: telephone, email address, postal address",
+          "Information about your use of the site: pages viewed, actions taken, time on page, referrals",
+          "Technical information: IP address, device and browser type, operating system, internet provider",
+          "Any further detail you choose to give us on your own initiative, for example in a message or enquiry",
+          "Statistical or aggregated information that does not identify a person is not treated as personal information"
+        ]
+      },
+      {
+        "title": "2. How the information is collected",
+        "bullets": [
+          "Information you give us on your own initiative",
+          "Information collected automatically through cookies, pixels, logs and similar technologies",
+          "Information received from third parties such as a payment processor, a CRM provider, mailing systems, Google Analytics and Meta Ads"
+        ]
+      },
+      {
+        "title": "3. Purposes of use",
+        "paras": [
+          "The firm uses the information in order to:"
+        ],
+        "bullets": [
+          "Provide legal services to clients",
+          "Manage client relations and new enquiries",
+          "Send professional updates, notices and marketing content, only with consent and with removal available at any time",
+          "Operate, maintain and improve the website and the services",
+          "Comply with legal obligations that apply to the firm, including the rules of the Israel Bar Association, file management and required reporting",
+          "Protect the firm's rights, manage disputes and respond to claims",
+          "Any other purpose for which explicit consent was given"
+        ]
+      },
+      {
+        "title": "4. Legal basis for processing",
+        "paras": [
+          "Processing rests on one or more of the following: your explicit consent; a legal obligation that applies to the firm, such as retaining documents under the ethics rules; or a legitimate interest of the firm, such as providing the service, managing files, improving service, or legal defence.",
+          "You may withdraw your consent at any time, subject to law."
+        ]
+      },
+      {
+        "title": "5. Disclosure to third parties",
+        "paras": [
+          "Where necessary, the firm may use external service providers to deliver legal services and for day-to-day operations. Where payment is made through the site, it is processed by an external, secure payment provider that meets information-security standards (PCI DSS); card details are entered directly with that provider and are not stored by the firm.",
+          "The firm may disclose personal information to:"
+        ],
+        "bullets": [
+          "Service providers acting on its behalf (payment processing, CRM, cloud storage, mailing services and the like)",
+          "Professional advisers such as accountants and external experts, subject to a duty of confidentiality",
+          "Enforcement or regulatory authorities, where required by law or under an order",
+          "Another body in the event of a structural change, merger or transfer of activity, subject to an undertaking to uphold this policy"
+        ],
+        "tail": "The firm will not transfer personal information to third parties for marketing purposes without explicit consent."
+      },
+      {
+        "title": "6. Transfer outside Israel",
+        "paras": [
+          "Information may be held on cloud servers abroad, for example AWS, Google Cloud or Microsoft Azure. Transfers are made only to countries with an adequate level of protection, or subject to binding agreements to protect your privacy."
+        ]
+      },
+      {
+        "title": "7. Cookies and tracking technologies",
+        "paras": [
+          "The firm uses cookies to operate the site and to measure and improve its performance, together with analytics tools (Google Analytics 4) and Meta pixels.",
+          "You can change your browser settings to restrict cookies, though this may affect your browsing experience. Continued use of the site constitutes consent to this use."
+        ]
+      },
+      {
+        "title": "8. Direct marketing",
+        "paras": [
+          "The firm sends content and updates only after explicit consent has been given, or in accordance with the exceptions in section 30A of the Communications Law. Every message carries a link for immediate removal."
+        ]
+      },
+      {
+        "title": "9. Retention and security",
+        "paras": [
+          "Information is kept for the periods required for the purposes for which it was collected, and in accordance with legal obligations and the rules of the Israel Bar Association. Client files, for example, are retained for the periods required by law or by the ethics rules.",
+          "On completion of the matter, or at your request, information is deleted or anonymised, subject to legal retention duties. The firm applies advanced information-security measures: encryption, access control, security audits, and confidentiality undertakings with its employees and suppliers."
+        ]
+      },
+      {
+        "title": "10. Minors",
+        "paras": [
+          "The legal services and this website are not intended for minors under the age of 18. If the firm learns that information about a minor was collected without the consent of a parent or guardian, that information will be deleted."
+        ]
+      },
+      {
+        "title": "11. Your rights as a data subject",
+        "paras": [
+          "Under the Protection of Privacy Law you may:"
+        ],
+        "bullets": [
+          "Inspect information held about you",
+          "Request its correction or deletion",
+          "Object to the processing of information",
+          "Request that information be transferred to another body, so far as is technically possible"
+        ],
+        "tail": "A request to exercise these rights should be made in writing, together with a means of identification."
+      },
+      {
+        "title": "12. Data Protection Officer",
+        "paras": [
+          "The firm has appointed a Data Protection Officer in accordance with Amendment 13. For privacy matters: telephone 055-978-1688, email office@lawoffice.org.il."
+        ]
+      },
+      {
+        "title": "13. Not legal advice",
+        "paras": [
+          "We wish to caution visitors that the information on this website is not a substitute for professional legal advice from an attorney. The material presented is a basic survey only of the laws, regulations, procedures and court rulings relating to the legal subjects reviewed. We cannot give a comprehensive answer on every legal field presented. Attorneys and jurists also differ at times in their views on the interpretation of the law and of court rulings. Moreover, the legal position is dynamic, and it is possible that information presented on the website is no longer current. Accordingly, if you are seeking legal advice on a specific question, we suggest that you contact us directly. We will be glad to be of service and to assist you as far as we are able with any legal question. Information on this site written in the masculine form is for convenience only and is intended for women and men alike."
+        ]
+      },
+      {
+        "title": "14. Changes to this policy",
+        "paras": [
+          "The firm may update this privacy policy from time to time. An updated version, carrying its update date, is published on this site, and continued use of the site after an update constitutes agreement to the updated policy."
+        ]
+      },
+      {
+        "title": "15. Contact",
+        "paras": [
+          "For any question about privacy: telephone 055-978-1688, email office@lawoffice.org.il, or write to 11 Menachem Begin Road, Rogovin Tidhar Tower, floor 25, Ramat Gan."
+        ]
+      }
+    ],
+    "contact": "Questions about this page, or a request concerning your data, go to <email>office@lawoffice.org.il</email> or the Tel Aviv office on <phone>03-372-4722</phone>.",
+    "draft": "Draft for review. The firm's approved legal wording replaces this text before launch."
+  }
+}
