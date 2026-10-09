@@ -223,6 +223,8 @@ export async function scheduleDueEmails(
     for (const d of decisions) {
       if (d.action === 'stop') {
         result.stopped++;
+        // whatever is still queued for this person goes with it (the dispatcher checks again at delivery)
+        await cancelPendingNurture(db, lead.id, `the sequence has stopped (${d.reason})`);
       } else if (d.action === 'skip') {
         const { error } = await db.from('email_sequence_state').upsert(
           {

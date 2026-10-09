@@ -123,13 +123,18 @@ export function OfferView() {
                     {t.rich('offer.errors.accountExists', { link: (c) => <Link href="/sign-in" style={s('color: inherit; font-weight: 600')}>{c}</Link> })}
                   </p>
                 )}
-                <button type="button" className="btn btn-primary" disabled={busy === 'portal'} aria-busy={busy === 'portal'} onClick={() => void goPortal()} style={s(`${CTA}; opacity: ${busy === 'portal' ? 0.6 : 1}`)}>
-                  {t('offer.goPortal')}
-                </button>
-                <div style={s('display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; font-size: 13.5px; color: #736d64')}>
-                  <LockIcon />
-                  <span>{t('offer.noPassword')}</span>
-                </div>
+                {/* an address that already has a sign-in account: the message above leads to the sign-in page instead */}
+                {error !== 'accountExists' && (
+                  <>
+                    <button type="button" className="btn btn-primary" disabled={busy === 'portal'} aria-busy={busy === 'portal'} onClick={() => void goPortal()} style={s(`${CTA}; opacity: ${busy === 'portal' ? 0.6 : 1}`)}>
+                      {t('offer.goPortal')}
+                    </button>
+                    <div style={s('display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; font-size: 13.5px; color: #736d64')}>
+                      <LockIcon />
+                      <span>{t('offer.noPassword')}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div style={s('display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 20px')}>

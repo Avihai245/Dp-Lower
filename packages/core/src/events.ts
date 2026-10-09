@@ -9,6 +9,8 @@ export const CRM_EVENT_TYPES = [
   'booking.cancelled',
   /** the applicant did not take the call (marked by staff): for the firm's follow-up, no email goes to the applicant */
   'booking.no_show',
+  /** staff corrected a no-show to held: for a CRM that already recorded the no-show (sent only after a no-show) */
+  'booking.held',
   'callback.requested',
   'contact.created',
   'account.created',

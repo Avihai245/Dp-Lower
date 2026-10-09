@@ -25,7 +25,7 @@ export type ContactErrors = Partial<Record<ContactField, true>>;
 /** Order in which the fields appear on the page: the first invalid one receives focus after a failed attempt. */
 export const FIELD_ORDER: readonly ContactField[] = ['name', 'email', 'phone', 'consent'];
 
-const EMAIL_RE = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]{2,}$/;
+const EMAIL_RE = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]{2,}$/;
 const digitsOf = (value: string): number => value.replace(/[^0-9]/g, '').length;
 
 export const isValidName = (value: string): boolean => {

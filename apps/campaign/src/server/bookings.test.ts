@@ -237,11 +237,15 @@ describe.skipIf(!hasDb)('booking with lawyers (local Supabase)', () => {
       ok: true,
       data: { status: 'no_show' },
     });
-    // the second no-show reuses the key: one event per call
+    // the first no-show has the fixed key; the correction to held and the second no-show are new facts for the CRM
     expect(
       ((await db.from('events').select('id').eq('dedupe_key', `booking.no_show:${past.id}`)).data ?? [])
         .length,
     ).toBe(1);
+    const sequence = ((await db.from('events').select('type, created_at').eq('lead_id', l.id).in('type', ['booking.no_show', 'booking.held'])).data ?? [])
+      .sort((x, y) => x.created_at.localeCompare(y.created_at))
+      .map((r) => r.type);
+    expect(sequence).toEqual(['booking.no_show', 'booking.held', 'booking.no_show']);
     const staffCodes =
       (await db.from('activity_log').select('code, kind, actor_name').eq('lead_id', l.id).eq('kind', 'staff'))
         .data ?? [];

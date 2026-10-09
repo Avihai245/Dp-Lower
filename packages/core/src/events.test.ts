@@ -8,7 +8,7 @@ describe('CRM event types', () => {
   });
 
   it('cover the whole life of a booked call', () => {
-    const booking: CrmEventType[] = ['booking.created', 'booking.cancelled', 'booking.no_show'];
+    const booking: CrmEventType[] = ['booking.created', 'booking.cancelled', 'booking.no_show', 'booking.held'];
     expect(CRM_EVENT_TYPES).toEqual(expect.arrayContaining(booking));
   });
 

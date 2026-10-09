@@ -82,7 +82,7 @@ export function ApplicationEditor({ initial }: { initial: PortalState }) {
   const showError = status === 'error' || leaveFailed;
 
   return (
-    <div style={s('min-height: 100vh; display: flex; flex-direction: column')}>
+    <main style={s('min-height: 100vh; display: flex; flex-direction: column')}>
       <div style={s('max-width: 100%; width: 100%; margin: 0 auto; padding: 20px clamp(20px, 4.6vw, 160px); display: flex; align-items: center; gap: 24px')}>
         <PortalLogo />
         <button type="button" className="btn btn-ghost" onClick={leave('/portal')} style={s('font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 10px')}>
@@ -248,7 +248,7 @@ export function ApplicationEditor({ initial }: { initial: PortalState }) {
           </span>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

@@ -215,7 +215,7 @@ export function DocumentsScreen({ initial }: { initial: PortalState }) {
   );
 
   return (
-    <div style={s('min-height: 100vh')}>
+    <main style={s('min-height: 100vh')}>
       <div style={s('max-width: 100%; width: 100%; margin: 0 auto; padding: 20px clamp(20px, 4.6vw, 160px); display: flex; align-items: center; gap: 24px')}>
         <PortalLogo />
         <Link href="/portal" className="btn btn-ghost" style={s('font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 10px')}>
@@ -322,6 +322,6 @@ export function DocumentsScreen({ initial }: { initial: PortalState }) {
       <span role="status" aria-live="polite" className="pt-sr-only">
         {announcement && `${t('documents.tags.received')}: ${announcement}`}
       </span>
-    </div>
+    </main>
   );
 }

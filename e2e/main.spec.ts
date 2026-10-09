@@ -340,6 +340,8 @@ test.describe('navigation', () => {
       await route.fulfill({ status: 201, contentType: 'application/json', body: '{"ok":true}' });
     });
     await page.goto('/?utm_source=google&utm_campaign=spring');
+    // the first touch is written once the page has hydrated: leaving earlier (a loaded machine) would lose it
+    await page.waitForFunction(() => window.sessionStorage.getItem('dpl-attribution'));
     await page.goto('/about');
     const band = page.locator('#leadform');
     await band.scrollIntoViewIfNeeded();

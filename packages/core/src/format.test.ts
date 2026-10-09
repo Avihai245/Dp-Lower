@@ -86,6 +86,6 @@ describe('names, phone numbers and addresses from a form', () => {
 
   it('an address is what a mail provider takes: ASCII, no quoted local part, a dotted domain', () => {
     for (const ok of ['anna@example.com', 'anna.reinhardt+case@mail.example.co.il', "o'neil@example.org", 'a_b-c@sub.example.de', 'x@xn--p1ai.xn--p1ai']) expect(isEmail(ok), ok).toBe(true);
-    for (const bad of ['"quoted"@example.com', 'üser@exämple.com', 'שם@דוגמה.קום', 'a@b', 'a@b.c', 'a b@example.com', '@example.com', 'a@@example.com', 'a@example..com', 'a@-.com'.replace('-.', '.')]) expect(isEmail(bad), bad).toBe(false);
+    for (const bad of ['"quoted"@example.com', 'üser@exämple.com', 'שם@דוגמה.קום', 'a@b', 'a@b.c', 'a b@example.com', '@example.com', 'a@@example.com', 'a..b@example.com', '.a@example.com', 'a.@example.com', 'a@example..com', 'a@-.com'.replace('-.', '.')]) expect(isEmail(bad), bad).toBe(false);
   });
 });

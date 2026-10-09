@@ -41,10 +41,15 @@ export function SignInForm({ next, error, mainSiteUrl, known, logoAlt }: { next:
   const [email, setEmail] = useState(known?.accountCreated ? known.email : '');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [emailLeft, setEmailLeft] = useState(false);
   const [hint, setHint] = useState<'invalid' | 'noPassword' | null>(null);
   const [notice, setNotice] = useState<Notice>(error);
 
   const emailOk = isEmail(email);
+  // the button stays disabled until the address is valid (the design); say why once the field was left
+  const emailNote = emailLeft && email.trim() !== '' && !emailOk ? (
+    <p id="si-email-note" role="alert" style={s('font-size: 13px; line-height: 1.45; color: #a03a2c; margin: 6px 0 0')}>{t('signIn.emailInvalid')}</p>
+  ) : null;
   const onField = (set: (v: string) => void) => (e: { target: { value: string } }) => {
     set(e.target.value);
     setHint(null);
@@ -135,7 +140,8 @@ export function SignInForm({ next, error, mainSiteUrl, known, logoAlt }: { next:
         <form noValidate onSubmit={sendReset}>
           <div style={s('margin-bottom: 22px')}>
             <label htmlFor="si-reset-email" style={s(AUTH_LABEL)}>{t('signIn.reset.emailLabel')}</label>
-            <input id="si-reset-email" type="email" dir="ltr" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} value={email} onChange={onField(setEmail)} placeholder={t('signIn.emailPlaceholder')} style={s(AUTH_INPUT)} />
+            <input id="si-reset-email" aria-invalid={emailNote ? true : undefined} aria-describedby={emailNote ? 'si-email-note' : undefined} onBlur={() => setEmailLeft(true)} type="email" dir="ltr" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} value={email} onChange={onField(setEmail)} placeholder={t('signIn.emailPlaceholder')} style={s(AUTH_INPUT)} />
+            {emailNote}
           </div>
           {banner}
           <button type="submit" className="btn" disabled={resetDisabled} aria-busy={busy} style={s(`${AUTH_BUTTON}; opacity: ${resetDisabled ? 0.35 : 1}; pointer-events: ${resetDisabled ? 'none' : 'auto'}`)}>
@@ -179,7 +185,8 @@ export function SignInForm({ next, error, mainSiteUrl, known, logoAlt }: { next:
           </div>
           <div style={s('margin-bottom: 18px')}>
             <label htmlFor="si-email" style={s(AUTH_LABEL)}>{t('signIn.email')}</label>
-            <input id="si-email" type="email" name="email" dir="ltr" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false} value={email} onChange={onField(setEmail)} placeholder={t('signIn.emailPlaceholder')} style={s(AUTH_INPUT)} />
+            <input id="si-email" aria-invalid={emailNote ? true : undefined} aria-describedby={emailNote ? 'si-email-note' : undefined} onBlur={() => setEmailLeft(true)} type="email" name="email" dir="ltr" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false} value={email} onChange={onField(setEmail)} placeholder={t('signIn.emailPlaceholder')} style={s(AUTH_INPUT)} />
+            {emailNote}
           </div>
           <div style={s('margin-bottom: 24px')}>
             <div style={s('display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px')}>

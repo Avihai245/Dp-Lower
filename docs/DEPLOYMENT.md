@@ -72,6 +72,7 @@ The apps never talk to an email provider or a CRM directly. They write every ema
 | `lead.returned` | known email re-entered from another browser | nothing (information) |
 | `booking.created` / `booking.cancelled` | free call booked / cancelled (`data.reason`: `cancelled` by the applicant, `rescheduled`, `staff`) | calendar entry for the lawyer in `data.booking.lawyer` (id, name, email; null when the call is not assigned), reminder |
 | `booking.no_show` | the team marked that the applicant did not take the call | follow up (no email goes to the applicant) |
+| `booking.held` | the team corrected a no-show to "call held" | undo the follow-up |
 | `callback.requested` | "Speak with an AI Advisor" request | call the person back |
 | `contact.created` | website form / lead band / chat | create a lead, notify the team; carries the form's `source` and `utm` |
 | `lead.updated` | name, phone, email or answers changed (by the applicant or by staff) | keep the contact in your CRM current; `data.changed` names the fields, `data.previous.email` the old address after a correction |

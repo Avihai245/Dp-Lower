@@ -230,6 +230,20 @@ test('direct visits go where they can continue: no answers -> questions, no lead
   await answered.context.close();
 });
 
+test('Back from the booking returns to the details form with the lead filled in (and the address can be corrected)', async ({ browser }) => {
+  const { context, page } = await visitor(browser, { answers: COMPLETE });
+  await page.goto('/details');
+  await page.getByLabel('Full name').fill('Dana Back');
+  await page.getByLabel('Email').fill(newEmail('back'));
+  await page.getByLabel('Phone').fill('+1 555 000 0042');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/booking$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/details$/);
+  await expect(page.getByLabel('Full name')).toHaveValue('Dana Back');
+  await context.close();
+});
+
 test('the quiz resumes at the first unanswered question (shared with the landing chat)', async ({ browser }) => {
   const { context, page } = await visitor(browser, { answers: { country: 'austria', relative: 'parent' } });
   await page.goto('/eligibility');
@@ -282,6 +296,14 @@ test('sign-in: wrong password, forgot-password flow, Google unavailable locally,
   await page.getByLabel('Password').fill('not-the-password');
   await page.getByRole('button', { name: 'Go to my application' }).click();
   await expect(page.getByText('We could not match that email and password.')).toBeVisible();
+
+  // an address the button cannot accept says so once the field is left (the button itself stays disabled, as designed)
+  await page.getByLabel('Email', { exact: true }).fill('üser@exämple.com');
+  await page.getByLabel('Password').click();
+  await expect(page.locator('#si-email-note')).toHaveText('Please enter a valid email address.');
+  await expect(page.getByRole('button', { name: 'Go to my application' })).toBeDisabled();
+  await page.getByLabel('Email', { exact: true }).fill('nobody@example.com');
+  await expect(page.locator('#si-email-note')).toHaveCount(0);
 
   // Google: the local auth server has the provider switched off, so the page says so instead of landing on a JSON error
   await page.getByRole('button', { name: 'Continue with Google' }).click();

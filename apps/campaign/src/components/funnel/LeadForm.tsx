@@ -36,6 +36,7 @@ export function LeadForm({ initialLead, emailLocked = false }: { initialLead: Le
   const captcha = useRef<string | null>(null);
   const [resend, setResend] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   const touched = useRef(false);
+  const refreshed = useRef(false);
   const refs = { fullName: useRef<HTMLInputElement>(null), email: useRef<HTMLInputElement>(null), phone: useRef<HTMLInputElement>(null) };
   const honeypot = useRef<HTMLInputElement>(null);
 
@@ -51,7 +52,14 @@ export function LeadForm({ initialLead, emailLocked = false }: { initialLead: Le
     }
     // nothing to submit and nobody to continue: the questions come first
     if (!initialLead && !isQuizComplete(getQuizAnswers())) {
-      router.replace('/eligibility');
+      // Back from the booking restores this page as it was before the lead existed (the router cache): if the browser
+      // does hold a lead by now, fetch the page again instead of sending it back to the questions
+      const goBack = () => router.replace('/eligibility');
+      if (refreshed.current) goBack();
+      else {
+        refreshed.current = true;
+        fetch('/api/lead', { cache: 'no-store' }).then((r) => (r.ok ? router.refresh() : goBack()), goBack);
+      }
       return;
     }
     setReady(true);

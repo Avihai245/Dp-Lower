@@ -68,7 +68,7 @@ export const initialsOf = (full: string): string =>
  * domain of dot-separated ASCII labels (an international domain is written in its punycode form). The firm's website keeps
  * identical copies of this expression (it cannot import this package into the browser); a test checks they agree.
  */
-export const EMAIL_RE = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]{2,}$/;
+export const EMAIL_RE = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]{2,}$/;
 export const isEmail = (s: string): boolean => EMAIL_RE.test(s.trim()) && s.trim().length <= 254;
 export const isPhone = (s: string): boolean => digitsOf(s).length >= 7 && s.trim().length <= 40;
 export const isName = (s: string): boolean => s.trim().length >= 2 && s.trim().length <= 120;

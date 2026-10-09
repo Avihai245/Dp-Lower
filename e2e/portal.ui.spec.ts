@@ -38,6 +38,7 @@ test.describe('guided tour', () => {
     const { page, errors, close } = await signedIn(browser, a);
     await page.goto('/portal');
     await expect(page).toHaveTitle(/Your application/);
+    await expect(page.locator('main')).toHaveCount(1);
     await expect(dialog(page)).toBeVisible({ timeout: 10_000 });
     await expect(dialog(page).getByText('Welcome to your portal')).toBeVisible();
     await expect(dialog(page).getByText('Quick tour')).toBeVisible();

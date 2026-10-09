@@ -111,6 +111,28 @@ and CRM in use, W = firm website.
 | P-10, P-11, P-13 | HMAC signing and Turnstile are off until their secrets are set; the campaign `llms.txt` lists `/eligibility`, which `robots.txt` disallows; "Mark received" on an empty slot counts as a document for the drip rule | Accepted: documented as optional in `DEPLOYMENT.md`; the funnel's first step stays listed for answer engines; the firm holds a document it marked received |
 | other nits | 22 px "Open in maps" targets, the chat teaser over the hero on 390 px phones, day chips wrapping 4+1, any ZIP accepted as `.docx`, an eight-character password minimum, repeated wrong sign-ins throttled only by Supabase Auth's own limits (hosted default 30 per 5 minutes per address) | Accepted or recorded; none changes the design |
 
+### 1.1c Third round (the fixes of the second round re-checked, areas not yet covered)
+
+Three more agents that had not written the code: security (the account-takeover fix, unsubscribe, root files, free-text cleaning, queued-mail cancellation), the documents and a clean clone (install, typecheck, lint, tests, build, the bootstrap script, the SQL snippets), and the system used through a browser. No blocker. One major finding in use, the rest minor. Each was reproduced or read in the code before it was fixed.
+
+| ID | Finding | Resolution |
+|---|---|---|
+| T-1 | `pnpm test` without Supabase variables failed (two integration files built a client in the body of a skipped suite; four cron tests needed the database), which would have turned the CI `verify` job red | Fixed: the clients are built with placeholders, the cron tests stub the variables; the suite passes with no env file at all (1,346 pass, 62 skipped) |
+| T-2 | Browser Back from the booking did not reach the details form: the router cache restored the page from before the lead existed and the form sent the visitor to the questions | Fixed: the form asks `/api/lead` first and refetches the page when the browser holds a lead; e2e test in `funnel.ui.spec.ts` |
+| T-3 | `bootstrap:admin` on an address someone had registered publicly first kept that person's password | Fixed: an account that is not staff yet gets a new password and its sessions are ended; `e2e/bootstrap-admin.spec.ts` |
+| T-4 | A queued nurture email of a lead whose sequence had stopped stayed pending when no webhook was configured (the check only ran at delivery) | Fixed: the scheduler cancels what is queued when it stops a lead; test in `drip.test.ts` |
+| T-5 | SQL test 001 failed on a shared database that already held a call at the tested slot | Fixed: it takes a day with no call at that time |
+| T-6 | The portal had no `<main>` landmark | Fixed on the dashboard, the application and the documents screens; asserted in `portal.ui.spec.ts` |
+| T-7 | Sign-in: an address the button cannot accept (non-ASCII, quotes) gave no message | Fixed: the message appears once the field is left (the button stays disabled, as designed) |
+| T-8 | The offer card for an address that already has an account showed "No password needed" and the portal button around the error | Fixed: the card shows only the message with its sign-in link |
+| T-9 | `a..b@c.com` was accepted | Fixed in the three copies of the address pattern |
+| T-10 | Correcting a call from no-show back to held told the CRM nothing | Fixed: `booking.held` is emitted after a no-show; a second no-show is a new event (`bookings.test.ts`) |
+| T-11 | Free-text fields were cleaned before their length was checked | Fixed: a raw cap precedes the cleaning |
+| T-12 | The documents named paths, status codes, event payloads, environment variables and counts that were out of date | Corrected (README, ARCHITECTURE, DEPLOYMENT, HEBREW_REVIEW, AUDIT, env examples, CI pins the Supabase CLI) |
+| T-13 | Lighthouse results were promised in 1.3 but absent | Added to 1.3 |
+
+Accepted or left to the firm: a name typed as `Tom <tom@evil.com>` is stored as `Tom tom@evil.com` (harmless text; the tag characters are stripped); after the team changes an applicant's address in the CRM, the new address receives the "details changed" email but not the confirmation of a call it already holds (the applicant can open the call from the portal); `/en/` redirects twice; `/he/foo.txt` shows the English 404 page; the call panel says "Waiting to be marked" while a call is running. Not covered by any round and worth a manual look before launch: the Realtime subscription scope for each staff role, Server Action replay across roles, a live hostile webhook POST to the Auth hook, and the Hebrew portal screens at 1440 px.
+
 ### 1.2 Per-lawyer availability and the booking lifecycle (B-05, B-08)
 
 See the `/api/bookings` rows in section 8 of `ARCHITECTURE.md` and the data model in its section 6. Summary of the behaviour: each lawyer has their own weekly hours and blocked

@@ -66,7 +66,7 @@ export function Dashboard({ initial }: { initial: PortalState }) {
   };
 
   return (
-    <div style={s('min-height: 100vh; animation: fadeIn 300ms ease both')}>
+    <main style={s('min-height: 100vh; animation: fadeIn 300ms ease both')}>
       <DashboardHeader
         email={lead.email}
         showTour={!submitted}
@@ -79,6 +79,6 @@ export function Dashboard({ initial }: { initial: PortalState }) {
       {submitted ? <SubmittedView state={state} /> : <NotSubmittedView state={state} />}
       {tourOn && !submitted && <Tour onClose={closeTour} />}
       {detailsOpen && <MyDetailsModal lead={lead} onClose={() => setDetailsOpen(false)} onSaved={saved} />}
-    </div>
+    </main>
   );
 }

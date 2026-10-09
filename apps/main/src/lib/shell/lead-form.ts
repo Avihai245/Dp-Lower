@@ -11,7 +11,7 @@ import type { Locale } from '@dpl/core';
 export const CONTACT_ENDPOINT = '/api/contact';
 
 export const digitsOf = (s: string): string => s.replace(/[^0-9]/g, '');
-const EMAIL_RE = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]{2,}$/;
+const EMAIL_RE = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]{2,}$/;
 export const isName = (s: string): boolean => s.trim().length >= 2 && s.trim().length <= 120;
 export const isEmail = (s: string): boolean => EMAIL_RE.test(s.trim()) && s.trim().length <= 254;
 export const isPhone = (s: string): boolean => digitsOf(s).length >= 7 && s.trim().length <= 40;

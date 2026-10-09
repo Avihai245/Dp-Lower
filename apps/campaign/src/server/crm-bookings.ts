@@ -13,7 +13,7 @@ import type { StaffSession } from './staff';
  *    dispatcher recorded as held a day later can still be marked a no-show;
  *  - "Cancel call" while it is still ahead: the applicant gets the booking-cancelled email, the CRM a booking.cancelled
  *    event (reason 'staff').
- * A no-show sends nothing to the applicant; it emits booking.no_show so the firm's CRM can follow up.
+ * A no-show sends nothing to the applicant; it emits booking.no_show so the firm's CRM can follow up (and booking.held when staff correct it).
  * Every change is a conditional update (the state the button was shown for), so two people clicking at once, or a call
  * that changed meanwhile, end in 'conflict' rather than a double email.
  */
@@ -93,16 +93,19 @@ export async function callAction(
     text: `${step.text} (${firmText(data.starts_at, settings.timezone)})`,
     meta: { bookingId: data.id, startsAt: summary.startsAt, from: booking.status },
   });
-  if (a.action === 'no_show') {
+  if (a.action === 'no_show' || (a.action === 'held' && booking.status === 'no_show')) {
+    const noShow = a.action === 'no_show';
+    const type = noShow ? 'booking.no_show' : 'booking.held';
     await enqueueEvent(db, {
-      type: 'booking.no_show',
+      type,
       leadId: lead.id,
       payload: {
         lead: leadSnapshot(lead),
         booking: { ...summary, lawyer: await lawyerOf(db, data.assigned_to) },
         by: actor.name,
       },
-      dedupeKey: `booking.no_show:${data.id}`,
+      // the first marking of a call has a fixed key; a correction (no-show, held, no-show again) is a new fact for the CRM
+      dedupeKey: noShow && booking.status !== 'completed' ? `booking.no_show:${data.id}` : `${type}:${data.id}:${at}`,
     });
   }
   return done({ status: step.to });

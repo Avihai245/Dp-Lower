@@ -286,6 +286,17 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       expect((await eventsOf(own)).length).toBeGreaterThan(0);
     });
 
+    it('cancels what is already queued for a lead whose sequence has stopped (no webhook is needed for that)', async () => {
+      const now = new Date();
+      const l = await lead({ createdAt: new Date(now.getTime() - 4 * DAY) });
+      await drip.startWelcomeSequence(l);
+      expect((await eventsOf(l)).map((e) => e.status)).toEqual(['pending']);
+      await db.from('leads').update({ status: 'review_completed' }).eq('id', l.id);
+      const { data: closed } = await db.from('leads').select('*').eq('id', l.id).single();
+      expect(await run([closed!], now)).toMatchObject({ stopped: 1 });
+      expect((await eventsOf(l)).map((e) => e.status)).toEqual(['cancelled']);
+    });
+
     it('ignores leads older than 47 days and leads created by Google sign-in that never answered the questions', async () => {
       const now = new Date();
       const ancient = await lead({ createdAt: new Date(now.getTime() - 48 * DAY) });
