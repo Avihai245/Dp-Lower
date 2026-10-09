@@ -104,6 +104,7 @@ export async function queueEmailEvent(a: QueueEmailArgs): Promise<EventRow | nul
       locale: ctx.locale,
       to: { email: a.lead.email, name: a.lead.full_name },
       rendered,
+      unsubscribeUrl: ctx.links.unsubscribe,
     });
     const hour = (a.at ?? new Date()).toISOString().slice(0, 13);
     const dedupeKey = a.dedupeKey ?? `email:${a.template}:${a.lead.id}:${hour}`;

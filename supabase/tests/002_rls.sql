@@ -27,8 +27,12 @@ begin
   assert (select count(*) from public.callback_requests) = 0, 'owner cannot read callbacks';
   assert (select count(*) from public.events) = 0, 'owner cannot read the outbox';
   assert not public.is_staff(), 'owner is not staff';
-  update public.leads set full_name = 'Hacked' where id = '00000000-0000-0000-0000-00000000f001';
-  assert (select full_name from public.leads) = 'Owner', 'owner cannot update their lead directly';
+  begin
+    update public.leads set full_name = 'Hacked' where id = '00000000-0000-0000-0000-00000000f001';
+    assert false, 'owner cannot update their lead directly';
+  exception when insufficient_privilege then null;
+  end;
+  assert (select full_name from public.leads) = 'Owner', 'the lead is unchanged';
   begin
     insert into public.leads (full_name, email) values ('X', 'x@example.com');
     assert false, 'owner cannot insert leads';
@@ -60,8 +64,12 @@ begin
   assert (select count(*) from public.events where payload = '{"test": "rls-002"}') = 1, 'staff sees the outbox';
   assert (select docs_received from public.admin_lead_rows where full_name = 'Owner') = 1, 'CRM row counts documents';
   assert (select notes_count from public.admin_lead_rows where full_name = 'Owner') = 1, 'CRM row counts notes';
-  update public.leads set status = 'under_review' where id = '00000000-0000-0000-0000-00000000f001';
-  assert (select status from public.leads where id = '00000000-0000-0000-0000-00000000f001') = 'under_review', 'staff can update';
+  -- staff read through the Data API; every change is made by the server (see 004_read_only_api.sql)
+  begin
+    update public.leads set status = 'under_review' where id = '00000000-0000-0000-0000-00000000f001';
+    assert false, 'staff cannot update leads through the Data API';
+  exception when insufficient_privilege then null;
+  end;
 end $$;
 reset role;
 

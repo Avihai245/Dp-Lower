@@ -8,7 +8,7 @@ import {
   type ApplicationSaveInput,
 } from '@dpl/core';
 import { ApiError } from '@dpl/db/http';
-import { enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
+import { cancelPendingNurture, enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
 import { asJson, type Db, type LeadRow } from '@dpl/db/types';
 import { cleanApplicationData } from '@/components/portal/model/state';
 import { queueEmail } from './email';
@@ -167,6 +167,8 @@ export async function submitApplication(db: Db, lead: LeadRow): Promise<SubmitRe
     dedupeKey: `application.submitted:${lead.id}`,
   });
   await queueEmail({ template: 'application-received', lead: updated, dedupeKey: `email:application-received:${lead.id}` });
+  // the nurture sequence ends with the submission: what is still queued must not go out
+  await cancelPendingNurture(db, lead.id, 'cancelled: the application was submitted');
 
   return { submittedAt: updated.submitted_at ?? now, alreadySubmitted: false };
 }

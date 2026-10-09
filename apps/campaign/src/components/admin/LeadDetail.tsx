@@ -7,6 +7,7 @@ import { nextActionAction } from '@/app/[locale]/(admin)/admin/actions';
 import { Link } from '@/i18n/navigation';
 import { useAdmin } from './AdminProvider';
 import { DocumentsPanel } from './DocumentsPanel';
+import { ErasePanel } from './ErasePanel';
 import { formatCall } from './format';
 import { ActivityPanel, AnswersPanel, ApplicationPanel } from './InfoPanels';
 import { nextActionFor, pagerOrder, stageNeighbours } from './model';
@@ -224,6 +225,7 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
           <OwnerPanel lead={lead} />
           <StatusPanel lead={lead} />
           <NotesPanel detail={detail} />
+          <ErasePanel lead={lead} />
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@ const hasDb = loadLocalEnv();
 type Payload = {
   template: string;
   category: string;
+  listUnsubscribe?: string;
   locale: string;
   to: { email: string; name: string };
   from: { email: string; name: string };
@@ -119,6 +120,9 @@ describe.skipIf(!hasDb)('queueEmail (local Supabase)', () => {
     const p = (await event(`welcome:${l.id}:4`))!.payload as Payload;
     expect(p.category).toBe('nurture');
     expect(p.html).toMatch(/\/unsubscribe\?t=/);
+    // the same signed address, for the List-Unsubscribe header of a sending app that can set one
+    expect(p.listUnsubscribe).toMatch(/\/unsubscribe\?t=[\w.-]+$/);
+    expect(p.html).toContain(p.listUnsubscribe!.replace(/&/g, '&amp;'));
     expect(await event(`welcome:${unsub.id}:4`)).toBeNull();
     // transactional emails still reach an unsubscribed lead
     await mail.queueEmail({

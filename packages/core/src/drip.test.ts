@@ -46,10 +46,16 @@ describe('planDrip', () => {
     expect(d).toEqual([{ action: 'skip', number: 3, scheduledFor: day(3), reason: 'already_booked' }]);
   });
 
-  it('skips the document nudges (2 and 4) when every document is in', () => {
-    const s = { ...base, docsReceived: 8 };
-    const d = planDrip(s, [{ number: 1, status: 'sent', sentAt: created }], day(2, 1));
-    expect(d).toEqual([{ action: 'skip', number: 2, scheduledFor: day(2), reason: 'documents_complete' }]);
+  it('sends the document nudges (2 and 4) only while nothing has been uploaded', () => {
+    const sentFirst = [{ number: 1, status: 'sent' as const, sentAt: created }];
+    expect(planDrip({ ...base, docsReceived: 0 }, sentFirst, day(2, 1))).toEqual([{ action: 'send', number: 2, scheduledFor: day(2) }]);
+    // one document is enough to skip, and so is a complete set
+    for (const docsReceived of [1, 3, 8]) {
+      const d = planDrip({ ...base, docsReceived }, sentFirst, day(2, 1));
+      expect(d, `${docsReceived} documents`).toEqual([{ action: 'skip', number: 2, scheduledFor: day(2), reason: 'documents_started' }]);
+    }
+    const upToThree = [...sentFirst, { number: 2, status: 'sent' as const, sentAt: day(2) }, { number: 3, status: 'sent' as const, sentAt: day(3) }];
+    expect(planDrip({ ...base, docsReceived: 2 }, upToThree, day(5, 1))).toEqual([{ action: 'skip', number: 4, scheduledFor: day(5), reason: 'documents_started' }]);
   });
 
   it('stops for good on unsubscribe, submission and once the case is past the application', () => {

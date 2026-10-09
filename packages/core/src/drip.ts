@@ -26,7 +26,7 @@ export interface DripRecord {
   sentAt?: Date | null;
 }
 
-export type SkipReason = 'already_booked' | 'documents_complete' | 'missed_window';
+export type SkipReason = 'already_booked' | 'documents_started' | 'missed_window';
 export type StopReason = 'unsubscribed' | 'submitted' | 'past_application';
 
 export type DripDecision =
@@ -49,7 +49,8 @@ export function dripStopReason(s: Pick<DripLeadState, 'unsubscribedAt' | 'submit
  * What the dispatcher should do for one lead right now.
  *  - stops after unsubscribe, submission or when the case has moved past the application;
  *  - email 3 ("your call is still open") is skipped when a call is booked;
- *  - emails 2 and 4 (asking for records) are skipped once every document is in;
+ *  - emails 2 and 4 (asking for records) are sent only to someone who has not uploaded anything yet: they are skipped
+ *    as soon as one document is in;
  *  - an email overdue by more than MISSED_WINDOW_HOURS is skipped, not sent late;
  *  - at most one email is sent per run, and not within MIN_GAP_HOURS of the previous one.
  */
@@ -73,8 +74,8 @@ export function planDrip(state: DripLeadState, records: readonly DripRecord[], n
       decisions.push({ action: 'skip', number, scheduledFor, reason: 'already_booked' });
       continue;
     }
-    if ((number === 2 || number === 4) && state.docsTotal > 0 && state.docsReceived >= state.docsTotal) {
-      decisions.push({ action: 'skip', number, scheduledFor, reason: 'documents_complete' });
+    if ((number === 2 || number === 4) && state.docsReceived > 0) {
+      decisions.push({ action: 'skip', number, scheduledFor, reason: 'documents_started' });
       continue;
     }
     const overdueHours = (now.getTime() - scheduledFor.getTime()) / 3_600_000;

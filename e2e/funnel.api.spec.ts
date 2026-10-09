@@ -746,6 +746,27 @@ test.describe('unsubscribe', () => {
 });
 
 test.describe('hardening', () => {
+  test('a token from an email is not a login: neither the unsubscribe link nor the portal link works as the lead cookie', async ({ playwright }) => {
+    const owner = await newClient(playwright);
+    const lead = await createLead(owner, 'tokens');
+    const row = (await leadByEmail(lead.email))!;
+    const stolen = [
+      signAppToken({ lid: lead.leadId, p: 'unsub' }), // sits in every nurture email, never expires
+      signAppToken({ lid: lead.leadId, ep: row.session_epoch, p: 'portal', n: '/portal' }, 3600), // the emailed portal link
+      signAppToken({ lid: lead.leadId, ep: row.session_epoch }, 3600), // no purpose at all
+      signAppToken({ lid: lead.leadId, p: 'lead' }, 3600), // right purpose, no epoch
+    ];
+    for (const token of stolen) {
+      const thief = await playwright.request.newContext({ baseURL: BASE_URL, extraHTTPHeaders: { 'x-forwarded-for': newIp(), cookie: `dpl_lead=${token}` } });
+      expect((await thief.get('/api/lead')).status()).toBe(401);
+      expect((await thief.post('/api/portal/enter', { headers: { origin: new URL(BASE_URL).origin } })).status()).toBe(401);
+      await thief.dispose();
+    }
+    // the real cookie of the person who filled in the form still works
+    expect((await owner.get('/api/lead')).status()).toBe(200);
+    await owner.dispose();
+  });
+
   test('state-changing routes refuse a cross-site Origin', async ({ playwright }) => {
     const client = await newClient(playwright);
     await createLead(client, 'origin');

@@ -43,6 +43,7 @@ Set them in each Vercel project (Settings, Environment Variables, Production + P
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | `https://euro-passports.com` |
 | `NEXT_PUBLIC_MAIN_SITE_URL` | `https://www.lawoffice.org.il` |
+| `NEXT_PUBLIC_CAMPAIGN_URL` | optional: the origin used in emailed links and email images. Defaults to `NEXT_PUBLIC_SITE_URL`, which is right for production; set it only if the campaign is served from a different address than the one it is built for. |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publishable key (or legacy anon key) |
 | `SUPABASE_SERVICE_ROLE_KEY` | secret key (or legacy service_role key). **Server only.** |
@@ -61,7 +62,7 @@ Set them in each Vercel project (Settings, Environment Variables, Production + P
 
 The apps never talk to an email provider or a CRM directly. They write every email and every business event to the `events` table (the outbox); a dispatcher posts them as JSON to your Zapier "Catch Hook" URLs, retrying with backoff (2 min, 10 min, 1 h, 6 h, 24 h) and then marking the event `dead`.
 
-**Zap 1: send emails.** Trigger: Webhooks by Zapier, Catch Hook. Filter: `event` equals `email.send`. Action: your email app's "Send Email" (Gmail, Outlook, SendGrid, Mailgun...). Map: To = `data to email`, To name = `data to name`, From name = `data from name`, From = `data from email`, Reply-To = `data replyTo`, Subject = `data subject`, Body (HTML) = `data html`, plain text = `data text`. The body is complete HTML in the lead's language (English or Hebrew, RTL), including the unsubscribe link for nurture emails. Use "HTML" mode, not "plain text".
+**Zap 1: send emails.** Trigger: Webhooks by Zapier, Catch Hook. Filter: `event` equals `email.send`. Action: your email app's "Send Email" (Gmail, Outlook, SendGrid, Mailgun...). Map: To = `data to email`, To name = `data to name`, From name = `data from name`, From = `data from email`, Reply-To = `data replyTo`, Subject = `data subject`, Body (HTML) = `data html`, plain text = `data text`. For `data category` = `nurture`, `data listUnsubscribe` is the signed one-click unsubscribe address: if your email app can set headers (SendGrid, Mailgun, Postmark and Amazon SES can; Gmail and Outlook actions cannot), send `List-Unsubscribe: <that url>` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, which keeps the nurture sequence out of spam folders and satisfies the Gmail/Yahoo bulk-sender rules. The body is complete HTML in the lead's language (English or Hebrew, RTL), including the unsubscribe link for nurture emails. Use "HTML" mode, not "plain text".
 
 **Zap 2: CRM and team notifications** (optional, any number of paths). Trigger: Catch Hook. Use "Paths" on `event`:
 

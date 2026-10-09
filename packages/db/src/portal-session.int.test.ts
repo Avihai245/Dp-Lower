@@ -51,8 +51,10 @@ describe.skipIf(!live)('lead -> account bridge (real GoTrue)', () => {
     // RLS: the applicant reads exactly their own lead and cannot change it
     const mine = await client.from('leads').select('id,email');
     expect(mine.data).toEqual([{ id: lead.id, email: lead.email }]);
+    // the Data API is read-only for signed-in users: the write is refused outright, and nothing changed
     const hack = await client.from('leads').update({ full_name: 'Hacked', stage: 'granted' }).eq('id', lead.id).select();
-    expect(hack.data).toEqual([]);
+    expect(hack.error?.code).toBe('42501');
+    expect((await db.from('leads').select('full_name').eq('id', lead.id).single()).data?.full_name).toBe(lead.full_name);
     const forged = await client.from('leads').insert({ full_name: 'x', email: `forged-${stamp}@example.com` });
     expect(forged.error).not.toBeNull();
   });

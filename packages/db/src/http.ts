@@ -45,9 +45,16 @@ export async function parseJson<T>(req: Request, schema: ZodType<T>): Promise<T>
   return parsed.data;
 }
 
+/**
+ * The address of the visitor, used as the rate-limit bucket. On Vercel the platform sets `x-vercel-forwarded-for` and
+ * `x-real-ip` itself and overwrites `x-forwarded-for` with the real client address, none of which a visitor can
+ * influence, so those come first. When several proxies have appended to `x-forwarded-for`, the entry added by the
+ * proxy closest to this app (the right-most) is the one that cannot be forged by the client; the left-most can.
+ */
 export function clientIp(req: Request): string {
-  const fwd = req.headers.get('x-forwarded-for');
-  return (fwd?.split(',')[0] ?? req.headers.get('x-real-ip') ?? 'unknown').trim();
+  const h = req.headers;
+  const forwarded = h.get('x-forwarded-for')?.split(',').at(-1);
+  return (h.get('x-vercel-forwarded-for')?.split(',')[0] ?? h.get('x-real-ip') ?? forwarded ?? 'unknown').trim() || 'unknown';
 }
 
 /**

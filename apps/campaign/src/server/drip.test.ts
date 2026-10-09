@@ -177,29 +177,17 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       expect(await run([l], now)).toMatchObject({ scheduled: 0, skipped: 0 });
     });
 
-    it('skips the document nudge (email 2) once every document is in', async () => {
+    it('skips the document nudge (email 2) as soon as a document is in', async () => {
       const now = new Date();
       const l = await lead({ createdAt: new Date(now.getTime() - 2 * DAY - HOUR) });
       await sent(l, 1, new Date(l.created_at));
-      const types = [
-        'birth_certificate',
-        'marriage_certificates',
-        'emigration_naturalization',
-        'persecution_proof',
-        'passport',
-        'family_tree',
-        'photo_id',
-        'other',
-      ];
-      const { error } = await db
-        .from('documents')
-        .insert(types.map((doc_type) => ({ lead_id: l.id, doc_type, status: 'received' as const })));
+      const { error } = await db.from('documents').insert({ lead_id: l.id, doc_type: 'passport', status: 'received' as const });
       expect(error).toBeNull();
 
       expect(await run([l], now)).toMatchObject({ scheduled: 0, skipped: 1 });
       expect((await stateOf(l)).find((s) => s.number === 2)).toMatchObject({
         status: 'skipped',
-        reason: 'documents_complete',
+        reason: 'documents_started',
       });
     });
 

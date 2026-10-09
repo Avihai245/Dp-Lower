@@ -7,11 +7,14 @@ const ev = (o: Partial<EventRow>): EventRow => ({
   attempts: 1, next_attempt_at: new Date().toISOString(), locked_at: null, last_error: null, created_at: '2026-10-01T00:00:00Z', delivered_at: null, ...o,
 });
 
-function fakeDb(events: EventRow[]) {
+function fakeDb(events: EventRow[], leads: Array<Record<string, unknown>> = []) {
   const patches: Array<{ id: string; patch: Record<string, unknown> }> = [];
   const db = {
     rpc: async () => ({ data: events, error: null }),
-    from: () => ({ update: (patch: Record<string, unknown>) => ({ eq: async (_c: string, id: string) => { patches.push({ id, patch }); return { error: null }; } }) }),
+    from: (table: string) =>
+      table === 'leads'
+        ? { select: () => ({ in: async () => ({ data: leads, error: null }) }) }
+        : { update: (patch: Record<string, unknown>) => ({ eq: async (_c: string, id: string) => { patches.push({ id, patch }); return { error: null }; } }) },
   } as unknown as Db;
   return { db, patches };
 }
@@ -34,7 +37,7 @@ describe('deliverPending', () => {
     delete process.env.ZAPIER_CRM_WEBHOOK_URL;
     delete process.env.ZAPIER_EMAIL_WEBHOOK_URL;
     const { db } = fakeDb([ev({})]);
-    expect(await deliverPending(db)).toEqual({ claimed: 0, sent: 0, failed: 0, dead: 0, skipped: 'no_webhook' });
+    expect(await deliverPending(db)).toEqual({ claimed: 0, sent: 0, failed: 0, dead: 0, cancelled: 0, skipped: 'no_webhook' });
   });
 
   it('routes crm and email events to their own hooks and marks them sent', async () => {
@@ -75,5 +78,48 @@ describe('deliverPending', () => {
     const { db, patches } = fakeDb([ev({})]);
     expect(await deliverPending(db)).toMatchObject({ failed: 1 });
     expect(patches[0]!.patch.status).toBe('pending');
+  });
+
+  describe('nurture emails are checked again at delivery', () => {
+    const lead = { id: 'l1', email: 'anna@example.com', unsubscribed_at: null, submitted_at: null, stage: 'lead' };
+    const nurture = (o: Partial<EventRow> = {}) =>
+      ev({ id: 'n1', channel: 'email', type: 'email.send', created_at: new Date().toISOString(), payload: { category: 'nurture', template: 'welcome-2', to: { email: 'Anna@example.com' } }, ...o });
+
+    it('sends one that is still wanted (the address compares without case)', async () => {
+      const { db } = fakeDb([nurture()], [lead]);
+      expect(await deliverPending(db)).toMatchObject({ sent: 1, cancelled: 0 });
+      expect(calls).toHaveLength(1);
+    });
+
+    it('drops one for a person who unsubscribed, submitted or moved past the application, without posting it', async () => {
+      for (const changed of [{ unsubscribed_at: '2026-10-02T00:00:00Z' }, { submitted_at: '2026-10-02T00:00:00Z' }, { stage: 'review' }]) {
+        calls.length = 0;
+        const { db, patches } = fakeDb([nurture()], [{ ...lead, ...changed }]);
+        expect(await deliverPending(db), JSON.stringify(changed)).toMatchObject({ sent: 0, cancelled: 1 });
+        expect(calls).toHaveLength(0);
+        expect(patches[0]!.patch).toMatchObject({ status: 'cancelled' });
+        expect(String(patches[0]!.patch.last_error)).toContain('stopped');
+      }
+    });
+
+    it('drops one addressed to an address that has since been corrected, one that went stale, and one whose lead is gone', async () => {
+      const wrongAddress = fakeDb([nurture({ payload: { category: 'nurture', to: { email: 'typo@example.com' } } })], [lead]);
+      expect(await deliverPending(wrongAddress.db)).toMatchObject({ cancelled: 1 });
+      expect(String(wrongAddress.patches[0]!.patch.last_error)).toContain('corrected');
+
+      const stale = fakeDb([nurture({ created_at: new Date(Date.now() - 49 * 3_600_000).toISOString() })], [lead]);
+      expect(await deliverPending(stale.db)).toMatchObject({ cancelled: 1 });
+      expect(String(stale.patches[0]!.patch.last_error)).toContain('stale');
+
+      const orphan = fakeDb([nurture()], []);
+      expect(await deliverPending(orphan.db)).toMatchObject({ cancelled: 1 });
+      expect(calls).toHaveLength(0);
+    });
+
+    it('leaves transactional emails alone: a booking confirmation still goes to someone who unsubscribed', async () => {
+      const tx = ev({ id: 't1', channel: 'email', type: 'email.send', payload: { category: 'transactional', to: { email: 'anna@example.com' } } });
+      const { db } = fakeDb([tx], [{ ...lead, unsubscribed_at: '2026-10-02T00:00:00Z' }]);
+      expect(await deliverPending(db)).toMatchObject({ sent: 1, cancelled: 0 });
+    });
   });
 });

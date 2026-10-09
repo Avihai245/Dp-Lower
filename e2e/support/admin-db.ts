@@ -104,6 +104,13 @@ export const deleteAuthUser = async (id: string): Promise<void> => {
 export async function uploadObject(bucket: string, path: string, body: Buffer, contentType: string): Promise<void> {
   await call(`/storage/v1/object/${bucket}/${path.split('/').map(q).join('/')}`, { method: 'POST', raw: body, contentType });
 }
+/** Whether a stored object exists (read with the service role). */
+export async function objectExists(bucket: string, path: string): Promise<boolean> {
+  const { url, key } = env();
+  const res = await fetch(`${url}/storage/v1/object/${bucket}/${path.split('/').map(q).join('/')}`, { headers: { apikey: key, authorization: `Bearer ${key}` } });
+  await res.arrayBuffer();
+  return res.ok;
+}
 export async function removeObjects(bucket: string, paths: string[]): Promise<void> {
   if (paths.length) await call(`/storage/v1/object/${bucket}`, { method: 'DELETE', body: { prefixes: paths } });
 }

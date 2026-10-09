@@ -104,6 +104,7 @@ export type ActionError =
   | 'duplicate'
   | 'email_taken'
   | 'stale'
+  | 'confirm_mismatch'
   | 'rate_limited'
   | 'internal';
 export type ActionResult<T = void> = { ok: true; data: T } | { ok: false; error: ActionError; field?: string };

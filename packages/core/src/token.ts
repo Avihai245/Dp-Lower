@@ -1,4 +1,4 @@
-/** Small HMAC-signed tokens (lead cookie, unsubscribe links, booking links). Works in Node, Edge and browsers. */
+/** Small HMAC-signed tokens (lead cookie, emailed portal links, unsubscribe links). Works in Node, Edge and browsers. */
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -23,8 +23,14 @@ export async function hmacSha256Hex(secret: string, message: string): Promise<st
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * What a token may be used for. Every token names its purpose (`p`) and is only accepted for that purpose: the
+ * unsubscribe link in an email, which never expires, must not also work as the cookie that signs a browser in.
+ */
+export type TokenPurpose = 'lead' | 'portal' | 'unsub';
+
 export async function signToken(
-  payload: Record<string, unknown>,
+  payload: { p: TokenPurpose } & Record<string, unknown>,
   secret: string,
   ttlSeconds?: number,
 ): Promise<string> {
@@ -34,15 +40,20 @@ export async function signToken(
   return `${data}.${b64urlEncode(new Uint8Array(sig))}`;
 }
 
-/** Returns the payload, or null when the token is malformed, tampered with or expired. */
-export async function verifyToken<T extends Record<string, unknown>>(token: string | undefined | null, secret: string): Promise<T | null> {
+/** Returns the payload, or null when the token is malformed, tampered with, expired or signed for another purpose. */
+export async function verifyToken<T extends Record<string, unknown>>(
+  token: string | undefined | null,
+  secret: string,
+  purpose: TokenPurpose,
+): Promise<T | null> {
   if (!token) return null;
   const [data, sig] = token.split('.');
   if (!data || !sig) return null;
   try {
     const ok = await crypto.subtle.verify('HMAC', await hmacKey(secret, 'verify'), b64urlDecode(sig), enc.encode(data));
     if (!ok) return null;
-    const payload = JSON.parse(dec.decode(b64urlDecode(data))) as T & { exp?: number };
+    const payload = JSON.parse(dec.decode(b64urlDecode(data))) as T & { exp?: number; p?: string };
+    if (payload.p !== purpose) return null;
     if (typeof payload.exp === 'number' && payload.exp < Math.floor(Date.now() / 1000)) return null;
     return payload;
   } catch {

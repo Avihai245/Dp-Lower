@@ -23,7 +23,7 @@ const cookieOptions = (maxAge: number) => ({
 
 /** Call from a Route Handler or Server Action (cookies are read-only in Server Components). */
 export async function setLeadCookie(lead: Pick<LeadRow, 'id' | 'session_epoch'>): Promise<void> {
-  const token = await signToken({ lid: lead.id, ep: lead.session_epoch, v: 1 }, appSecret(), MAX_AGE);
+  const token = await signToken({ p: 'lead', lid: lead.id, ep: lead.session_epoch, v: 1 }, appSecret(), MAX_AGE);
   (await cookies()).set(LEAD_COOKIE, token, cookieOptions(MAX_AGE));
 }
 
@@ -33,8 +33,9 @@ export async function clearLeadCookie(): Promise<void> {
 
 export async function readLeadSession(): Promise<{ leadId: string; epoch: number } | null> {
   const store = await cookies();
-  const payload = await verifyToken<{ lid?: string; ep?: number }>(store.get(LEAD_COOKIE)?.value, appSecret());
-  return payload?.lid ? { leadId: payload.lid, epoch: payload.ep ?? 0 } : null;
+  // only a token signed as a lead cookie counts: the emailed portal and unsubscribe tokens carry the same lead id
+  const payload = await verifyToken<{ lid?: string; ep?: number }>(store.get(LEAD_COOKIE)?.value, appSecret(), 'lead');
+  return payload?.lid && typeof payload.ep === 'number' ? { leadId: payload.lid, epoch: payload.ep } : null;
 }
 
 /** The lead this browser's cookie belongs to, or null (no cookie, forged, or epoch no longer current). */

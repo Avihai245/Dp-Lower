@@ -78,7 +78,9 @@ async function createLead(db: Db, input: LeadInput, firstTouch: FirstTouch): Pro
     .select('*')
     .single();
   if (error) {
-    if (error.code === '23505') return null;
+    // a unique violation means another request created this email a moment ago (the caller looks it up again), but a
+    // repeated case reference is a defect of ours, not a race: say so instead of pretending the email exists
+    if (error.code === '23505' && !/case_ref/.test(`${error.message} ${error.details ?? ''}`)) return null;
     throw new Error(`lead insert failed: ${error.message}`);
   }
   await logActivity(db, { leadId: data.id, code: 'lead_created', text: 'Lead created from the eligibility check', meta: { source: data.source } });

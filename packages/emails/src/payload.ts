@@ -24,8 +24,11 @@ export function buildEmailPayload(a: {
   to: { email: string; name: string };
   rendered: RenderedEmail;
   sender?: EmailSender;
+  /** the lead's signed unsubscribe address, for nurture emails */
+  unsubscribeUrl?: string | null;
 }): EmailPayload {
   const sender = a.sender ?? emailSender();
+  const nurture = isNurtureTemplate(a.template);
   return {
     template: a.template,
     locale: a.locale,
@@ -36,6 +39,7 @@ export function buildEmailPayload(a: {
     preheader: a.rendered.preheader,
     html: a.rendered.html,
     text: a.rendered.text,
-    category: isNurtureTemplate(a.template) ? 'nurture' : 'transactional',
+    category: nurture ? 'nurture' : 'transactional',
+    ...(nurture && a.unsubscribeUrl ? { listUnsubscribe: a.unsubscribeUrl } : {}),
   };
 }

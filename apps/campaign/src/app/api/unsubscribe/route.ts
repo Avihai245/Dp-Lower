@@ -1,7 +1,7 @@
 import { createAdminSupabase } from '@dpl/db/admin';
 import { ApiError, assertSameOrigin, handle, json, limitOrThrow, parseJson } from '@dpl/db/http';
 import { readUnsubscribeToken } from '@dpl/db/links';
-import { enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
+import { cancelPendingNurture, enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +24,8 @@ export const POST = handle(async (req) => {
   if (error) throw new Error(`lead lookup failed: ${error.message}`);
   if (!lead) throw new ApiError(400, 'invalid_token');
 
+  // also when it was recorded before: emails queued since (or in a race) must not go out either
+  await cancelPendingNurture(db, lead.id, 'cancelled: unsubscribed');
   if (!lead.unsubscribed_at) {
     const { data, error: upErr } = await db
       .from('leads')

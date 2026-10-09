@@ -1,0 +1,25 @@
+{
+  "llms": {
+    "title": "Decker Pex Levi: German and Austrian citizenship by descent",
+    "keyFacts": "Key facts",
+    "facts": {
+      "firm": "Run by Decker Pex Levi Law Offices (offices in Tel Aviv / Ramat Gan and Jerusalem). The firm's website is {url}",
+      "offer": "What you get: a free eligibility check (six questions, about two minutes, no documents and no payment) and a free call of {minutes} minutes with a lawyer",
+      "routes": "Routes: Germany (Basic Law Art. 116(2), StAG §5) and Austria (Citizenship Act §58c)",
+      "languages": "Languages: English and Hebrew"
+    },
+    "pages": "Pages",
+    "pageLinks": {
+      "landing": "Overview, how it works, the team, fees and questions",
+      "eligibility": "The six-question eligibility check (starts here)",
+      "privacy": "Privacy policy",
+      "other": "Hebrew edition"
+    },
+    "process": "How it works",
+    "routesTitle": "The two routes",
+    "team": "The team",
+    "fees": "Fees",
+    "questions": "Questions people ask first",
+    "caveat": "Figures, reviews, the offer and the fee model on the site are marked as pending the firm's approval. Nothing here is legal advice, and citizenship is never guaranteed."
+  }
+}

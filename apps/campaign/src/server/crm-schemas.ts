@@ -50,6 +50,8 @@ export const updateContactInput = z.object({
     .refine((v) => v === '' || digitsOf(v).length >= 7, 'invalid_phone'),
 });
 export const leadOnlyInput = z.object({ leadId: uuid });
+/** Deleting an applicant needs the case reference typed back, so it cannot happen by a stray click. */
+export const deleteApplicantInput = z.object({ leadId: uuid, confirm: z.string().trim().min(1).max(40) });
 export const inboxStatusInput = z.object({
   kind: z.enum(['callback', 'contact']),
   id: uuid,

@@ -498,12 +498,22 @@
       "email_taken": "Another lead already uses this email address.",
       "stale": "This lead has changed in the meantime. The page was refreshed.",
       "rate_limited": "Too many requests. Please wait a moment and try again.",
-      "internal": "Something went wrong. Please try again."
+      "internal": "Something went wrong. Please try again.",
+      "confirm_mismatch": "The case reference you typed does not match."
     }
   },
   "error": {
     "title": "This page could not be loaded",
     "text": "Something went wrong while reading the data. Check your connection and try again.",
     "retry": "Try again"
+  },
+  "erase": {
+    "title": "Delete applicant",
+    "text": "Permanently removes this applicant's file: details, application, uploaded documents, notes, history, sign-in account and any emails still queued for them, plus callback requests and website enquiries from the same address. This cannot be undone. A record that it happened (case reference, who, when) is kept; it does not name the person.",
+    "open": "Delete applicant…",
+    "confirmLabel": "To confirm, type the case reference {caseRef}",
+    "confirm": "Delete permanently",
+    "cancel": "Cancel",
+    "done": "Applicant {caseRef} was deleted."
   }
 }

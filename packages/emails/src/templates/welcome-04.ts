@@ -2,7 +2,7 @@ import { define } from '../doc';
 import { eyebrow, hero, items, para, section } from '../kit';
 import { bottom, common, personalAreaCta, top } from './common';
 
-/** Email 4 of 15 · day 5 · if your family kept nothing (skipped when every document is in). */
+/** Email 4 of 15 · day 5 · if your family kept nothing (skipped as soon as one document is in). */
 const en = {
   subject: 'If your family kept nothing',
   preheader: 'The records survive in places families never thought to look.',

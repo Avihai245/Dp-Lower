@@ -30,7 +30,7 @@ const run = handle(async (req) => {
     failures.push(`schedule: ${message(e)}`);
   }
 
-  let dispatch = { claimed: 0, sent: 0, failed: 0, dead: 0 } as Awaited<ReturnType<typeof deliverPending>>;
+  let dispatch = { claimed: 0, sent: 0, failed: 0, dead: 0, cancelled: 0 } as Awaited<ReturnType<typeof deliverPending>>;
   try {
     dispatch = await deliverPending(db);
   } catch (e) {
@@ -57,6 +57,7 @@ const run = handle(async (req) => {
     scheduleErrors: schedule.errors,
     claimed: dispatch.claimed,
     dead: dispatch.dead,
+    cancelled: dispatch.cancelled,
     sequenceSent,
     ...(dispatch.skipped ? { deliveryNote: dispatch.skipped } : {}),
   };

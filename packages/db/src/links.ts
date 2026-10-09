@@ -23,19 +23,19 @@ export async function createPortalLinkToken(lead: Pick<LeadRow, 'id' | 'session_
 }
 
 export async function readPortalLinkToken(token: string): Promise<{ leadId: string; epoch: number; next: string } | null> {
-  const p = await verifyToken<{ lid?: string; ep?: number; p?: string; n?: string }>(token, appSecret());
-  if (!p || p.p !== 'portal' || !p.lid) return null;
+  const p = await verifyToken<{ lid?: string; ep?: number; n?: string }>(token, appSecret(), 'portal');
+  if (!p || !p.lid) return null;
   return { leadId: p.lid, epoch: p.ep ?? 0, next: safeNext(p.n) };
 }
 
-/** Never expires, never grants access: it can only stop the nurture emails. */
+/** Never expires, never grants access: it can only stop the nurture emails (it is not accepted as a lead cookie or a portal link). */
 export async function createUnsubscribeToken(leadId: string): Promise<string> {
   return signToken({ lid: leadId, p: 'unsub' }, appSecret());
 }
 
 export async function readUnsubscribeToken(token: string): Promise<{ leadId: string } | null> {
-  const p = await verifyToken<{ lid?: string; p?: string }>(token, appSecret());
-  return p && p.p === 'unsub' && p.lid ? { leadId: p.lid } : null;
+  const p = await verifyToken<{ lid?: string }>(token, appSecret(), 'unsub');
+  return p?.lid ? { leadId: p.lid } : null;
 }
 
 const localePrefix = (l: Locale) => (l === DEFAULT_LOCALE ? '' : `/${l}`);

@@ -92,3 +92,19 @@ export async function logActivity(db: Db, a: ActivityArgs): Promise<void> {
   });
   if (error) console.error('[activity] insert failed', error.message);
 }
+
+/**
+ * Nurture emails that are queued but not yet delivered stop with the sequence: the person unsubscribed or submitted, or the
+ * address was corrected. (The dispatcher checks again at delivery, so an email claimed in the same moment is still caught.)
+ * An email already handed to the sending app cannot be recalled.
+ */
+export async function cancelPendingNurture(db: Db, leadId: string, reason: string): Promise<void> {
+  const { error } = await db
+    .from('events')
+    .update({ status: 'cancelled', last_error: reason, locked_at: null })
+    .eq('lead_id', leadId)
+    .eq('channel', 'email')
+    .in('status', ['pending', 'failed'])
+    .eq('payload->>category', 'nurture');
+  if (error) console.error('[outbox] cancelPendingNurture failed', error.message);
+}

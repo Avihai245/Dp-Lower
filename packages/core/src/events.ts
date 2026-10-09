@@ -17,6 +17,7 @@ export const CRM_EVENT_TYPES = [
   'stage.changed',
   'result.requested',
   'unsubscribed',
+  'lead.deleted',
 ] as const;
 export type CrmEventType = (typeof CRM_EVENT_TYPES)[number];
 
@@ -35,6 +36,11 @@ export interface EmailPayload {
   text: string;
   /** transactional emails ignore unsubscribe; marketing/nurture emails respect it */
   category: 'transactional' | 'nurture';
+  /**
+   * Nurture emails only: the signed unsubscribe address. A sending app that can set headers should send it as
+   * `List-Unsubscribe: <url>` with `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (docs/DEPLOYMENT.md, Zap 1).
+   */
+  listUnsubscribe?: string;
 }
 
 export interface LeadSnapshot {

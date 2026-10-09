@@ -17,7 +17,12 @@ export const supabaseServiceKey = (): string =>
 
 export const siteUrl = (): string => process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
 export const mainSiteUrl = (): string => process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? 'http://localhost:3000';
-export const campaignSiteUrl = (): string => process.env.NEXT_PUBLIC_CAMPAIGN_URL ?? 'http://localhost:3001';
+/**
+ * Where the campaign lives: the origin of every emailed link (portal, unsubscribe) and of the images in emails. The
+ * campaign app is its own site, so its own NEXT_PUBLIC_SITE_URL is the right answer when this is not set; the firm
+ * website sets it to the campaign's address.
+ */
+export const campaignSiteUrl = (): string => process.env.NEXT_PUBLIC_CAMPAIGN_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
 
 export const isProd = (): boolean => process.env.NODE_ENV === 'production';
 

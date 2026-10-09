@@ -13,12 +13,14 @@ import { redirect } from '@/i18n/navigation';
 
 import { addException, addRule, deleteException, deleteRule, updateRule } from '@/server/crm-availability';
 import { updateContact, sendResetLink } from '@/server/crm-contact';
+import { deleteApplicant } from '@/server/crm-erase';
 import { setInboxStatus } from '@/server/crm-inbox';
 import {
   addExceptionInput,
   addNoteInput,
   addRuleInput,
   assignOwnerInput,
+  deleteApplicantInput,
   deleteByIdInput,
   deleteNoteInput,
   docActionInput,
@@ -117,6 +119,11 @@ export async function updateContactAction(input: z.input<typeof updateContactInp
 
 export async function sendResetLinkAction(input: z.input<typeof leadOnlyInput>) {
   return run(requireStaff, leadOnlyInput, input, (db, s, a) => sendResetLink(db, s.actor, a.leadId));
+}
+
+/** Admins only: removes an applicant and everything held about them (see crm-erase.ts). */
+export async function deleteApplicantAction(input: z.input<typeof deleteApplicantInput>) {
+  return run(requireAdmin, deleteApplicantInput, input, (db, s, a) => deleteApplicant(db, s.actor, a.leadId, a.confirm));
 }
 
 // -- inbox ---------------------------------------------------------------------------------------------------------

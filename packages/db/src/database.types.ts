@@ -207,6 +207,26 @@ isOneToOne: false
       referencedColumns: ["user_id"]
     }
                   ]
+                },"deletion_log": {
+                  Row: {
+                    "case_ref": string,"deleted_at": string,"deleted_by": string | null,"deleted_by_name": string | null,"id": string,"storage_objects": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "case_ref": string,"deleted_at"?: string,"deleted_by"?: string | null,"deleted_by_name"?: string | null,"id"?: string,"storage_objects"?: number
+                  }
+                  Update: {
+                    "case_ref"?: string,"deleted_at"?: string,"deleted_by"?: string | null,"deleted_by_name"?: string | null,"id"?: string,"storage_objects"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "deletion_log_deleted_by_fkey"
+      columns: ["deleted_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["user_id"]
+    }
+                  ]
                 },"documents": {
                   Row: {
                     "created_at": string,"doc_type": string,"file_name": string | null,"file_path": string | null,"file_size": number | null,"id": string,"lead_id": string,"mime_type": string | null,"requested_at": string | null,"review_note": string | null,"reviewed_at": string | null,"reviewed_by": string | null,"status": Database["public"]['Enums']["doc_status"],"updated_at": string,"uploaded_at": string | null
@@ -466,7 +486,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "booking_status": "confirmed"|"cancelled"|"completed"|"no_show","doc_status": "missing"|"requested"|"received"|"reupload","event_channel": "crm"|"email","event_status": "pending"|"processing"|"sent"|"failed"|"dead","inbox_status": "new"|"in_progress"|"closed","lead_route": "germany"|"austria"|"both"|"unsure","lead_stage": "lead"|"account"|"application"|"review"|"filed"|"granted","lead_status": "enquiry"|"account_created"|"application_incomplete"|"application_submitted"|"under_review"|"info_required"|"review_completed"|"contacting","locale_code": "en"|"he","sequence_status": "queued"|"sent"|"skipped","staff_role": "admin"|"lawyer"|"case_manager"
+            "booking_status": "confirmed"|"cancelled"|"completed"|"no_show","doc_status": "missing"|"requested"|"received"|"reupload","event_channel": "crm"|"email","event_status": "pending"|"processing"|"sent"|"failed"|"dead"|"cancelled","inbox_status": "new"|"in_progress"|"closed","lead_route": "germany"|"austria"|"both"|"unsure","lead_stage": "lead"|"account"|"application"|"review"|"filed"|"granted","lead_status": "enquiry"|"account_created"|"application_incomplete"|"application_submitted"|"under_review"|"info_required"|"review_completed"|"contacting","locale_code": "en"|"he","sequence_status": "queued"|"sent"|"skipped","staff_role": "admin"|"lawyer"|"case_manager"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -586,7 +606,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "booking_status": ["confirmed", "cancelled", "completed", "no_show"],"doc_status": ["missing", "requested", "received", "reupload"],"event_channel": ["crm", "email"],"event_status": ["pending", "processing", "sent", "failed", "dead"],"inbox_status": ["new", "in_progress", "closed"],"lead_route": ["germany", "austria", "both", "unsure"],"lead_stage": ["lead", "account", "application", "review", "filed", "granted"],"lead_status": ["enquiry", "account_created", "application_incomplete", "application_submitted", "under_review", "info_required", "review_completed", "contacting"],"locale_code": ["en", "he"],"sequence_status": ["queued", "sent", "skipped"],"staff_role": ["admin", "lawyer", "case_manager"]
+            "booking_status": ["confirmed", "cancelled", "completed", "no_show"],"doc_status": ["missing", "requested", "received", "reupload"],"event_channel": ["crm", "email"],"event_status": ["pending", "processing", "sent", "failed", "dead", "cancelled"],"inbox_status": ["new", "in_progress", "closed"],"lead_route": ["germany", "austria", "both", "unsure"],"lead_stage": ["lead", "account", "application", "review", "filed", "granted"],"lead_status": ["enquiry", "account_created", "application_incomplete", "application_submitted", "under_review", "info_required", "review_completed", "contacting"],"locale_code": ["en", "he"],"sequence_status": ["queued", "sent", "skipped"],"staff_role": ["admin", "lawyer", "case_manager"]
           }
         }
 } as const

@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Database } from './database.types';
-import { enqueueEmail, enqueueEvent, logActivity } from './outbox';
+import { cancelPendingNurture, enqueueEmail, enqueueEvent, logActivity } from './outbox';
 import { rateLimit } from './rate-limit';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,6 +32,22 @@ describe.skipIf(!(url && service))('outbox + rate limit (real database)', () => 
     const second = await enqueueEmail(db, { leadId: null, payload, dedupeKey: `email:${tag}` });
     expect(first).toMatchObject({ type: 'email.send', channel: 'email' });
     expect(second).toBeNull();
+  });
+
+  it('cancelPendingNurture stops queued nurture emails of one lead and nothing else', async () => {
+    const { data: lead } = await db.from('leads').insert({ full_name: 'Stop Me', email: `stop-${tag}@example.com` }).select('*').single();
+    const { data: other } = await db.from('leads').insert({ full_name: 'Keep Me', email: `keep-${tag}@example.com` }).select('*').single();
+    const base = { locale: 'en', to: { email: 'a@b.co', name: 'A' }, from: { email: 'f@b.co', name: 'F' }, replyTo: 'r@b.co', subject: 's', preheader: 'p', html: '<p>x</p>', text: 'x' } as const;
+    await enqueueEmail(db, { leadId: lead!.id, payload: { ...base, template: 'welcome-3', category: 'nurture' }, dedupeKey: `cancel:${tag}:nurture` });
+    await enqueueEmail(db, { leadId: lead!.id, payload: { ...base, template: 'booking-confirmation', category: 'transactional' }, dedupeKey: `cancel:${tag}:tx` });
+    await enqueueEmail(db, { leadId: other!.id, payload: { ...base, template: 'welcome-3', category: 'nurture' }, dedupeKey: `cancel:${tag}:other` });
+    await cancelPendingNurture(db, lead!.id, 'cancelled: test');
+    const status = async (key: string) => (await db.from('events').select('status, last_error').eq('dedupe_key', `cancel:${tag}:${key}`).single()).data;
+    expect(await status('nurture')).toEqual({ status: 'cancelled', last_error: 'cancelled: test' });
+    expect((await status('tx'))?.status).toBe('pending');
+    expect((await status('other'))?.status).toBe('pending');
+    await db.from('events').delete().like('dedupe_key', `cancel:${tag}:%`);
+    await db.from('leads').delete().in('id', [lead!.id, other!.id]);
   });
 
   it('logActivity writes the documented history', async () => {

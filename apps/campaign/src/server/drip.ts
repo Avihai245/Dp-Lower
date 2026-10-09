@@ -79,7 +79,7 @@ export interface ScheduleResult {
   leads: number;
   /** emails queued */
   scheduled: number;
-  /** emails recorded as skipped (call already booked, documents complete, overdue) */
+  /** emails recorded as skipped (call already booked, a document already uploaded, overdue) */
   skipped: number;
   /** leads whose sequence is over (unsubscribed, submitted, case past the application) */
   stopped: number;

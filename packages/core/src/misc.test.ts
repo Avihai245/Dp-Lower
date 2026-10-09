@@ -123,17 +123,33 @@ describe('schemas', () => {
 describe('signed tokens', () => {
   const secret = 'test-secret-test-secret-test-secret';
   it('round-trips a payload', async () => {
-    const t = await signToken({ lid: 'abc' }, secret, 60);
-    expect(await verifyToken<{ lid: string }>(t, secret)).toMatchObject({ lid: 'abc' });
+    const t = await signToken({ p: 'lead', lid: 'abc' }, secret, 60);
+    expect(await verifyToken<{ lid: string }>(t, secret, 'lead')).toMatchObject({ lid: 'abc', p: 'lead' });
   });
   it('rejects tampering, a wrong secret and expiry', async () => {
-    const t = await signToken({ lid: 'abc' }, secret, 60);
+    const t = await signToken({ p: 'lead', lid: 'abc' }, secret, 60);
     const [data, sig] = t.split('.');
-    expect(await verifyToken(`${data}x.${sig}`, secret)).toBeNull();
-    expect(await verifyToken(t, 'another-secret-another-secret-1234')).toBeNull();
-    expect(await verifyToken(await signToken({ lid: 'abc' }, secret, -5), secret)).toBeNull();
-    expect(await verifyToken('garbage', secret)).toBeNull();
-    expect(await verifyToken(undefined, secret)).toBeNull();
+    expect(await verifyToken(`${data}x.${sig}`, secret, 'lead')).toBeNull();
+    expect(await verifyToken(t, 'another-secret-another-secret-1234', 'lead')).toBeNull();
+    expect(await verifyToken(await signToken({ p: 'lead', lid: 'abc' }, secret, -5), secret, 'lead')).toBeNull();
+    expect(await verifyToken('garbage', secret, 'lead')).toBeNull();
+    expect(await verifyToken(undefined, secret, 'lead')).toBeNull();
+  });
+  it('is only accepted for the purpose it was signed for', async () => {
+    const unsub = await signToken({ p: 'unsub', lid: 'abc' }, secret);
+    const portal = await signToken({ p: 'portal', lid: 'abc', ep: 0 }, secret, 60);
+    const lead = await signToken({ p: 'lead', lid: 'abc', ep: 0 }, secret, 60);
+    expect(await verifyToken(unsub, secret, 'unsub')).not.toBeNull();
+    for (const [token, wrongFor] of [[unsub, ['lead', 'portal']], [portal, ['lead', 'unsub']], [lead, ['portal', 'unsub']]] as const) {
+      for (const purpose of wrongFor) expect(await verifyToken(token, secret, purpose), `${purpose}`).toBeNull();
+    }
+    // a payload that names no purpose at all (an old or hand-made token) is accepted for none
+    const bare = await (async () => {
+      const data = btoa(JSON.stringify({ lid: 'abc', ep: 0 })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const sig = await hmacSha256Hex(secret, data);
+      return `${data}.${sig}`;
+    })();
+    expect(await verifyToken(bare, secret, 'lead')).toBeNull();
   });
   it('produces a stable HMAC for webhook signatures', async () => {
     const a = await hmacSha256Hex('k', 'm');
