@@ -1,1 +1,17 @@
-{}
+{
+  "list": {
+    "kicker": "Knowledge center",
+    "title": "The law, explained by the attorneys who file the cases.",
+    "intro": "We believe in empowering clients and the public with accessible, up-to-date legal information, on this site, on our podcast and on our YouTube channel. Filter by subject, or <media>watch the media appearances</media>.",
+    "all": "All",
+    "filterLabel": "Filter by subject"
+  },
+  "article": {
+    "back": "Knowledge center",
+    "updated": "Updated {date}",
+    "ctaText": "Questions about your own situation? The first consultation with an attorney is free.",
+    "ctaButton": "Request a consultation",
+    "relatedServices": "Related practice areas",
+    "more": "More from the knowledge center"
+  }
+}

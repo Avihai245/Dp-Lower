@@ -1,1 +1,40 @@
-{}
+{
+  "list": {
+    "kicker": "Practice areas",
+    "title": "Everything we practise, in one place.",
+    "intro": "Every matter starts with a free consultation in which an attorney tells you plainly whether there is a case. Choose an area to see who it is for, what the law requires, which documents are needed, and how the firm handles it.",
+    "groups": {
+      "passports": {
+        "title": "Passports and citizenship",
+        "lede": "European citizenship by descent, and immigration to the United States and Canada."
+      },
+      "israel": {
+        "title": "Israel and immigration",
+        "lede": "Status, visas, appeals and representation before the Population and Immigration Authority."
+      },
+      "other": {
+        "title": "Other practice areas",
+        "lede": "Notarial, family, inheritance and commercial work, often alongside an immigration matter."
+      }
+    }
+  },
+  "detail": {
+    "back": "All practice areas",
+    "checkEligibility": "Check your eligibility online",
+    "signIn": "Sign in to my portal",
+    "requestConsultation": "Request a free consultation",
+    "call": "Call <num>03-372-4722</num>",
+    "reassurance": "Free, in your language, no obligation. A lawyer calls back within one business day.",
+    "leadFallbackName": "Decker Pex Levi",
+    "leadFallbackRole": "Attorneys and notaries",
+    "who": "Who this is for",
+    "eligibility": "Eligibility and legal context",
+    "process": "How the process runs",
+    "assist": "How the firm assists",
+    "faq": "Questions people ask",
+    "documents": "Documents usually needed",
+    "documentsNote": "Anything you cannot find, we search for. Nothing is needed to start.",
+    "team": "Who handles it",
+    "related": "Related reading"
+  }
+}
