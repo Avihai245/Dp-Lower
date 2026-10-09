@@ -1,0 +1,253 @@
+{
+  "brand": {
+    "full": "Decker Pex Levi Law Offices",
+    "logoAlt": "Decker Pex Levi"
+  },
+  "skipLink": "Skip to content",
+  "phones": {
+    "telAviv": "03-372-4722",
+    "jerusalem": "02-381-0013"
+  },
+  "util": {
+    "label": "Contact numbers and language",
+    "telAviv": "Tel Aviv",
+    "jerusalem": "Jerusalem",
+    "whatsapp": "WhatsApp"
+  },
+  "lang": {
+    "label": "Language",
+    "en": "English",
+    "he": "עברית"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "menu": "Menu",
+    "about": "About",
+    "passports": "Passports & citizenship",
+    "israel": "Israel & immigration",
+    "other": "Other practice",
+    "insights": "Insights",
+    "contact": "Contact",
+    "portal": "Client portal",
+    "consult": "Free consultation"
+  },
+  "mega": {
+    "about": {
+      "title": "The firm",
+      "lede": "Over thirty years in immigration, visa and citizenship law, from Tel Aviv and Jerusalem.",
+      "cta": "About Decker Pex Levi",
+      "items": {
+        "about": {
+          "name": "About the firm",
+          "note": "Who we are and how we work"
+        },
+        "team": {
+          "name": "Our team",
+          "note": "Thirty-seven people, by department"
+        },
+        "stories": {
+          "name": "Client stories",
+          "note": "Reviews and testimonials"
+        },
+        "recognition": {
+          "name": "Recognition",
+          "note": "Dun's 100 and BDI"
+        },
+        "offices": {
+          "name": "Offices",
+          "note": "Tel Aviv and Jerusalem"
+        },
+        "portal": {
+          "name": "Client portal",
+          "note": "Sign in or continue a case"
+        }
+      }
+    },
+    "passports": {
+      "title": "Passports and citizenship",
+      "lede": "European citizenship by descent, and immigration to North America.",
+      "cta": "All passport routes"
+    },
+    "israel": {
+      "title": "Israel and immigration",
+      "lede": "Status, visas and representation before the Population and Immigration Authority.",
+      "cta": "All Israel practice areas"
+    },
+    "other": {
+      "title": "Other practice",
+      "lede": "Notarial, family, inheritance and commercial matters, often alongside an immigration file.",
+      "cta": "All practice areas"
+    },
+    "insights": {
+      "title": "Insights",
+      "lede": "Legal guides written by the attorneys who file the cases, and the firm's media appearances.",
+      "cta": "Knowledge center",
+      "items": {
+        "center": {
+          "name": "Knowledge center",
+          "note": "Articles and legal guides"
+        },
+        "media": {
+          "name": "Media",
+          "note": "Interviews, podcast, YouTube"
+        }
+      }
+    }
+  },
+  "leadBand": {
+    "eyebrow": "Need legal advice?",
+    "title": "Leave your details for a free consultation.",
+    "lede": "An attorney will call you, hear the matter, and tell you plainly whether there is a case. No charge and no obligation.",
+    "nextTitle": "What happens next",
+    "next": [
+      {
+        "num": "01",
+        "text": "An attorney, not an intake clerk, calls you back within one business day."
+      },
+      {
+        "num": "02",
+        "text": "You tell the story once. We say plainly whether there is a case, and what it would need."
+      },
+      {
+        "num": "03",
+        "text": "If we take it on, you know the fee before any work starts."
+      }
+    ],
+    "rating": "<b>4.9</b> average across <n>380+</n> client reviews",
+    "labels": {
+      "name": "Full name",
+      "phone": "Phone",
+      "email": "Email",
+      "matter": "Subject"
+    },
+    "placeholders": {
+      "name": "Your name",
+      "phone": "+972",
+      "email": "you@email.com"
+    },
+    "matters": [
+      "German or Austrian passport",
+      "Polish passport",
+      "Portuguese passport",
+      "Romanian, French or Bulgarian passport",
+      "Immigration to Israel or Aliyah",
+      "Status for a foreign spouse",
+      "Work permit for a foreign expert",
+      "Notarial translation",
+      "Inheritance or family matter",
+      "Something else"
+    ],
+    "consent": "I confirm that I have read the <privacy>privacy policy</privacy> and agree to it.",
+    "submit": "Request my free consultation",
+    "sending": "Sending…",
+    "noscript": "This form needs JavaScript to send your message. Please turn it on, or call or write to us using the contact details on this site.",
+    "disclaimer": "Sending an enquiry does not create a lawyer-client relationship, and nothing on this site is legal advice.",
+    "errors": {
+      "name": "Please enter your name.",
+      "phone": "Please enter a phone number with at least 7 digits.",
+      "email": "Please enter a valid email address.",
+      "consent": "Please confirm that you have read the privacy policy.",
+      "rate": "Too many requests from your connection. Please wait a minute and try again, or call us on <n>{phone}</n>.",
+      "failed": "We could not send your enquiry. Please try again, or call us on <n>{phone}</n>.",
+      "captcha": "The security check did not complete. Please try again in a moment, or call us on <n>{phone}</n>."
+    },
+    "sentTitle": "<n>{name}</n>, your enquiry is with us.",
+    "sentLine": "An attorney will call <n>{phone}</n> within one business day, and a confirmation is on its way to <n>{email}</n>.",
+    "another": "Send another enquiry"
+  },
+  "closeBand": {
+    "eyebrow": "One more step",
+    "title": "Tell us the matter. We will tell you whether there is a case.",
+    "lede": "The initial consultation is free, in your own language, with an attorney rather than an intake clerk.",
+    "consult": "Free consultation",
+    "call": "Call <n>{phone}</n>"
+  },
+  "footer": {
+    "tagline": "Immigration, citizenship and visa law. Offices in Tel Aviv and Jerusalem.",
+    "social": {
+      "linkedin": "LinkedIn",
+      "youtube": "YouTube",
+      "facebook": "Facebook"
+    },
+    "telAviv": {
+      "title": "Tel Aviv",
+      "lines": [
+        "11 Menachem Begin Road, Ramat Gan",
+        "Rogovin Tidhar Tower, floor 25",
+        "P.O.B 1213, 5268104, Israel"
+      ]
+    },
+    "jerusalem": {
+      "title": "Jerusalem",
+      "lines": [
+        "10 Yad Harutzim Street, floor 2",
+        "P.O.B 53347, 9342148",
+        "Jerusalem, Israel"
+      ]
+    },
+    "pagesTitle": "Pages",
+    "pages": {
+      "about": "About the firm",
+      "team": "Our team",
+      "services": "Practice areas",
+      "testimonials": "Client stories",
+      "insights": "Knowledge center",
+      "media": "Media",
+      "contact": "Contact and offices"
+    },
+    "disclaimer": "Decker Pex Levi, Advocates and Notaries. Nothing on this website is legal advice, and no lawyer-client relationship is formed by contacting us. Eligibility for citizenship or status depends on the records and facts of each case, and no outcome is guaranteed.",
+    "copyright": "© Decker Pex Levi 2026. All rights reserved.",
+    "terms": "Terms of use",
+    "privacy": "Privacy policy",
+    "accessibility": "Accessibility statement",
+    "developedBy": "Site developed by <a>Sabatier Group LLC</a> · AI Digital Marketing Solutions"
+  },
+  "sticky": {
+    "label": "Talk to a lawyer, free"
+  },
+  "chat": {
+    "dialog": "Chat with the firm",
+    "launcher": "Chat with us",
+    "launcherSent": "We will call you",
+    "close": "Close chat",
+    "initials": "DP",
+    "name": "Decker Pex Levi",
+    "status": "Usually replies within the hour",
+    "greeting": "Hello. You have reached Decker Pex Levi, the immigration and citizenship practice.",
+    "promptTopics": "What is your enquiry about? Choose the closest and an attorney will call you back.",
+    "promptForm": "Leave your details and an attorney from the relevant department will call you. The first conversation is free.",
+    "promptSent": "Your request is with the team.",
+    "topics": [
+      "A European passport by descent",
+      "Status or a visa in Israel",
+      "Immigration to the US or Canada",
+      "Notarial translation",
+      "Something else"
+    ],
+    "placeholders": {
+      "name": "Your name",
+      "phone": "Phone number",
+      "email": "Email"
+    },
+    "emailOptional": "Email (optional)",
+    "consent": "I confirm that I have read the <privacy>privacy policy</privacy> and agree to it.",
+    "submit": "Ask an attorney to call me",
+    "sending": "Sending…",
+    "errors": {
+      "name": "Please enter your name.",
+      "phone": "Please enter a phone number with at least 7 digits.",
+      "email": "Please enter a valid email address, or leave it empty.",
+      "consent": "Please confirm that you have read the privacy policy.",
+      "rate": "Too many requests from your connection. Please wait a minute and try again, or call us on <n>{phone}</n>.",
+      "failed": "We could not send your request. Please try again, or call us on <n>{phone}</n>.",
+      "captcha": "The security check did not complete. Please try again in a moment, or call us on <n>{phone}</n>."
+    },
+    "doneTitle": "<n>{name}</n>, we have your details.",
+    "doneLine": "An attorney from the relevant department will call <n>{phone}</n>, usually within one business day."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you are looking for does not exist or has moved.",
+    "home": "Back to the home page"
+  }
+}

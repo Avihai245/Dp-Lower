@@ -19,3 +19,6 @@ supabase/.branches
 supabase/.temp
 supabase/functions/.env
 .visual
+
+# agent worktrees live here while workers run
+.claude/worktrees/

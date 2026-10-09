@@ -1,0 +1,50 @@
+{
+  "contact": {
+    "eyebrow": "Request a consultation",
+    "fields": {
+      "name": { "label": "Full name", "placeholder": "Your name" },
+      "email": { "label": "Email", "placeholder": "you@email.com" },
+      "phone": { "label": "Phone", "placeholder": "+972" },
+      "matter": { "label": "What is the matter about?" },
+      "note": { "label": "In a few words", "placeholder": "Anything that helps us prepare for the call" }
+    },
+    "consent": "I have read and agree to the <privacy>privacy policy</privacy>. Decker Pex Levi may contact me about this enquiry.",
+    "submit": "Request my free consultation",
+    "sending": "Sending…",
+    "noscript": "This form needs JavaScript to send your message. Please turn it on, or call or write to us using the contact details on this site.",
+    "disclaimer": "Sending an enquiry does not create a lawyer-client relationship. Nothing on this site is legal advice.",
+    "honeypot": "Leave this field empty",
+    "errors": {
+      "name": "Please enter your full name.",
+      "email": "Please enter a valid email address.",
+      "phone": "Please enter a phone number with at least 7 digits.",
+      "consent": "Please confirm that you agree to the privacy policy so that we can contact you.",
+      "summary": "Please check the highlighted fields."
+    },
+    "sent": {
+      "title": "<ltr>{name}</ltr>, your enquiry is with us.",
+      "line": "One of our attorneys will call <ltr>{phone}</ltr> within one business day, and you will also get a confirmation at <ltr>{email}</ltr>.",
+      "urgent": "If it is urgent, call the Tel Aviv office on <tel>{number}</tel> and mention that you have just written in.",
+      "again": "Send another enquiry"
+    },
+    "failed": {
+      "title": "Your enquiry has not been sent",
+      "rate": "Too many requests in a short time. Please wait a minute and try again, or call us on <tel>{number}</tel>.",
+      "generic": "We could not send your enquiry. Please check your connection and try again, or call us on <tel>{number}</tel>.",
+      "captcha": "The security check did not complete. Please wait a moment and try again, or call us on <tel>{number}</tel>.",
+      "retry": "Try again"
+    }
+  },
+  "matters": [
+    "German or Austrian passport",
+    "Polish passport",
+    "Portuguese passport",
+    "Romanian, French or Bulgarian passport",
+    "Immigration to Israel or Aliyah",
+    "Status for a foreign spouse",
+    "Work permit for a foreign expert",
+    "Notarial translation",
+    "Inheritance or family matter",
+    "Something else"
+  ]
+}

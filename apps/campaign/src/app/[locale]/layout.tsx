@@ -1,0 +1,61 @@
+import { dirOf, type Locale } from '@dpl/core';
+import { RevealObserver } from '@dpl/ui';
+import type { Metadata, Viewport } from 'next';
+import { hasLocale } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import type { ReactNode } from 'react';
+import { ClientMessages } from '@/components/ClientMessages';
+import { preloadHebrewFonts } from '@/lib/font-preload';
+import { routing } from '@/i18n/routing';
+
+import '@fontsource-variable/manrope';
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/newsreader/opsz-italic.css';
+import '@fontsource-variable/frank-ruhl-libre';
+import '@fontsource-variable/assistant';
+import '@dpl/ui/fonts.css';
+import '@dpl/ui/base.css';
+import '@dpl/ui/hover.css';
+import '../globals.css';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  applicationName: 'Decker Pex Levi',
+  icons: { icon: { url: '/images/DPL_logo.webp', type: 'image/webp' } },
+  openGraph: { type: 'website', siteName: 'Decker Pex Levi Law Offices' },
+  twitter: { card: 'summary_large_image' },
+};
+
+export const viewport: Viewport = { themeColor: '#14202b', width: 'device-width', initialScale: 1 };
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function LocaleLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) notFound();
+  setRequestLocale(locale);
+  if (locale === 'he') preloadHebrewFonts();
+
+  return (
+    <html lang={locale} dir={dirOf(locale as Locale)}>
+      <head>
+        {/* without JavaScript nothing would ever reveal, so show everything */}
+        <noscript>
+          {/* the figures count up from 0 with scripts: without them show the final value (the text kept for screen readers) instead of "0+" */}
+          <style>{`[data-reveal],[data-reveal-img],[data-stagger]>*,[data-hero-seq]>*{opacity:1!important;transform:none!important;clip-path:none!important;animation:none!important}[data-count] [aria-hidden="true"]{display:none!important}[data-count] .dpl-sr-only{position:static!important;width:auto!important;height:auto!important;margin:0!important;overflow:visible!important;clip:auto!important;white-space:nowrap!important;direction:ltr!important;font-family:var(--font-serif)!important;font-size:clamp(38px,3.4vw,54px)!important;line-height:1!important;color:#14202b!important}`}</style>
+        </noscript>
+      </head>
+      <body>
+        <ClientMessages namespaces={['common']}>
+          <RevealObserver />
+          {children}
+        </ClientMessages>
+      </body>
+    </html>
+  );
+}

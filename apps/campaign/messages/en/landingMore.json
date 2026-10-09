@@ -1,0 +1,206 @@
+{
+  "cta": {
+    "check": "Check your eligibility",
+    "advisor": "Speak with an AI Advisor"
+  },
+  "rating": {
+    "value": "4.9",
+    "reviews": "380+ Google reviews"
+  },
+  "process": {
+    "eyebrow": "How the eligibility check works",
+    "title": "The first step takes two minutes.",
+    "lede": "No documents, no payment, no phone call. Six questions about who left and when, then you see which route your answers point to.",
+    "steps": [
+      {
+        "title": "Answer a few questions",
+        "body": "Where your family came from, who left, and roughly when. Nothing you need to look up."
+      },
+      {
+        "title": "Understand your potential path",
+        "body": "Your answers indicate which citizenship route may be relevant to your family."
+      },
+      {
+        "title": "Continue your application",
+        "body": "If you want to go on, you start providing what our lawyers need to review the case."
+      }
+    ]
+  },
+  "ctaBand": {
+    "title": "Could you qualify?",
+    "lede": "Start with a few questions about your family history. You'll see your potential route at the end.",
+    "imageAlt": "A young couple walking through a European city street in daylight"
+  },
+  "team": {
+    "eyebrow": "Who you are trusting",
+    "title": "The people who will handle your case.",
+    "p1": "The same lawyers and researchers who assess your eligibility prepare and file your case.",
+    "p2": "Most clients come to us with a story rather than a file: a grandmother's city, a surname that changed, a date nobody wrote down. Reconstructing that is the work.",
+    "photoAlt": "The Decker Pex Levi team at the firm's offices",
+    "outsideAlt": "The Decker Pex Levi team outside the office",
+    "caption": "Decker Pex Levi · Tel Aviv. The citizenship practice sits inside a full-service firm, so a case that turns into litigation or a consular appeal stays in the same building."
+  },
+  "video": {
+    "eyebrow": "In our own words",
+    "title": "How these cases actually run.",
+    "lede": "The law, the records, and what we do on your behalf, from the lawyers who file these cases.",
+    "play": "Play video",
+    "iframeTitle": "Decker Pex Levi: how these cases actually run"
+  },
+  "why": {
+    "eyebrow": "Why Decker Pex Levi",
+    "title": "Expertise you can point at.",
+    "items": [
+      {
+        "title": "One practice, both countries",
+        "body": "German and Austrian citizenship cases are assessed side by side, so you are not told to go elsewhere halfway through."
+      },
+      {
+        "title": "We do the records research",
+        "body": "Registry entries, archive files and certificates are located on your behalf. Most clients start with almost nothing."
+      },
+      {
+        "title": "A named person on your case",
+        "body": "You know who is handling your application and you get an answer within two business days."
+      },
+      {
+        "title": "Honest about the outcome",
+        "body": "If your family history does not fit either route, we tell you at the eligibility stage rather than after you have paid."
+      }
+    ]
+  },
+  "fees": {
+    "eyebrow": "Fees",
+    "title": "What this costs.",
+    "lede": "The eligibility check and the call with a lawyer are free. If we take the case on, you know the fee before any work starts.",
+    "cta": "Get a quote after the check",
+    "note": "Fee model to be confirmed by the firm before launch.",
+    "items": [
+      {
+        "title": "The quote follows the review",
+        "body": "A lawyer reads your case first, so the figure you receive reflects your actual records rather than an average."
+      },
+      {
+        "title": "A fixed professional fee, agreed upfront",
+        "body": "If we take your case on, the fee is set out in writing before any work begins. There are no hidden costs and no hourly surprises."
+      },
+      {
+        "title": "Third-party costs shown separately",
+        "body": "Archive searches, translations, apostilles and consular fees are charged at cost and listed in advance."
+      }
+    ]
+  },
+  "faq": {
+    "eyebrow": "Before you start",
+    "title": "Questions people ask first.",
+    "lede": "If yours is not here, the lawyer on your free consultation call will answer it directly.",
+    "items": [
+      {
+        "q": "Can I qualify through a grandparent or great-grandparent?",
+        "a": "Often, yes. Both the German and the Austrian provisions can reach beyond the generation that left, and the German rules in particular have widened in recent years. How far back the line can go depends on which route applies and on the specific facts, which is what the eligibility check begins to establish."
+      },
+      {
+        "q": "Do I need to speak German?",
+        "a": "No. There is no language requirement for these descent-based routes, and we correspond with you in English throughout."
+      },
+      {
+        "q": "Do I have to give up my current citizenship?",
+        "a": "Generally no. These routes are designed for descendants and do not normally require you to renounce another citizenship, though your own country's rules on dual nationality also apply."
+      },
+      {
+        "q": "What if I do not have my ancestor's documents?",
+        "a": "That is the usual starting point. Most clients arrive with a name, a city and an approximate date. Locating birth, marriage and emigration records is part of the work we do for you."
+      },
+      {
+        "q": "How do I know whether Germany or Austria applies to me?",
+        "a": "The eligibility check works this out from your answers. If your family history touches both countries, both routes are considered."
+      },
+      {
+        "q": "Does this apply if my ancestor left before the war rather than during it?",
+        "a": "It can. What matters is the reason for leaving and the loss of citizenship that followed, not only the date. Families who left under pressure in the years before 1939 are within the scope of these provisions, and the eligibility check asks about the circumstances for that reason."
+      },
+      {
+        "q": "Can my children also receive citizenship?",
+        "a": "In many cases yes, and this is one of the main reasons families begin. Whether it passes on, and whether it needs to be claimed in a particular order, depends on the route and on each child's own circumstances. We set this out for your family specifically once the case is reviewed."
+      },
+      {
+        "q": "What is the difference between the German and the Austrian route?",
+        "a": "They rest on different laws. The German provisions restore citizenship to those who lost it through persecution and to their descendants; the Austrian provision opens citizenship to descendants of people who were persecuted and left Austria. The evidence each authority expects differs, which is why we assess both in-house."
+      },
+      {
+        "q": "How long does the process take?",
+        "a": "It varies with the route, the records and the authority's own processing times. The slow part is usually the archives: requests to German and Austrian registries can take months to come back. After reviewing your case a lawyer gives you a realistic estimate for your specific file rather than a general figure."
+      },
+      {
+        "q": "What happens after the eligibility check?",
+        "a": "You see which route your answers point to and can begin the application straight away. A lawyer then reviews your case and writes back with the records still needed and a realistic timeline."
+      }
+    ]
+  },
+  "finalCta": {
+    "eyebrow": "The first step",
+    "title": "Your family history may be worth exploring.",
+    "lede": "A few questions about who left and when. That's the whole first step, and it's free.",
+    "assurance": "No payment · No obligation · Your details stay private"
+  },
+  "footer": {
+    "logoAlt": "Decker Pex Levi",
+    "navLabel": "Footer",
+    "nav": {
+      "paths": "Germany & Austria",
+      "process": "How it works",
+      "team": "Our team",
+      "faq": "Questions",
+      "signIn": "Track my application"
+    },
+    "disclaimer": "Decker Pex Levi · German & Austrian citizenship practice. The eligibility check is an initial indication based on your answers and is not legal advice. Decker Pex Levi does not guarantee eligibility or the granting of citizenship. Every case is assessed on its own records.",
+    "credit": "Site developed by <a>Sabatier Group LLC</a> · AI Digital Marketing Solutions",
+    "privacy": "Privacy policy"
+  },
+  "mobileCta": {
+    "label": "Check your eligibility"
+  },
+  "chat": {
+    "launcherTitle": "Prefer a conversation?",
+    "launcherSub": "Chat with us, no forms",
+    "panelLabel": "Chat with Decker Pex Levi",
+    "name": "Decker Pex Levi",
+    "close": "Close chat",
+    "statusIdle": "Usually replies instantly",
+    "statusQuestion": "Question {n} of {total}",
+    "statusDone": "All questions answered",
+    "progress": "Progress",
+    "intro1": "Hello. I'm the assistant at Decker Pex Levi, the German and Austrian citizenship practice.",
+    "intro2": "If you'd rather talk than fill in a form, I can walk you through it here. Six short questions about your family, then you'll see what your history may point to.",
+    "intro3": "No documents and no personal details at this stage.",
+    "start": "Yes, let's check my eligibility",
+    "about": "What will you ask me?",
+    "aboutAnswer": "Which country your family left, which relative it was, roughly when they left, whether they were forced to leave, what records the family still has, and where you live today. Plain answers are enough. \"I'm not sure\" is a normal answer here.",
+    "startOnly": "Fine, let's start",
+    "finished": "That's everything we need. Let's look at your result.",
+    "seeResult": "See my result",
+    "back": "Back",
+    "continueForm": "Continue in the form"
+  },
+  "advisor": {
+    "close": "Close",
+    "kicker": "Request a call",
+    "title": "We'll call you back.",
+    "body": "Leave your name and phone number and a member of our team will call you back to talk about your family history and the eligibility check. It is an initial conversation, not legal advice.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "+1 212 555 0134",
+    "phoneError": "Please enter a phone number we can reach you on.",
+    "rateLimited": "Too many requests from this device. Please try again in a few minutes.",
+    "failed": "We could not send your request. Please check your connection and try again.",
+    "submit": "Call me back",
+    "sending": "Sending…",
+    "fine": "By requesting a call you agree that a member of our team may call you on this number. This is an initial eligibility conversation, not legal advice.",
+    "doneKicker": "Call requested",
+    "doneTitle": "We will call you on",
+    "doneBody": "A member of our team will call this number shortly. Please keep your phone nearby.",
+    "doneRetry": "Use a different number",
+    "doneHint": "Wrong number? Send your request again with the right one."
+  }
+}

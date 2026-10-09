@@ -1,0 +1,31 @@
+/*
+ * Funnel and sign-in screens (eligibility, details, booking, result, set password, sign in).
+ * Everything that is plain layout is an inline style ported verbatim from the prototype through s() / x();
+ * only what needs real selectors lives here.
+ */
+
+/*
+ * The prototype's stylesheet makes every .btn a pill: `.btn { border-radius: 999px !important }`. The buttons also carry
+ * an inline `border-radius: 12px`, which an author rule without !important can not beat, so it is restated here.
+ */
+.fx .btn { border-radius: 999px !important; }
+
+/* the cursor is a pointer on every enabled button of the flow, as in the prototype */
+.fx button:not(:disabled) { cursor: pointer; }
+
+/* the booking confirmation's confetti is decoration: not for visitors who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  .fx [data-confetti] { display: none; }
+  .fx [data-fx-anim] { animation: none !important; }
+}
+
+/* loading placeholders of the booking screen (day tabs and slots) */
+@keyframes fxPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.fx [data-skeleton] { animation: fxPulse 1400ms ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .fx [data-skeleton] { animation: none; } }
+
+/* the honeypot: reachable by bots, invisible and unreachable for people */
+.fx .fx-hp { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* the question heading takes focus after each answer so screen readers announce the next question; no ring needed */
+.fx [data-q-title]:focus { outline: none; }

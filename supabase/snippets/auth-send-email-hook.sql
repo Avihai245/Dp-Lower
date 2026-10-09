@@ -1,0 +1,31 @@
+-- Documentation snippet, NOT a migration.
+--
+-- Password reset, magic-link and confirmation emails of Supabase Auth are sent by the app, not by Supabase's SMTP:
+-- Supabase calls POST /api/auth/send-email (a "Send Email" HTTP hook) and the app queues the email in the outbox
+-- (template password-reset / auth-link, in the person's language) like every other email.
+--
+-- Hosted project: Dashboard > Authentication > Hooks > Send Email > HTTPS
+--   URL     https://euro-passports.com/api/auth/send-email
+--   Secret  generate one (it looks like  v1,whsec_<base64>)  and set the same value as SEND_EMAIL_HOOK_SECRET in the
+--           campaign app's environment. Requests whose Standard Webhooks signature does not verify, or whose timestamp
+--           is more than 5 minutes off, are rejected with 401.
+--
+-- Local development (supabase/config.toml):
+--   [auth.hook.send_email]
+--   enabled = true
+--   uri = "http://host.docker.internal:3001/api/auth/send-email"
+--   secrets = "env(SEND_EMAIL_HOOK_SECRET)"
+-- and start the stack with SEND_EMAIL_HOOK_SECRET exported (v1,whsec_<base64>).
+--
+-- Notes
+--  * `admin.generateLink()` and `verifyOtp()` (used by openPortalSession) do not send email, so the hook only fires for
+--    resetPasswordForEmail, signInWithOtp, signUp / invite and email changes.
+--  * While the hook is enabled Supabase's own SMTP is bypassed. If the app is down, Supabase reports the failure to the
+--    person who asked (the hook answers 5xx when it cannot write to the outbox).
+--  * A redelivered webhook is harmless: the outbox dedupe key is `auth:{webhook-id}:{kind}`.
+
+-- Handy while debugging: the last auth emails in the outbox and whether the dispatcher delivered them.
+-- select created_at, status, attempts, last_error, payload->>'template' as template, payload->'to'->>'email' as recipient
+--   from public.events
+--  where type = 'email.send' and dedupe_key like 'auth:%'
+--  order by created_at desc limit 20;

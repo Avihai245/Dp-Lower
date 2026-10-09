@@ -1,0 +1,181 @@
+{
+  "meta": {
+    "about": {
+      "title": "About the firm | Decker Pex Levi Law Offices",
+      "description": "Who we are: an Israeli law firm for citizenship by descent, immigration and notarial work, with offices in Tel Aviv and Jerusalem."
+    },
+    "team": {
+      "title": "Our team | Decker Pex Levi Law Offices",
+      "description": "The attorneys, case managers, archival researchers and notaries of Decker Pex Levi, organised by department."
+    },
+    "testimonials": {
+      "title": "Client testimonials | Decker Pex Levi Law Offices",
+      "description": "What clients say about working with Decker Pex Levi on citizenship and immigration cases."
+    },
+    "media": {
+      "title": "Media | Decker Pex Levi Law Offices",
+      "description": "Decker Pex Levi in the press, on television and on our YouTube channel."
+    },
+    "contact": {
+      "title": "Contact & free consultation | Decker Pex Levi Law Offices",
+      "description": "Book a free consultation. Offices at 11 Menachem Begin Road, Ramat Gan and 10 Yad Harutzim Street, Jerusalem. Tel 03-372-4722."
+    },
+    "attorney": {
+      "title": "{name}, {role} | Decker Pex Levi Law Offices",
+      "fallbackDescription": "{name}, {role}, {dept} at Decker Pex Levi Law Offices."
+    }
+  },
+  "breadcrumbs": {
+    "home": "Home",
+    "about": "About the firm",
+    "team": "Our team",
+    "testimonials": "Client testimonials",
+    "media": "Media",
+    "contact": "Contact & free consultation"
+  },
+  "about": {
+    "eyebrow": "About the firm",
+    "title": "Over thirty years in one complicated subject.",
+    "lead1": "Decker Pex Levi practises immigration, visa and citizenship law from offices in Tel Aviv and Jerusalem, and has ranked repeatedly among the leading Israeli firms in the field. Clients are individuals and families seeking a foreign passport, immigrants and emigrants, and international companies that need legal solutions in Israel.",
+    "lead2": "We undertake only cases with a solid foundation and a reasonable chance of success, then guide each client from the first consultation to the result, with complete transparency and updates throughout.",
+    "photoAlt": "The Decker Pex Levi team at the firm's offices",
+    "how": {
+      "eyebrow": "How we work",
+      "title": "Any client can, and should, understand what we do.",
+      "points": [
+        {
+          "title": "You lead, we explain",
+          "body": "From the first meeting we explain how the process works, where it may become complex, and what has to be done. The client leads on their preferences; we make sure the goal is reached in the best way."
+        },
+        {
+          "title": "Only cases that can succeed",
+          "body": "We undertake cases with a solid foundation and a reasonable chance of success, and say so plainly when there is none. Once we are in, we see it through, including repeated applications and appeals."
+        },
+        {
+          "title": "The whole process",
+          "body": "A one-stop shop from the first meeting to the result, without further action required of the client. On a foreign passport that means obtaining records, translating them, filing, and accompanying you until the passport is in hand."
+        },
+        {
+          "title": "Multinational and multicultural",
+          "body": "Attorneys and professionals from many backgrounds, working in Hebrew, English, Russian, Ukrainian, Arabic, German, Dutch and Spanish, so we liaise directly with authorities in Europe, the US, Canada and Israel."
+        },
+        {
+          "title": "Informed clients, informed public",
+          "body": "We publish up-to-date legal information on this site, our podcast and our YouTube channel, because anyone who seeks it should be able to understand the law that affects them."
+        }
+      ]
+    },
+    "recognition": {
+      "eyebrow": "Recognition",
+      "title": "Ranked in <ltr>Dun's 100</ltr> and <ltr>BDI</ltr> among Israel's leading immigration firms.",
+      "body": "The ranking reflects the firm's commitment to quality of service and professional vision, and its record of legal solutions in the field, including judgments that set precedent on status and citizenship in Israel.",
+      "marks": [
+        { "name": "Dun's 100", "note": "Leading immigration law firms in Israel" },
+        { "name": "BDI", "note": "Leading immigration law firms in Israel" },
+        { "name": "Israel Bar", "note": "All attorneys of the firm are members" }
+      ]
+    },
+    "partners": {
+      "eyebrow": "The partners",
+      "title": "Three partners, thirty-seven people.",
+      "body": "Licensed attorneys, case managers, archival researchers, a genealogist and in-house notaries, organised by department.",
+      "cta": "Meet the whole team"
+    },
+    "civil": {
+      "eyebrow": "Beyond immigration",
+      "intro": "Many of our attorneys practised civil law extensively before joining the firm. Alongside immigration and citizenship, the firm assists in:",
+      "areas": [
+        "Family law",
+        "Inheritance and wills",
+        "Tort law",
+        "Commercial civil law",
+        "Corporate law",
+        "Intellectual property",
+        "Municipal taxes",
+        "Bankruptcy",
+        "Real estate"
+      ]
+    }
+  },
+  "team": {
+    "eyebrow": "Our team",
+    "title": "The people who work for you.",
+    "lead": "Thirty-seven people across the Austria and Germany, Immigration to Israel, United States, foreign citizenship and commercial departments, with case managers, archival researchers and in-house notaries behind the attorneys. Between them the team works in Hebrew, English, Russian, Ukrainian, Arabic, German, Dutch and Spanish.",
+    "filterLabel": "Filter the team by department",
+    "all": "All",
+    "status": "{count, plural, one {Showing # person} other {Showing # people}}",
+    "departments": {
+      "partners": "Partners",
+      "austria-and-germany": "Austria and Germany",
+      "immigration-to-israel": "Immigration to Israel",
+      "united-states": "United States",
+      "foreign-citizenship": "Foreign citizenship",
+      "commercial": "Commercial",
+      "notarial-translations": "Notarial translations",
+      "client-relations": "Client relations",
+      "operations": "Operations",
+      "finance": "Finance"
+    }
+  },
+  "attorney": {
+    "back": "All team members",
+    "cta": "Request a consultation",
+    "linkedin": "LinkedIn",
+    "practiceAreas": "Practice areas",
+    "bioFallback": "{role} at Decker Pex Levi."
+  },
+  "testimonials": {
+    "rating": "4.9",
+    "ratingNote": "Average across 380+ client reviews",
+    "eyebrow": "Client stories",
+    "title": "What clients say when the case is over.",
+    "stars": "Rated 5 out of 5"
+  },
+  "media": {
+    "eyebrow": "Media",
+    "title": "Where we explain the law in public.",
+    "lead": "Interviews, explainers and the firm's podcast. Our attorneys are asked to comment on immigration and citizenship matters in the Israeli press, and the YouTube channel carries the explainers in full.",
+    "channelAlt": "Decker Pex Levi on YouTube",
+    "channelLabel": "The Decker Pex Levi channel on YouTube",
+    "pressEyebrow": "Press and appearances",
+    "press": [
+      {
+        "title": "Comment on the widened German and Austrian citizenship rules",
+        "note": "National press · date to be confirmed"
+      },
+      {
+        "title": "Interview on status for foreign spouses in Israel",
+        "note": "Television · date to be confirmed"
+      },
+      {
+        "title": "Explainer on the Law of Return and contested Aliyah files",
+        "note": "Radio · date to be confirmed"
+      },
+      {
+        "title": "Precedent-setting judgment on eligibility for status",
+        "note": "Legal press · date to be confirmed"
+      }
+    ],
+    "pressNotice": "Titles, outlets and dates to be confirmed by the firm before launch."
+  },
+  "contact": {
+    "eyebrow": "Contact the firm",
+    "title": "The first conversation is free.",
+    "lead": "Leave your details and one of our attorneys will call you to hear the matter and tell you plainly whether there is a case. No charge, and no obligation afterwards.",
+    "officesEyebrow": "Our offices",
+    "also": "Also",
+    "map": "Open in maps",
+    "otherEyebrow": "Other ways to reach us",
+    "mobile": "Mobile",
+    "whatsapp": "WhatsApp",
+    "hours": "Sunday to Thursday, 09:00 to 18:00 Israel time",
+    "languages": "Hebrew, English, Russian, Ukrainian, Arabic, German, Dutch and Spanish",
+    "client": {
+      "eyebrow": "Already a client",
+      "title": "Your case area is open around the clock.",
+      "body": "If you have started a German or Austrian citizenship case with us, sign in to add documents, complete a section of your application, or see the current stage of the file.",
+      "signIn": "Sign in to my portal",
+      "eligibility": "Check my eligibility first"
+    }
+  }
+}

@@ -1,0 +1,106 @@
+import type { Locale } from '@dpl/core';
+import { getContent } from '@dpl/i18n';
+import { s } from '@dpl/ui';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { ReactNode } from 'react';
+import { preload } from 'react-dom';
+import { A11yInit } from '@/components/shell/A11yInit';
+import { AttributionCapture } from '@/components/shell/AttributionCapture';
+import type { A11yLabels } from '@/components/shell/A11yWidget';
+import { CloseBand } from '@/components/shell/CloseBand';
+import { FloatingWidgets } from '@/components/shell/FloatingWidgets';
+import { Footer } from '@/components/shell/Footer';
+import { Header, type HeaderItem } from '@/components/shell/Header';
+import { LeadBand } from '@/components/shell/LeadBand';
+import { LeadOrClose } from '@/components/shell/LeadOrClose';
+import { SkipLink } from '@/components/shell/SkipLink';
+import { UtilityBar } from '@/components/shell/UtilityBar';
+import { firmJsonLd } from '@/lib/home/jsonld';
+import { JsonLd, SITE_URL } from '@/lib/seo';
+import { campaignUrl } from '@/lib/shell/campaign';
+import { buildMenus, NAV, serviceGroups } from '@/lib/nav';
+import '@/styles/shell.css';
+
+/**
+ * Shell of every page of the site: skip link, utility bar, sticky header with its mega menus, the page itself, the lead
+ * band (or the "One more step" band on the contact page), the footer and the floating widgets. Pages render inside
+ * <main id="dpl-main">, so they must not render a <main> of their own. #dpl-page is what the accessibility widget zooms
+ * and filters; the floating widgets are deliberately outside it.
+ */
+export default async function SiteLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
+  const { locale: requested } = await params;
+  setRequestLocale(requested);
+  const locale = requested as Locale; // already validated by the [locale] layout
+  const t = await getTranslations('site');
+  const ta = await getTranslations('a11y');
+  const th = await getTranslations('home');
+  const content = getContent(locale);
+  // the header logo is a 240 px copy (11 KB) of the 800 px original (47 KB), which it is shown at a fifth of
+  preload('/images/DPL_logo-sm.webp', { as: 'image', fetchPriority: 'high' });
+
+  const portalHref = campaignUrl(locale, 'sign-in');
+  const items: HeaderItem[] = NAV.map((n) => ({ key: n.key, label: t(`nav.${n.key}`), href: n.href, menu: n.menu }));
+  const menus = buildMenus(
+    content,
+    {
+      title: (m) => t(`mega.${m}.title`),
+      lede: (m) => t(`mega.${m}.lede`),
+      cta: (m) => t(`mega.${m}.cta`),
+      item: (m, id) => ({ name: t(`mega.${m}.items.${id}.name`), note: t(`mega.${m}.items.${id}.note`) }),
+    },
+    portalHref,
+  );
+
+  const a11y: A11yLabels = {
+    open: ta('open'),
+    dialog: ta('dialog'),
+    title: ta('title'),
+    close: ta('close'),
+    tools: {
+      larger: ta('tools.larger'),
+      smaller: ta('tools.smaller'),
+      contrast: ta('tools.contrast'),
+      invert: ta('tools.invert'),
+      grayscale: ta('tools.grayscale'),
+      light: ta('tools.light'),
+      links: ta('tools.links'),
+      font: ta('tools.font'),
+      motion: ta('tools.motion'),
+    },
+    reset: ta('reset'),
+    statement: ta('statement'),
+  };
+
+  return (
+    <>
+      <A11yInit />
+      <AttributionCapture />
+      {/* the firm and the site, on every page as in the prototype's <head>: the pages that name `#firm` find it here */}
+      <JsonLd
+        data={firmJsonLd({ locale, siteUrl: SITE_URL, name: t('brand.full'), catalogName: th('meta.catalog'), content })}
+      />
+      <div style={s("background: #f8f5f0; color: #23292f; font-family: 'Manrope', system-ui, sans-serif; -webkit-font-smoothing: antialiased")}>
+        <SkipLink />
+        <div id="dpl-page">
+          <UtilityBar />
+          <Header
+            logoAlt={t('brand.logoAlt')}
+            navLabel={t('nav.label')}
+            menuLabel={t('nav.menu')}
+            items={items}
+            menus={menus}
+            portal={{ label: t('nav.portal'), href: portalHref }}
+            consult={{ label: t('nav.consult'), href: '/contact' }}
+            groups={serviceGroups(content.services)}
+          />
+          <main id="dpl-main" tabIndex={-1}>
+            {children}
+          </main>
+          <LeadOrClose lead={<LeadBand />} close={<CloseBand />} />
+          <Footer locale={locale} />
+        </div>
+        <FloatingWidgets a11y={a11y} />
+      </div>
+    </>
+  );
+}

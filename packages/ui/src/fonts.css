@@ -1,0 +1,26 @@
+/*
+ * Typography variables used by every component (via s() the prototype's 'Newsreader' / 'Manrope' map to these).
+ * The apps import the @fontsource-variable packages that define the "... Variable" families; Hebrew glyphs come
+ * from Frank Ruhl Libre (headings) and Assistant (text), and load only on pages that contain Hebrew.
+ */
+:root {
+  --dir: 1;
+  --font-serif: 'Newsreader Variable', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Manrope Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+/* The Hebrew families carry Latin letters and numerals too, so on a Hebrew page the English design fonts are never drawn
+   (pixel-identical, checked on both apps at 1440 and 390 px) but, as fallbacks, they cost 130+ KB of font download. */
+html[dir='rtl'] {
+  --dir: -1;
+  --font-serif: 'Frank Ruhl Libre Variable', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Assistant Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+/* Letter-spacing (negative on headings, wide on small caps labels) is designed for Latin; Hebrew reads best untracked. */
+html[dir='rtl'] h1,
+html[dir='rtl'] h2,
+html[dir='rtl'] h3,
+html[dir='rtl'] h4,
+html[dir='rtl'] [style*='letter-spacing'] {
+  letter-spacing: 0 !important;
+}
+html[dir='rtl'] [style*='text-transform'] { text-transform: none !important; }

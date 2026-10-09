@@ -1,0 +1,100 @@
+{
+  "brand": "Decker Pex Levi Law Offices",
+  "pages": {
+    "home": {
+      "name": "Home",
+      "title": "Decker Pex Levi Law Offices | Citizenship by Descent, Immigration & Notary — Israel",
+      "description": "Israeli law firm for German, Austrian, Polish and Portuguese citizenship by descent, immigration to Israel, US and Canada, and notarial services. Offices in Tel Aviv and Jerusalem. Free consultation."
+    },
+    "about": {
+      "name": "About the firm",
+      "title": "About the firm | Decker Pex Levi Law Offices",
+      "description": "Who we are: an Israeli law firm for citizenship by descent, immigration and notarial work, with offices in Tel Aviv and Jerusalem."
+    },
+    "services": {
+      "name": "Practice areas",
+      "title": "Practice areas | Decker Pex Levi Law Offices",
+      "description": "All practice areas: European citizenship by descent, US and Canada immigration, immigration to Israel, notary, family law, estates and companies."
+    },
+    "team": {
+      "name": "Our team",
+      "title": "Our team | Decker Pex Levi Law Offices",
+      "description": "The attorneys, case managers, archival researchers and notaries of Decker Pex Levi, organised by department."
+    },
+    "testimonials": {
+      "name": "Client testimonials",
+      "title": "Client testimonials | Decker Pex Levi Law Offices",
+      "description": "What clients say about working with Decker Pex Levi on citizenship and immigration cases."
+    },
+    "insights": {
+      "name": "Knowledge center",
+      "title": "Knowledge center | Decker Pex Levi Law Offices",
+      "description": "Guides and updates on citizenship by descent, immigration and Israeli status law."
+    },
+    "media": {
+      "name": "Media",
+      "title": "Media | Decker Pex Levi Law Offices",
+      "description": "Decker Pex Levi in the press, on television and on our YouTube channel."
+    },
+    "contact": {
+      "name": "Contact & free consultation",
+      "title": "Contact & free consultation | Decker Pex Levi Law Offices",
+      "description": "Book a free consultation. Offices at 11 Menachem Begin Road, Ramat Gan and 10 Yad Harutzim Street, Jerusalem. Tel 03-372-4722."
+    },
+    "privacy": {
+      "name": "Privacy policy",
+      "title": "Privacy policy | Decker Pex Levi Law Offices",
+      "description": "How Decker Pex Levi collects, uses and protects personal information."
+    },
+    "terms": {
+      "name": "Terms of use",
+      "title": "Terms of use | Decker Pex Levi Law Offices",
+      "description": "Terms of use for the Decker Pex Levi website."
+    },
+    "accessibility": {
+      "name": "Accessibility statement",
+      "title": "Accessibility statement | Decker Pex Levi Law Offices",
+      "description": "Accessibility of the Decker Pex Levi website and how to request assistance."
+    }
+  },
+  "llms": {
+    "title": "Decker Pex Levi Law Offices",
+    "summary": "Israeli law firm (offices in Tel Aviv / Ramat Gan and Jerusalem) practising citizenship by descent, immigration and notarial law. Best known for German and Austrian citizenship restoration for descendants of people persecuted by the Nazi regime (German Basic Law Art. 116(2), StAG §5; Austrian Citizenship Act §58c).",
+    "keyFacts": "Key facts:",
+    "facts": {
+      "firm": "Firm: Decker Pex Levi Law Offices (founding partners Joshua Pex and Michael Decker; managing partner Anat Levi)",
+      "website": "Website: {site}  ·  German/Austrian eligibility check: {campaign}",
+      "contact": "Contact: office@lawoffice.org.il · +972-3-372-4722",
+      "languages": "Languages served: English, Hebrew"
+    },
+    "office": "{city}: {address} Tel {tel}",
+    "groups": {
+      "passports": "European and foreign citizenship",
+      "israel": "Immigration to Israel",
+      "other": "Other practice areas"
+    },
+    "guides": "Guides",
+    "firm": "Firm",
+    "links": {
+      "about": "About the firm",
+      "team": "Team ({count} people)",
+      "testimonials": "Client testimonials",
+      "contact": "Contact and offices"
+    },
+    "optional": "Optional",
+    "fullText": "Full text for AI systems",
+    "url": "URL",
+    "department": "Department",
+    "legalBasis": "Legal basis",
+    "published": "Published",
+    "who": "Who it is for",
+    "eligibility": "Eligibility",
+    "documents": "Documents",
+    "process": "Process",
+    "questions": "Questions",
+    "q": "Q",
+    "a": "A",
+    "team": "Team",
+    "faqTitle": "German & Austrian citizenship — common questions"
+  }
+}

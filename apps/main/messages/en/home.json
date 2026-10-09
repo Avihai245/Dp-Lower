@@ -1,0 +1,111 @@
+{
+  "meta": {
+    "title": "Decker Pex Levi Law Offices | Citizenship by Descent, Immigration & Notary — Israel",
+    "catalog": "Practice areas",
+    "description": "Israeli law firm for German, Austrian, Polish and Portuguese citizenship by descent, immigration to Israel, US and Canada, and notarial services. Offices in Tel Aviv and Jerusalem. Free consultation."
+  },
+  "hero": {
+    "eyebrow": "Immigration, citizenship and visa law",
+    "title": "From the first question to the passport in your hand.",
+    "lede": "Decker Pex Levi is an Israeli law firm practising immigration, citizenship and visa law. We represent clients before the Population and Immigration Authority, the Israeli courts and European consulates, and we handle each case through to its conclusion.",
+    "ctaAssess": "Get a free case assessment",
+    "ctaEligibility": "Check eligibility online",
+    "rating": "<b>4.9</b> · <n>380+</n> client reviews",
+    "callback": "A lawyer calls you back within one business day",
+    "videoTitle": "Decker Pex Levi background video",
+    "facts": [
+      { "title": "Dun's 100 and BDI", "note": "Ranked among Israel's leading immigration practices" },
+      { "title": "Tel Aviv and Jerusalem", "note": "Two offices, one case team" },
+      { "title": "Eight working languages", "note": "Your case discussed in your own language" },
+      { "title": "Free first consultation", "note": "An attorney, not an intake clerk" }
+    ]
+  },
+  "authority": [
+    { "value": "30+", "label": "Years practising immigration and citizenship law" },
+    { "value": "Dun's 100", "label": "And BDI. Among Israel's leading immigration firms" },
+    { "value": "37", "label": "Attorneys, researchers and case staff" },
+    { "value": "2", "label": "Offices, in Tel Aviv and Jerusalem" },
+    { "value": "8", "label": "Working languages across the team" }
+  ],
+  "intro": {
+    "title": "Most people who come to us are holding one end of a story: a city a grandparent left, a refusal from the Interior Ministry, a surname that changed at a border.",
+    "p1": "Our work is to turn that into a file an authority will accept. Decker Pex Levi practises immigration, visa and citizenship law and nothing else, from Tel Aviv and Jerusalem, in eight languages.",
+    "p2": "We take on matters with a reasonable prospect of success, say so candidly when there is none, and carry the ones we accept to the end, including appeals.",
+    "more": "More about the firm"
+  },
+  "countries": {
+    "eyebrow": "Where your family history can take you",
+    "title": "Nine countries. Twenty-two practice areas.",
+    "lede": "Each route has its own page: who it is for, what the law requires, which documents are needed, and who in the firm handles it.",
+    "unsure": "Not sure which",
+    "all": "All practice areas",
+    "allNote": "One conversation covers every route",
+    "israel": "Israel and immigration",
+    "other": "Other practice",
+    "areas": "{count, plural, one {# area} other {# areas}}"
+  },
+  "law": {
+    "image": "Hands holding a historical family photograph beside old letters",
+    "quote": "“I wanted my grandchildren to have the opportunity to build a future in Europe if they choose to.”",
+    "quoteBy": "Barbara Levine · client of the firm",
+    "eyebrow": "Germany and Austria · Start online",
+    "title": "In 2020 the citizenship laws changed. Most families never heard.",
+    "p1": "Germany and Austria widened the routes for descendants of people who lost citizenship through persecution. Descendants must prove the line to the German or Austrian ancestor, and that the ancestor was forced to give up that citizenship.",
+    "p2": "We were among the first firms in Israel to file these cases. Six questions tell you which route your family history points to, then a free call with one of our lawyers tells you what the records will need.",
+    "check": "Check your eligibility",
+    "signin": "Sign in to my portal",
+    "german": "The German route",
+    "austrian": "The Austrian route"
+  },
+  "stages": {
+    "eyebrow": "How a case runs",
+    "title": "Six stages. One of them is yours.",
+    "lede": "You tell us the story and hand over whatever papers exist. Records, translations, filing and the authority are ours.",
+    "items": [
+      { "title": "Free consultation", "short": "An attorney tells you plainly whether there is a case." },
+      { "title": "Your story and papers", "short": "The only stage that asks anything of you." },
+      { "title": "Records research", "short": "European archives and Israeli registries." },
+      { "title": "Translation", "short": "Certified by our own notaries, with apostilles." },
+      { "title": "Filing", "short": "Consulate, authority or court. We correspond." },
+      { "title": "The result", "short": "Followed, and appealed if needed, to the end." }
+    ]
+  },
+  "team": {
+    "eyebrow": "The people on your file",
+    "title": "Thirty-seven people. One of them is named on your case.",
+    "lede": "Attorneys, case managers, archival researchers, a genealogist and in-house notaries, across five departments.",
+    "image": "The attorneys and staff of Decker Pex Levi at the firm's offices",
+    "all": "All 37"
+  },
+  "reviews": {
+    "average": "Average across <n>380+</n> client reviews",
+    "read": "Read the reviews",
+    "featured": {
+      "quote": "“I began this process because I wanted my grandchildren to have the opportunity to study and build a future in Europe if they choose to. Decker Pex Levi was patient, kind, and extremely professional throughout the entire process. For our family, obtaining European citizenship means giving the next generation more possibilities.”",
+      "name": "Barbara Levine",
+      "date": "January 2026"
+    },
+    "supporting": [
+      {
+        "quote": "They knew exactly what was required for my Austrian citizenship case and guided me through the documentation step by step.",
+        "name": "Jonathan Weiss",
+        "date": "June 2026"
+      },
+      {
+        "quote": "My family had very limited information about my grandfather's life in Germany. They helped us understand what was missing and how to move forward.",
+        "name": "Rachel Hoffman",
+        "date": "May 2026"
+      }
+    ]
+  },
+  "articles": {
+    "eyebrow": "Knowledge center",
+    "title": "The law, written by the people who file the cases.",
+    "all": "All articles"
+  },
+  "offices": {
+    "eyebrow": "Our offices",
+    "also": "Also <n>{tel}</n>",
+    "map": "Open in maps"
+  }
+}

@@ -1,0 +1,30 @@
+/* Hover / focus states for elements styled with x() from @dpl/ui. Values arrive as CSS variables. */
+.hv-bc:hover { border-color: var(--hv-bc) !important; }
+.hv-bbc:hover { border-bottom-color: var(--hv-bbc) !important; }
+.hv-btc:hover { border-top-color: var(--hv-btc) !important; }
+.hv-bg:hover { background: var(--hv-bg) !important; }
+.hv-c:hover { color: var(--hv-c) !important; }
+.hv-tf:hover { transform: var(--hv-tf) !important; }
+.hv-ol:hover { outline: var(--hv-ol) !important; }
+.hv-olc:hover { outline-color: var(--hv-olc) !important; }
+.hv-sh:hover { box-shadow: var(--hv-sh) !important; }
+.hv-op:hover { opacity: var(--hv-op) !important; }
+.hv-pis:hover { padding-inline-start: var(--hv-pis) !important; }
+.hv-is:hover { inset-inline-start: var(--hv-is) !important; }
+.hv-td:hover { text-decoration: var(--hv-td) !important; }
+.hv-fl:hover { fill: var(--hv-fl) !important; }
+.hv-st:hover { stroke: var(--hv-st) !important; }
+
+.fv-bc:focus { border-color: var(--fv-bc) !important; }
+.fv-bbc:focus { border-bottom-color: var(--fv-bbc) !important; }
+.fv-btc:focus { border-top-color: var(--fv-btc) !important; }
+.fv-bg:focus { background: var(--fv-bg) !important; }
+.fv-c:focus { color: var(--fv-c) !important; }
+.fv-tf:focus { transform: var(--fv-tf) !important; }
+.fv-ol:focus { outline: var(--fv-ol) !important; }
+.fv-olc:focus { outline-color: var(--fv-olc) !important; }
+.fv-sh:focus { box-shadow: var(--fv-sh) !important; }
+.fv-op:focus { opacity: var(--fv-op) !important; }
+.fv-pis:focus { padding-inline-start: var(--fv-pis) !important; }
+.fv-is:focus { inset-inline-start: var(--fv-is) !important; }
+.fv-td:focus { text-decoration: var(--fv-td) !important; }

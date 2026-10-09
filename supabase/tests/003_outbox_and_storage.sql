@@ -5,6 +5,9 @@ do $$
 declare
   v_claimed int;
 begin
+  -- other work shares this database: set its events aside (the transaction is rolled back at the end)
+  update public.events set status = 'sent', delivered_at = now() where status <> 'sent';
+
   insert into public.events (type, payload, next_attempt_at) values
     ('a', '{}', now() - interval '1 minute'),
     ('b', '{}', now() - interval '1 minute'),
@@ -57,4 +60,18 @@ begin
 end $$;
 reset role;
 
+rollback;
+
+-- rate limiting
+begin;
+do $$
+declare i int; ok boolean;
+begin
+  for i in 1..3 loop
+    assert public.rate_limit_hit('test:key', 60, 3), 'hit ' || i || ' within limit';
+  end loop;
+  ok := public.rate_limit_hit('test:key', 60, 3);
+  assert not ok, 'fourth hit is limited';
+  assert public.rate_limit_hit('test:other', 60, 3), 'keys are independent';
+end $$;
 rollback;

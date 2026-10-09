@@ -1,0 +1,559 @@
+{
+  "meta": {
+    "suffix": "Admin · Decker Pex Levi",
+    "leads": "Leads",
+    "inbox": "Inbox",
+    "availability": "Availability",
+    "team": "Team"
+  },
+  "a11y": {
+    "skip": "Skip to content",
+    "help": "What is this?"
+  },
+  "nav": {
+    "brandAlt": "Decker Pex Levi",
+    "internal": "Internal",
+    "sections": "Admin sections",
+    "leads": "Leads",
+    "inbox": "Inbox",
+    "availability": "Availability",
+    "team": "Team",
+    "signOut": "Sign out",
+    "language": "Language",
+    "localeEn": "EN",
+    "localeHe": "עב",
+    "localeEnName": "English",
+    "localeHeName": "עברית",
+    "filters": "Filters",
+    "inboxCount": "{count} new"
+  },
+  "filters": {
+    "open": "All open",
+    "attention": "Needs attention",
+    "new": "New",
+    "germany": "Germany",
+    "austria": "Austria"
+  },
+  "search": {
+    "placeholder": "Search name, case ID, ancestor",
+    "label": "Search leads"
+  },
+  "stats": {
+    "attention": "Need attention",
+    "waiting": "Waiting on applicant",
+    "review": "In review",
+    "newLeads": "New leads"
+  },
+  "views": {
+    "label": "View",
+    "table": "Table",
+    "board": "Board",
+    "dragHint": "Drag a card to move a lead to the next stage.",
+    "noResults": "No leads match this filter or search.",
+    "noLeads": "No leads yet."
+  },
+  "table": {
+    "case": "Case",
+    "applicant": "Applicant",
+    "route": "Route",
+    "ancestor": "Ancestor",
+    "docs": "Docs",
+    "status": "Status",
+    "stage": "Stage",
+    "waiting": "Waiting on",
+    "updated": "Updated",
+    "edit": "Edit",
+    "notes": "{count, plural, one {# note} other {# notes}}",
+    "notRecorded": "Not recorded"
+  },
+  "stage": {
+    "lead": "New lead",
+    "account": "Account created",
+    "application": "Application in progress",
+    "review": "Under review",
+    "filed": "Filed with authority",
+    "granted": "Granted"
+  },
+  "route": {
+    "germany": "Germany",
+    "austria": "Austria",
+    "both": "Germany and Austria",
+    "unsure": "Not sure",
+    "unknown": "No route yet",
+    "shortGermany": "DE",
+    "shortAustria": "AT",
+    "shortBoth": "DE · AT",
+    "shortUnsure": "?"
+  },
+  "status": {
+    "enquiry": "Enquiry",
+    "account_created": "Account Created",
+    "application_incomplete": "Application Incomplete",
+    "application_submitted": "Application Submitted",
+    "under_review": "Under Review",
+    "info_required": "Additional Information Required",
+    "review_completed": "Review Completed",
+    "contacting": "Contacting Applicant"
+  },
+  "waiting": {
+    "nothing": "Nothing",
+    "portal": "Account",
+    "application": "Application",
+    "applicant": "Applicant's reply",
+    "documents": "{count} documents",
+    "pending": "Waiting: {what}",
+    "nothingPending": "Nothing pending"
+  },
+  "board": {
+    "empty": "No leads here",
+    "docs": "Docs {value}",
+    "back": "Move to previous stage",
+    "forward": "Move to next stage",
+    "edit": "Edit",
+    "moved": "Moved {name} to {stage}.",
+    "notes": "{count, plural, one {# note} other {# notes}}"
+  },
+  "time": {
+    "now": "Just now",
+    "min": "{n} min ago",
+    "hour": "{n}h ago",
+    "yesterday": "Yesterday",
+    "day": "{n}d ago",
+    "week": "{n}w ago",
+    "longDay": "{n} days ago",
+    "longWeek": "{n, plural, one {# week ago} other {# weeks ago}}"
+  },
+  "lead": {
+    "back": "All leads",
+    "position": "Lead {pos} of {total}",
+    "prev": "Previous lead",
+    "next": "Next lead",
+    "attention": "Needs attention",
+    "edit": "Edit details & password",
+    "ancestor": "Ancestor: {value}",
+    "stageBack": "Back a stage",
+    "stageForward": "Move to {stage}",
+    "stageFinal": "Final stage",
+    "stageSince": "In this stage since {when}",
+    "callBooked": "Call: {when}",
+    "stageTrack": "Case stages"
+  },
+  "next": {
+    "title": "Next action",
+    "done": "Done {when}. Logged in activity.",
+    "docAndRest": "{doc} and the rest",
+    "send_portal_invite": {
+      "text": "Invite {name} to open their portal. They finished the eligibility check but have no account.",
+      "button": "Send portal invite"
+    },
+    "send_reminder": {
+      "text": "{name} has an account but has not started the application.",
+      "button": "Send reminder"
+    },
+    "send_document_reminder": {
+      "text": "{count, plural, one {# document still open} other {# documents still open}}. Chase {name} for {doc}.",
+      "button": "Send document reminder"
+    },
+    "move_to_review": {
+      "text": "All documents are in. Check the application and move it to review.",
+      "button": "Move to review"
+    },
+    "assign_to_me": {
+      "text": "A lawyer reviews the file. Confirm the route and the descent chain before filing.",
+      "button": "Assign to me"
+    },
+    "send_status_update": {
+      "text": "Filed with the authority. Check for correspondence and keep {name} updated.",
+      "button": "Send status update"
+    },
+    "send_closing_email": {
+      "text": "Citizenship granted. Send the certificate instructions and close the case.",
+      "button": "Send closing email"
+    }
+  },
+  "docs": {
+    "title": "Documents",
+    "summary": "{count} of {total} received",
+    "name": {
+      "birth_certificate": "Ancestor's birth certificate",
+      "marriage_certificates": "Marriage certificates",
+      "emigration_naturalization": "Emigration or naturalization records",
+      "persecution_proof": "Proof of persecution or departure date",
+      "passport": "Your passport",
+      "family_tree": "Family tree or written account",
+      "photo_id": "Photo ID for each applicant",
+      "other": "Any other supporting record"
+    },
+    "short": {
+      "birth_certificate": "Birth cert.",
+      "marriage_certificates": "Marriage cert.",
+      "emigration_naturalization": "Emigration records",
+      "persecution_proof": "Persecution proof",
+      "passport": "Passport",
+      "family_tree": "Family tree",
+      "photo_id": "Photo ID",
+      "other": "Other record"
+    },
+    "chip": {
+      "received": "Received",
+      "missing": "Missing",
+      "requested": "Requested",
+      "reupload": "Needs re-upload"
+    },
+    "sub": {
+      "onFile": "On file",
+      "requested": "Request emailed to applicant",
+      "reupload": "File unreadable or incomplete",
+      "missing": "Not uploaded yet"
+    },
+    "action": {
+      "request": "Request",
+      "remind": "Remind",
+      "receive": "Mark received",
+      "reject": "Reject",
+      "view": "View"
+    },
+    "rejectTitle": "Send {name} back for a new upload",
+    "rejectNote": "Note to the applicant (optional)",
+    "rejectNotePlaceholder": "For example: the photo is blurred, please upload a sharper scan.",
+    "rejectConfirm": "Reject and email",
+    "rejectCancel": "Cancel"
+  },
+  "app": {
+    "title": "Application",
+    "summary": "{count} of {total} sections",
+    "sections": {
+      "about": "About you",
+      "ancestor": "Your ancestor",
+      "line": "The family line",
+      "contact": "How to reach you",
+      "review": "Review and records"
+    }
+  },
+  "answers": {
+    "title": "Eligibility answers",
+    "notRecorded": "Not recorded"
+  },
+  "activity": {
+    "title": "Activity",
+    "empty": "No activity yet.",
+    "codes": {
+      "lead_created": "Lead created from the eligibility check",
+      "lead_created_oauth": "Account created with Google",
+      "lead_returned": "Returned to the site",
+      "account_created": "Portal account created",
+      "email_verified": "Email address verified",
+      "password_set": "Password set",
+      "application_started": "Application started",
+      "application_submitted": "Application submitted",
+      "document_uploaded": "Document uploaded",
+      "document_removed": "Document removed",
+      "booking_created": "Free call booked",
+      "booking_cancelled": "Booked call cancelled",
+      "callback_requested": "Callback requested",
+      "result_emailed": "Result emailed to the applicant",
+      "unsubscribed": "Unsubscribed from emails",
+      "stage_changed": "Stage changed: {from} → {to}",
+      "status_changed": "Applicant status set to {to}",
+      "owner_assigned": "Assigned to {name}",
+      "owner_cleared": "Unassigned",
+      "note_added": "Note added",
+      "note_deleted": "Note deleted",
+      "doc_requested": "Document requested: {doc}",
+      "doc_reminded": "Reminder sent for {doc}",
+      "doc_received": "Document marked received: {doc}",
+      "doc_rejected": "Document rejected, re-upload requested: {doc}",
+      "contact_updated": "Contact details updated",
+      "password_reset_sent": "Password reset link sent to {email}",
+      "portal_invite_sent": "Portal invite sent to {email}",
+      "reminder_sent": "Reminder sent to {email}",
+      "doc_reminder_sent": "Document reminder sent to {email}",
+      "status_update_sent": "Status update sent to {email}",
+      "closing_email_sent": "Closing email sent to {email}",
+      "callback_status": "Callback request marked {status}",
+      "booking_completed": "Call date passed; marked as held",
+      "booking_held": "Call marked as held",
+      "booking_no_show": "Call marked as a no-show"
+    },
+    "inbox": {
+      "new": "new",
+      "in_progress": "in progress",
+      "closed": "closed"
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "address": "Address",
+    "origin": "Came from"
+  },
+  "statusPanel": {
+    "title": "Status shown to the applicant",
+    "note": "Changing this updates the applicant's portal and sends them an email.",
+    "current": "Currently shown: {status}."
+  },
+  "owner": {
+    "title": "Case owner",
+    "label": "Owner",
+    "unassigned": "Unassigned"
+  },
+  "notes": {
+    "title": "Notes",
+    "count": "{count, plural, one {# note} other {# notes}}",
+    "placeholder": "Add a note about this lead: a call, a follow-up, anything the team should know",
+    "hint": "Ctrl + Enter to save",
+    "add": "Add note",
+    "delete": "Delete",
+    "deleteAria": "Delete note",
+    "empty": "No notes yet.",
+    "unknownAuthor": "Case team"
+  },
+  "edit": {
+    "kicker": "Applicant · {caseRef}",
+    "titleFallback": "Applicant details",
+    "close": "Close",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "nameError": "Please enter a first and last name.",
+    "emailError": "Please enter a valid email address.",
+    "phoneError": "Please enter a phone number with at least 7 digits.",
+    "emailTaken": "This email address is already in use by another lead or account.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "savedLine": "Saved. {first} gets an email confirming the change.",
+    "savedEmailLine": "Saved. {first} gets an email confirming the change, and the old address is told. Earlier links and sign-ins stop working, so send a new link.",
+    "password": "Password",
+    "resetHelp": "Email the applicant a secure link to set a new password.",
+    "resetButton": "Send password reset link",
+    "resetSending": "Sending…",
+    "resetSent": "Reset link sent to {email} at {time}. It is valid for one hour."
+  },
+  "help": {
+    "filters": {
+      "title": "Filters",
+      "text": "Narrow the list. Each filter shows how many leads it holds. 'All open' hides cases already granted."
+    },
+    "search": {
+      "title": "Search",
+      "text": "Type a name, case number or ancestor. Works together with the active filter."
+    },
+    "stats": {
+      "title": "Counts",
+      "text": "Live totals across all leads, recalculated whenever a lead moves stage or is updated."
+    },
+    "views": {
+      "title": "Table or board",
+      "text": "Table lists every lead in one row. Board groups them by stage, and you can drag a card to move it. Both show the same filtered leads."
+    },
+    "nav": {
+      "title": "Moving between leads",
+      "text": "The arrows step to the previous or next lead in the current filter, so you can work through a list without going back."
+    },
+    "edit": {
+      "title": "Edit details & password",
+      "text": "Correct the name, email or phone, or email the applicant a secure link to set a new password. Every change is logged in Activity."
+    },
+    "stages": {
+      "title": "Case stages",
+      "text": "The six stages every case passes through. Move a case forward or back here. The same stage shows on the board and is logged in Activity."
+    },
+    "next": {
+      "title": "Next action",
+      "text": "The one thing to do for this lead now, worked out from its stage and missing documents. Doing it logs the step in Activity."
+    },
+    "docs": {
+      "title": "Documents",
+      "text": "Everything the case needs. Request emails the applicant, Mark received records a paper copy, and Reject asks for a new upload."
+    },
+    "app": {
+      "title": "Application",
+      "text": "The five sections of the applicant's online form. A tick means the section is complete."
+    },
+    "answers": {
+      "title": "Eligibility answers",
+      "text": "What the applicant answered in the eligibility check before contacting us. 'Not recorded' means the answer was not captured."
+    },
+    "activity": {
+      "title": "Activity",
+      "text": "A timeline of this case. Gold dots are actions your team took, with the time. Grey dots are milestones from the case record."
+    },
+    "contact": {
+      "title": "Contact",
+      "text": "Click to email or call the applicant. To change these details, use Edit details & password at the top."
+    },
+    "status": {
+      "title": "Status shown to the applicant",
+      "text": "This is the wording the applicant sees in their portal. Changing it sends them an email update."
+    },
+    "notes": {
+      "title": "Notes",
+      "text": "Internal only, never shown to the applicant. Use them for calls, follow-ups and anything a colleague needs to know."
+    },
+    "owner": {
+      "title": "Case owner",
+      "text": "The team member responsible for this case. 'Assign to me' in Next action sets this too."
+    },
+    "inbox": {
+      "title": "Inbox",
+      "text": "Callback requests from the campaign site and messages from the firm's website forms. Mark an item In progress when you pick it up and Closed when it is dealt with."
+    },
+    "weekly": {
+      "title": "Weekly call template",
+      "text": "The times at which visitors can book a free call, every week. Capacity is how many calls fit in one slot. Switch a time off to stop offering it without losing it."
+    },
+    "blocked": {
+      "title": "Blocked days and slots",
+      "text": "Close the calendar for a holiday or a single time. A blocked day offers no slots at all."
+    },
+    "team": {
+      "title": "Team",
+      "text": "Everyone with access to this area. Admins can change availability and manage the team; lawyers and case managers work on leads."
+    },
+    "calendars": {
+      "title": "Calendars",
+      "text": "Each lawyer has a calendar of their own: their weekly hours (one call at a time) and their days off. 'Unassigned (any lawyer)' is the template for calls that are not tied to a lawyer, with a number of calls per slot; a day blocked there is closed for everyone. A new booking goes to a free lawyer first (the one with the fewest calls that week), then to the unassigned template. Admins edit every calendar, lawyers their own."
+    },
+    "call": {
+      "title": "Free call",
+      "text": "The applicant's free call and the lawyer it is assigned to. Once its time has come, mark it held or a no-show; a call nobody marks is recorded as held a day later. Cancelling it emails the applicant."
+    }
+  },
+  "inbox": {
+    "title": "Inbox",
+    "filterOpen": "Open",
+    "filterNew": "New",
+    "filterProgress": "In progress",
+    "filterClosed": "Closed",
+    "filterAll": "All",
+    "callbacks": "Callback requests",
+    "contacts": "Website contact forms",
+    "emptyCallbacks": "No callback requests here.",
+    "emptyContacts": "No messages here.",
+    "status": {
+      "new": "New",
+      "in_progress": "In progress",
+      "closed": "Closed"
+    },
+    "start": "Start",
+    "close": "Close",
+    "reopen": "Reopen",
+    "openLead": "Open lead {caseRef}",
+    "handledBy": "Handled by {name}",
+    "source": "Source: {source}",
+    "page": "Page: {page}",
+    "unnamed": "No name given",
+    "kind": {
+      "contact": "Consultation form",
+      "lead_band": "Contact form",
+      "chat": "Chat"
+    },
+    "matter": "Matter",
+    "language": "Language: {language}",
+    "languageEn": "English",
+    "languageHe": "Hebrew",
+    "received": "Received {when}"
+  },
+  "availability": {
+    "title": "Availability",
+    "timezone": "Times are in the firm's time zone ({timezone}). Calls last {minutes} minutes.",
+    "readOnly": "Only admins can change availability.",
+    "weekly": "Weekly call template",
+    "capacity": "Capacity",
+    "time": "Time",
+    "active": "Active",
+    "add": "Add time",
+    "save": "Save",
+    "delete": "Delete",
+    "noTimes": "No times on this day.",
+    "capacityHint": "calls per slot",
+    "blocked": "Blocked days and slots",
+    "date": "Date",
+    "slot": "Time (leave empty for the whole day)",
+    "reason": "Reason (optional)",
+    "block": "Block",
+    "wholeDay": "Whole day",
+    "noBlocked": "Nothing is blocked.",
+    "unblock": "Unblock",
+    "upcoming": "Upcoming calls",
+    "noBookings": "No calls booked yet.",
+    "callWith": "Call with {name}",
+    "errors": {
+      "duplicate": "That time already exists.",
+      "invalid": "Check the time (HH:MM) and the other values.",
+      "forbidden": "Only admins can change availability.",
+      "generic": "Could not save. Please try again."
+    },
+    "scopes": {
+      "label": "Calendar",
+      "unassigned": "Unassigned (any lawyer)",
+      "weeklyOf": "Weekly hours: {name}",
+      "ownOnly": "You can change your own hours only.",
+      "everyone": "Closed for everyone",
+      "appliesTo": "Applies to",
+      "only": "{name} only",
+      "lawyer": "Lawyer: {name}",
+      "anyLawyer": "Any lawyer"
+    }
+  },
+  "team": {
+    "title": "Team",
+    "role": "Role",
+    "active": "Active",
+    "save": "Save",
+    "lastAdmin": "The firm needs at least one active admin.",
+    "roles": {
+      "admin": "Admin",
+      "lawyer": "Lawyer",
+      "case_manager": "Case manager"
+    },
+    "addHint": "To add a team member, create the account with the bootstrap script (pnpm bootstrap:admin) and set their role here."
+  },
+  "toast": {
+    "dismiss": "Dismiss",
+    "error": {
+      "unauthorized": "Your session has ended. Sign in again.",
+      "forbidden": "You do not have permission to do that.",
+      "invalid": "Please check the details and try again.",
+      "not_found": "That item no longer exists.",
+      "conflict": "That cannot be done in the current state.",
+      "duplicate": "That already exists.",
+      "email_taken": "This email address is already in use by another lead or account.",
+      "stale": "This lead has changed in the meantime. The page was refreshed.",
+      "rate_limited": "Too many requests. Please wait a moment and try again.",
+      "internal": "Something went wrong. Please try again.",
+      "confirm_mismatch": "The case reference you typed does not match."
+    }
+  },
+  "error": {
+    "title": "This page could not be loaded",
+    "text": "Something went wrong while reading the data. Check your connection and try again.",
+    "retry": "Try again"
+  },
+  "erase": {
+    "title": "Delete applicant",
+    "text": "Permanently removes this applicant's file: details, application, uploaded documents, notes, history, sign-in account and any emails still queued for them, plus callback requests and website enquiries from the same address. This cannot be undone. A record that it happened (case reference, who, when) is kept; it does not name the person.",
+    "open": "Delete applicant…",
+    "confirmLabel": "To confirm, type the case reference {caseRef}",
+    "confirm": "Delete permanently",
+    "cancel": "Cancel",
+    "done": "Applicant {caseRef} was deleted."
+  },
+  "callPanel": {
+    "title": "Free call",
+    "with": "With {name}",
+    "anyLawyer": "Any lawyer (unassigned)",
+    "phase": {
+      "booked": "Booked",
+      "awaiting": "Waiting to be marked",
+      "held": "Held",
+      "no_show": "No-show"
+    },
+    "held": "Mark call held",
+    "noShow": "Mark no-show",
+    "cancel": "Cancel call",
+    "cancelConfirm": "Cancel this call? The applicant is emailed that it will not take place.",
+    "cancelYes": "Yes, cancel the call",
+    "cancelNo": "No, keep it"
+  }
+}
