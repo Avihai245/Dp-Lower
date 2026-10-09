@@ -166,7 +166,10 @@ export async function cleanup(): Promise<void> {
   for (const id of users) {
     await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${id}`, { method: 'DELETE', headers: adminHeaders() });
   }
-  await fetch(`${SUPABASE_URL}/rest/v1/callback_requests?name=like.${encodeURIComponent(`e2e-funnel-${RUN}*`)}`, { method: 'DELETE', headers: adminHeaders() });
+  const callbackName = encodeURIComponent(`e2e-funnel-${RUN}*`);
+  // the CRM event of a callback request names the person in its payload (a visitor without a lead has no lead id)
+  await fetch(`${SUPABASE_URL}/rest/v1/events?type=eq.callback.requested&payload->callback->>name=like.${callbackName}`, { method: 'DELETE', headers: adminHeaders() });
+  await fetch(`${SUPABASE_URL}/rest/v1/callback_requests?name=like.${callbackName}`, { method: 'DELETE', headers: adminHeaders() });
 }
 
 /** Password sign-in against the auth server, to prove a password really was set. */

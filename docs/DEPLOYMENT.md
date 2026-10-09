@@ -12,7 +12,7 @@ no code changes are needed to go live. Placeholders you must replace are in `<an
 ## 1. Accounts you need
 
 - **Supabase** (database, auth, file storage). Region: `eu-central-1` (Frankfurt) is the closest to Israel.
-- **Vercel** (hosting for both apps). Pro plan recommended (cron every 10 minutes, see 5).
+- **Vercel** (hosting for both apps). Pro plan recommended (cron every 5 minutes, see 5).
 - **Zapier** (email sending and CRM sync: you choose the "send email" app and the CRM).
 - **Google Cloud** (only for "Continue with Google"): one OAuth client.
 - Optional: **Cloudflare Turnstile** (bot protection on the public forms).

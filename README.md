@@ -33,4 +33,25 @@ e2e/                       Playwright end-to-end tests
 
 ## Quality gates
 
-`pnpm typecheck`, `pnpm lint`, `pnpm test` (unit + integration), `pnpm db:test` (SQL), `pnpm e2e`. CI runs them on every push.
+| Command | What it checks |
+|---|---|
+| `pnpm typecheck` / `pnpm lint` | TypeScript and ESLint in every package and app |
+| `pnpm test` | about 1,240 unit and integration tests (the integration ones need `pnpm db:start`): domain rules, schemas, email templates against the design's HTML, the nurture scheduler, auth plumbing against a real GoTrue, UI logic, message parity between English and Hebrew |
+| `pnpm db:test` | SQL tests of the row level security, booking capacity and the outbox |
+| `pnpm e2e` | Playwright against the production builds of both apps (start them first, see below): the funnel (API and UI), the client portal, the CRM, the firm website's forms and navigation, SEO crawl of the whole sitemap, security headers and CSP, an axe accessibility scan, and the full journey from the landing page to a reviewed case in English and Hebrew |
+
+```bash
+pnpm build
+pnpm --filter @dpl/campaign start -p 3001 &    # http://localhost:3001
+pnpm --filter @dpl/main start -p 3000 &        # http://localhost:3000
+pnpm e2e                                       # or: pnpm exec playwright test e2e/journey.spec.ts
+```
+
+CI runs all of it on every push (`.github/workflows/ci.yml`).
+
+## Documents
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): contracts, data model, authentication model, API, outbox events.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md): Supabase, Vercel, Zapier and environment variables, first staff user, launch checklist, operations.
+- [`docs/HEBREW_REVIEW.md`](docs/HEBREW_REVIEW.md): where the Hebrew lives, the terminology chosen and the phrases that need a native reader.
+- [`docs/AUDIT.md`](docs/AUDIT.md): the plan traced to the code and its tests, deviations from the design, and what is left for the firm to decide.

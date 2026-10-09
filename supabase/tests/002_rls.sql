@@ -13,8 +13,8 @@ insert into public.leads (id, full_name, email, user_id) values
   ('00000000-0000-0000-0000-00000000f002', 'Other', 'other@example.com', null);
 insert into public.documents (lead_id, doc_type, status) values ('00000000-0000-0000-0000-00000000f001', 'passport', 'received');
 insert into public.lead_notes (lead_id, body) values ('00000000-0000-0000-0000-00000000f001', 'internal only');
-insert into public.callback_requests (phone) values ('+972500000000');
-insert into public.events (type, payload) values ('lead.created', '{}');
+insert into public.callback_requests (phone) values ('+972500000000-rls-test');
+insert into public.events (type, payload) values ('lead.created', '{"test": "rls-002"}');
 
 -- the applicant ------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
@@ -54,10 +54,10 @@ set local role authenticated;
 do $$
 begin
   assert public.is_staff() and public.is_admin(), 'staff recognised';
-  assert (select count(*) from public.leads) = 2, 'staff sees all leads';
-  assert (select count(*) from public.lead_notes) = 1, 'staff sees notes';
-  assert (select count(*) from public.callback_requests) = 1, 'staff sees callbacks';
-  assert (select count(*) from public.events) = 1, 'staff sees the outbox';
+  assert (select count(*) from public.leads where id in ('00000000-0000-0000-0000-00000000f001', '00000000-0000-0000-0000-00000000f002')) = 2, 'staff sees all leads';
+  assert (select count(*) from public.lead_notes where body = 'internal only') = 1, 'staff sees notes';
+  assert (select count(*) from public.callback_requests where phone = '+972500000000-rls-test') = 1, 'staff sees callbacks';
+  assert (select count(*) from public.events where payload = '{"test": "rls-002"}') = 1, 'staff sees the outbox';
   assert (select docs_received from public.admin_lead_rows where full_name = 'Owner') = 1, 'CRM row counts documents';
   assert (select notes_count from public.admin_lead_rows where full_name = 'Owner') = 1, 'CRM row counts notes';
   update public.leads set status = 'under_review' where id = '00000000-0000-0000-0000-00000000f001';

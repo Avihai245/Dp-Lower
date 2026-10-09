@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import type { Database } from './database.types';
 import { enqueueEmail, enqueueEvent, logActivity } from './outbox';
 import { rateLimit } from './rate-limit';
@@ -10,6 +10,13 @@ const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
 describe.skipIf(!(url && service))('outbox + rate limit (real database)', () => {
   const db = createClient<Database>(url!, service!, { auth: { persistSession: false } });
   const tag = `t${Date.now()}`;
+
+  // the database is shared with other work: leave nothing behind
+  afterAll(async () => {
+    await db.from('events').delete().in('dedupe_key', [`lead.created:${tag}`, `email:${tag}`]);
+    await db.from('leads').delete().in('email', [`out-${tag}@example.com`, `log-${tag}@example.com`]);
+    await db.from('rate_limits').delete().like('key', `test:${tag}%`);
+  });
 
   it('enqueueEvent is idempotent per dedupe key', async () => {
     const { data: lead } = await db.from('leads').insert({ full_name: 'Out Box', email: `out-${tag}@example.com` }).select('*').single();

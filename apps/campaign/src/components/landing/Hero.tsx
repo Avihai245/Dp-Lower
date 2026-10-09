@@ -4,6 +4,7 @@ import { preconnect, preload } from 'react-dom';
 import { Link } from '@/i18n/navigation';
 import { AdvisorButton } from './AdvisorButton';
 import { HeroVideo } from './HeroVideo';
+import { Isolated } from './more/ltr';
 
 const POSTER = 'https://i.ytimg.com/vi/52rCx7iQeFo/maxresdefault.jpg';
 
@@ -131,7 +132,7 @@ export async function Hero() {
             <span aria-hidden="true" style={s('opacity: 0.45')}>
               ·
             </span>
-            <span>{t('count')}</span>
+            <span><Isolated text={t('count')} /></span>
           </div>
         </div>
         <div

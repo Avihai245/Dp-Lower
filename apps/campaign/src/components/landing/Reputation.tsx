@@ -1,6 +1,7 @@
 import { s } from '@dpl/ui';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { Figures } from './Figures';
+import { Isolated } from './more/ltr';
 import { Kicker, Stars } from './primitives';
 import { ReviewList, type WrittenReview } from './ReviewList';
 import { ReviewMarquee } from './ReviewMarquee';
@@ -72,7 +73,7 @@ export async function Reputation() {
                   label={t('stars')}
                   css="display: block; color: #c99a3f; font-size: 20px; letter-spacing: 3px; margin-bottom: 8px"
                 />
-                <span style={s('display: block; font-size: 16px; color: #736d64')}>{t('count')}</span>
+                <span style={s('display: block; font-size: 16px; color: #736d64')}><Isolated text={t('count')} /></span>
               </span>
             </div>
           </div>

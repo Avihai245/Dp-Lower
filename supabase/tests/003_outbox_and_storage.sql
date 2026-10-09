@@ -5,6 +5,9 @@ do $$
 declare
   v_claimed int;
 begin
+  -- other work shares this database: set its events aside (the transaction is rolled back at the end)
+  update public.events set status = 'sent', delivered_at = now() where status <> 'sent';
+
   insert into public.events (type, payload, next_attempt_at) values
     ('a', '{}', now() - interval '1 minute'),
     ('b', '{}', now() - interval '1 minute'),

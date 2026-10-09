@@ -7,7 +7,7 @@ import { FIGURES, figureValue } from '@/lib/landing-figures';
  * Four figures that climb to their value the first time the strip scrolls into view (`useCountProgress`: ease-out
  * cubic, 1300ms, 22 steps, exactly as the prototype). The strip carries [data-count], which the hook watches. The
  * animated number is hidden from assistive technology, which reads the final value instead; visitors who ask for
- * reduced motion see the final values at once.
+ * reduced motion see the final values at once. The number reads left to right in Hebrew too ("1,200+", not "+1,200").
  */
 export function Figures({ tag, labels }: { tag: string; labels: string[] }) {
   const counting = useCountProgress();
@@ -29,6 +29,7 @@ export function Figures({ tag, labels }: { tag: string; labels: string[] }) {
           <div style={s('display: flex; align-items: baseline; gap: 10px')}>
             <span
               aria-hidden="true"
+              dir="ltr"
               style={s(
                 "font-family: 'Newsreader', Georgia, serif; font-size: clamp(38px, 3.4vw, 54px); line-height: 1; color: #14202b",
               )}

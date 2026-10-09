@@ -3,7 +3,7 @@
  * Proves the lead -> account bridge and the pre-registration defence described in docs/ARCHITECTURE.md section 7.
  */
 import { createClient } from '@supabase/supabase-js';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import type { Database } from './database.types';
 import { ensureAuthUser, markEmailVerified } from './portal-session';
 import type { LeadRow } from './types';
@@ -17,6 +17,13 @@ describe.skipIf(!live)('lead -> account bridge (real GoTrue)', () => {
   const opts = { auth: { persistSession: false, autoRefreshToken: false } };
   const db = createClient<Database>(url!, service!, opts);
   const stamp = Date.now();
+
+  // the database is shared with other work: remove the leads and sign-in users this file created
+  afterAll(async () => {
+    const { data: leads } = await db.from('leads').select('id, user_id').like('email', `%-${stamp}@example.com`);
+    for (const lead of leads ?? []) if (lead.user_id) await db.auth.admin.deleteUser(lead.user_id);
+    await db.from('leads').delete().like('email', `%-${stamp}@example.com`);
+  });
 
   async function newLead(tag: string): Promise<LeadRow> {
     const { data, error } = await db.from('leads').insert({ full_name: `Int ${tag}`, email: `int-${tag}-${stamp}@example.com` }).select('*').single();

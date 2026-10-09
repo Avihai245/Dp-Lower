@@ -37,28 +37,28 @@ Add new server modules for the apps in `apps/<app>/src/server/*.ts` (start the f
 ## 3. Commands
 
 ```
-pnpm install --frozen-lockfile          # in a fresh worktree, first thing
-pnpm exec vitest run [path]             # unit tests (root config picks up packages/*/src and apps/*/src)
-pnpm --filter @dpl/campaign exec tsc --noEmit      # typecheck one app
-pnpm --filter @dpl/campaign exec eslint src        # lint one app
-bash supabase/tests/run.sh              # SQL tests against the local database
+pnpm install --frozen-lockfile          # Node 22+, pnpm 10
+pnpm db:start && pnpm db:reset          # local Supabase in Docker (API 54321, DB 54322, mail inbox 54324)
+pnpm dev:campaign                       # http://localhost:3001  (Hebrew: /he)
+pnpm dev:main                           # http://localhost:3000
+pnpm typecheck && pnpm lint             # whole workspace
+pnpm test                               # vitest: unit tests, plus integration tests when the local Supabase is up
+pnpm db:test                            # SQL tests (RLS, booking, outbox) against the local database
+pnpm build && pnpm e2e                  # Playwright against production builds (see README: start both apps first)
+pnpm bootstrap:admin you@firm.com "Name" [password]   # first staff user
 ```
 
-Local Supabase is already running (Docker): API http://127.0.0.1:54321, DB postgresql://postgres:postgres@127.0.0.1:54322/postgres,
-mail inbox (Mailpit) http://127.0.0.1:54324. It is shared by everybody: create your own test leads (unique emails like
-`you+1700000000@example.com`), never reset or truncate the database, never change migrations without telling the coordinator.
-`.env.local` files are git-ignored; in a fresh worktree copy them: `cp /home/user/Dp-Lower/apps/campaign/.env.local apps/campaign/.env.local` (same for main).
+The `.env.local` files of both apps are git-ignored; copy `.env.example` and fill it from `supabase status -o env`.
+The integration and e2e tests create their own leads with unique `@example.com` addresses and remove them again; the SQL
+tests run inside a rolled-back transaction. None of them needs an empty database.
 
-Running a dev server in your worktree: `pnpm --filter @dpl/campaign exec next dev -p <your port>` (use the port in your brief; never
-touch ports 3000/3001, they belong to the coordinator). Do not run `next build` unless you need to (CPU is shared).
+## 4. Design conventions (how pages are built)
 
-## 4. Rules for porting the design (all workers)
-
-The prototypes live (read-only) in `/tmp/claude-0/-home-user-Dp-Lower/da03b263-f960-5b12-8d27-94b18ce889b9/scratchpad/design/form-design-blockers/project/`.
-They are `.dc.html` files: an HTML template (`<x-dc>`) with `{{ binding }}`, `<sc-if value=>`, `<sc-for list= as=>`, `style-hover=` /
-`style-focus=` attributes, plus one `class Component` in `<script type="text/x-dc">` whose `renderVals()` feeds the bindings. They are
-prototypes, not production code: port the *look and behaviour*, not the structure. **Read your whole range, top to bottom, including the
-logic that feeds it, before writing.** Line ranges are in your brief.
+The design came as HTML prototypes (`.dc.html` files: an HTML template with `{{ binding }}`, `<sc-if>`, `<sc-for>`, `style-hover=`
+attributes and one `class Component` whose `renderVals()` feeds the bindings). They are not part of this repository (they are in the
+original handoff ZIP); `tools/visual` can render them next to the app for pixel comparison (see `tools/visual/README.md`).
+The prototypes are prototypes, not production code: the *look and behaviour* is ported, not their structure. When you change a page,
+read the matching part of the prototype first, including the logic that feeds it.
 
 1. **Fidelity.** Every size, colour, spacing, font size/weight, radius, border, shadow, animation timing and breakpoint is copied verbatim. When the prototype computes a style string in `renderVals` (e.g. `headerCss`), port the same conditions.
 2. **Styling with `s()` / `x()` from `@dpl/ui`.** Paste the prototype's inline style string: `<div style={s("display:flex;gap:12px;padding:18px clamp(20px,4.6vw,160px)")}>`. `s()` converts `margin-left`, `padding-right`, `text-align:left`, `left`, `border-left`, 4-value `margin/padding/border-radius` and gradient directions into direction-aware logical equivalents, maps `font-family:'Newsreader'`/`'Manrope'` to the Hebrew-aware `var(--font-serif)`/`var(--font-sans)`, so one declaration is right in English and Hebrew. Hover/focus: `<a {...x("color:#000;...", { hover: "color:#a07a3c", focus: "outline:2px solid #a07a3c" })}>` (the prototype's `style-hover` / `style-focus`; supported properties are in `packages/ui/src/style.ts` `STATE_PROPS`; add one there and in `hover.css` if you need another). For `x()` with extra classes use `className`. `!important` is not allowed in inline styles: put the rule in a CSS file.
@@ -66,21 +66,21 @@ logic that feeds it, before writing.** Line ranges are in your brief.
    - Transforms/animations that move horizontally: use `calc(Npx * var(--dir, 1))` (`--dir` is 1 in LTR, -1 in RTL, set on `<html>`).
    - Arrows/chevrons that mean "forward": flip in RTL with `transform: scaleX(var(--dir, 1))` or pick the mirrored glyph.
    - Responsive rules use the `data-*` attributes from `globals.css` (`data-resp`, `data-pad`, `data-h1`, ...). Keep those attributes on the same elements as the prototype. React serialises styles as `height:1px` (no space), so prototype selectors like `[style*="height: 1px"]` do not work: use a data attribute (see the notes at the top of each `globals.css`).
-   - Put component CSS that needs real selectors (pseudo-elements, media queries) in a **new file you own** (e.g. `apps/campaign/src/styles/landing.css`) and import it from your component. Do not edit `globals.css`, `@dpl/ui` or `packages/db` unless your brief says so; if you need a change there, make it minimal and mention it in your report.
+   - Component CSS that needs real selectors (pseudo-elements, media queries) goes in a file of its own under `apps/<app>/src/styles/` (e.g. `landing.css`, `portal.css`) imported by the component; `globals.css` and `@dpl/ui` hold only what is shared.
 3. **Images** come from `apps/<app>/public/images/*` (already copied). Photos: `next/image` with explicit width/height or `fill` + `sizes` (keep the prototype's displayed size and `object-fit`). Hero/LCP image: `priority`. Logos/small decorative images may be plain `<img>`. Flags and icons that the prototype draws in CSS/SVG stay CSS/SVG.
 4. **Server vs client.** Default to Server Components. Mark a file `'use client'` only for state/effects/handlers. Pass data and translated strings as props from server parents when convenient. Interactive pieces: keep them small leaf components.
 5. **Accessibility.** Keep or improve semantics: real `<button>`/`<a>`, labels tied to inputs, `aria-*` for accordions/dialogs/tabs, visible focus, `alt` text (translated), `lang` handled by the layout. Dialogs trap focus and close on Escape.
-6. **No hard-coded user-facing strings** (see section 5). **No new dependencies**: if you truly need one, say so in your report instead of installing it (shared `pnpm-lock.yaml`).
+6. **No hard-coded user-facing strings** (see section 5). Prefer what is already installed over a new dependency.
 7. **TypeScript strict, no `any`, no `// @ts-ignore`.** Keep files focused (split big components). Match the surrounding code's style; comments only where the code is not self-explanatory.
-8. **Quality gate before you finish:** `tsc --noEmit` and `eslint src` clean for your app; the `messages.test.ts` parity test passes (`pnpm exec vitest run apps/<app>`); your own tests pass; you have looked at your pages in a real browser (Playwright is installed: use `chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })`, or check `ls /opt/pw-browsers`) at 1440px and 390px wide, in English and `/he`, and compared them with the prototype rendering rules in the source (no console errors, no horizontal scroll, RTL layout mirrored correctly).
+8. **Quality gate:** `pnpm typecheck`, `pnpm lint`, `pnpm test` and, for visible changes, `pnpm e2e` (it includes an axe scan, the English/Hebrew parity of every message, no console or CSP errors and no sideways scroll at phone width). Look at the page at 1440 px and 390 px, in English and `/he`.
 
 ## 5. Internationalisation
 
 - next-intl 4. English at `/…`, Hebrew at `/he/…` (`localePrefix: 'as-needed'`, no auto-detection). `<html lang dir>` is set by the layout. Use `Link`, `redirect`, `usePathname`, `useRouter` from `@/i18n/navigation` (never `next/link` for internal links) so the locale prefix is kept.
-- Messages: `apps/<app>/messages/{en,he}/<namespace>.json`. **You own the namespaces assigned to you** and only edit those files. Never rename or add a namespace (the list is in `src/i18n/messages.ts`; ask the coordinator).
+- Messages: `apps/<app>/messages/{en,he}/<namespace>.json`. A new namespace is added to the list in `src/i18n/messages.ts`.
 - `messages.test.ts` fails if English and Hebrew key sets differ or any value is empty. Arrays/objects are fine (`t.raw('key')` returns them; keep arrays the same length in both languages). Inline emphasis/links: `t.rich('key', { b: (c) => <strong>{c}</strong> })`; plurals/numbers: ICU (`{count, plural, one {…} other {…}}`).
 - Server Components: `getTranslations('ns')`; Client Components: `useTranslations('ns')`, and the page/group layout must wrap them in `<ClientMessages namespaces={['ns', …]}>` (`src/components/ClientMessages.tsx`) so the browser receives those namespaces (the root layout only sends `common`/`site`). Keep client namespaces small.
-- **English** copy is copied verbatim from the prototype (keep its punctuation, `·`, `→`, curly quotes). **Hebrew** is a professional translation by you: natural, idiomatic modern Hebrew in the register of an Israeli law firm's website (formal but warm, not literal); address the reader in second person plural-neutral or masculine-default phrasing consistently with the firm's existing Hebrew content in `packages/i18n/src/content/he.ts` (read it first and reuse its terminology: אזרחות מכוח מוצא, משרד הפנים, רשות האוכלוסין וההגירה, etc.). Legal terms must be accurate; names of people, places, products and laws stay as in the English (transliterate only if the Hebrew content does). Keep numerals Western; dates/times via `Intl`/next-intl formatters with the right locale; currency symbols as in the source. Do not translate: URLs, emails, phone numbers, case references (DPL-26-1001), `Decker Pex Levi` (Hebrew: דקר פקס לוי is used on lawoffice.org.il; use the Hebrew content file's spelling of the firm name).
+- **English** copy is copied verbatim from the prototype (keep its punctuation, `·`, `→`, curly quotes). **Hebrew** is natural, idiomatic modern Hebrew in the register of an Israeli law firm's website (formal but warm, not literal), addressing the reader in the plural, gender-neutral form, consistent with the firm's own Hebrew content in `packages/i18n/src/he.ts` (reuse its terminology: אזרחות מכוח מוצא, משרד הפנים, רשות האוכלוסין וההגירה, etc.). The terminology chosen and the phrases awaiting a native reader are in `docs/HEBREW_REVIEW.md`. Legal terms must be accurate; names of people, places, products and laws stay as in the English (transliterate only if the Hebrew content does). Keep numerals Western; dates/times via `Intl`/next-intl formatters with the right locale; currency symbols as in the source. Do not translate: URLs, emails, phone numbers, case references (DPL-26-1001), `Decker Pex Levi` (Hebrew: דקר פקס לוי is used on lawoffice.org.il; use the Hebrew content file's spelling of the firm name).
 - Placeholder marketing claims in the prototype (30% discount, 94% approval, 4.9 · 380+ reviews, 'To verify' badges, 'Illustrative case…', 'to be confirmed by the firm') are kept exactly as designed, including their disclaimers. Do not invent new claims.
 - RTL: icons/arrows that imply direction are mirrored; numbers, Latin names, emails and phone numbers inside Hebrew text are wrapped in `<bdi>` or `dir="ltr"` spans where they would otherwise reorder punctuation; inputs for email/phone/URL use `dir="ltr"` (and `inputMode`), names/free text follow the page direction.
 
@@ -146,6 +146,16 @@ Always written with `enqueueEvent()` / `enqueueEmail()` from `@dpl/db/outbox` ne
 
 `stage` (CRM board columns, `LEAD_STAGES`): lead → account → application → review → filed → granted; automatic transitions only move forward (`advanceStage`), staff can move any direction. `status` (what the applicant sees, `LEAD_STATUSES`): automatic ones are enquiry → account_created → application_incomplete → application_submitted (`advanceStatus` never overwrites a status staff set: under_review, info_required, review_completed, contacting). Changing the applicant-facing status in the CRM emits `status.changed` and queues the `status-update` email.
 
-## 11. Ownership map
+## 11. Code map: where to change what
 
-See the briefs. Files outside your ownership are read-only for you. Shared files owned by the coordinator: `apps/*/src/i18n/*`, `apps/*/src/middleware.ts`, `apps/*/src/app/[locale]/layout.tsx`, `apps/*/src/app/globals.css`, `apps/*/next.config.ts`, all of `packages/*`, `supabase/migrations/*`, `docs/*`.
+| To change | Look in |
+|---|---|
+| Firm website pages, navigation, forms | `apps/main/src/app/[locale]/(site)`, `components/{shell,home,pages,services,insights,legal,contact}`, content in `packages/i18n/src` |
+| Landing page sections, advisor modal, chat | `apps/campaign/src/components/landing` (and `landing/more`), `messages/*/landing*.json` |
+| Quiz, details, booking, offer, sign-in, password | `apps/campaign/src/components/funnel` (screens), `logic/` (pure rules), `src/app/api/**`, `src/server/{leads,bookings,availability,auth,go}.ts` |
+| Client portal | `apps/campaign/src/components/portal` (`model/` holds the pure logic), `src/app/api/portal/**`, `src/server/portal*.ts` |
+| CRM | `apps/campaign/src/components/admin`, `src/app/[locale]/(admin)`, `src/server/crm*.ts`, `staff*.ts` |
+| Emails and the nurture schedule | `packages/emails/src/templates`, `apps/campaign/src/server/{email,drip}.ts`, rules in `packages/core/src/drip.ts` |
+| Business rules (stages, statuses, slots, eligibility, application sections) | `packages/core/src` (with tests) |
+| Database | `supabase/migrations` (never edit an applied migration: add a new one), `supabase/tests` |
+| Security headers, CSP | `apps/*/next.config.ts`; middleware in `apps/*/src/middleware.ts` |
