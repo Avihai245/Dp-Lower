@@ -1,1 +1,19 @@
-{}
+{
+  "open": "Accessibility tools",
+  "dialog": "Accessibility tools",
+  "title": "Accessibility",
+  "close": "Close accessibility tools",
+  "tools": {
+    "larger": "Larger text",
+    "smaller": "Smaller text",
+    "contrast": "High contrast",
+    "invert": "Inverted colours",
+    "grayscale": "Grayscale",
+    "light": "Light background",
+    "links": "Underline links",
+    "font": "Readable font",
+    "motion": "Stop animation"
+  },
+  "reset": "Reset all",
+  "statement": "Accessibility statement"
+}
