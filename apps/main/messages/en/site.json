@@ -16,9 +16,7 @@
   "lang": {
     "label": "Language",
     "en": "English",
-    "he": "עברית",
-    "fr": "Français",
-    "frSoon": "French edition in preparation"
+    "he": "עברית"
   },
   "nav": {
     "label": "Main navigation",

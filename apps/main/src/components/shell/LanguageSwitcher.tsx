@@ -13,21 +13,19 @@ const THEME = {
     item: BASE,
     current: 'color: #f8f5f0; font-weight: 600',
     link: 'color: #9aa3ad',
-    soon: 'color: #5d6772',
   },
   light: {
     wrap: 'display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 14px',
     item: `${BASE}; font-size: 15px; padding: 12px 10px; display: inline-block`,
     current: 'color: #14202b; font-weight: 600',
     link: 'color: #736d64',
-    soon: 'color: #a8a196',
   },
 } as const;
 
 /**
  * English / עברית switch: the same page in the other language. The language the visitor is reading is bold and not a
- * link. Français is shown but not available yet (aria-disabled, with the reason as its title). The links are plain
- * anchors with the exact address of the other edition (no redirect hop, and the same URLs as the hreflang alternates).
+ * link. The prototype's Français item is left out: there is no French edition (the approved plan removes the button).
+ * The links are plain anchors with the exact address of the other edition (no redirect hop, and the same URLs as the hreflang alternates).
  * `dark` sits in the utility bar; `light` closes the burger list on phones, where the utility bar is hidden.
  */
 export function LanguageSwitcher({ variant = 'dark' }: { variant?: keyof typeof THEME }) {
@@ -51,9 +49,6 @@ export function LanguageSwitcher({ variant = 'dark' }: { variant?: keyof typeof 
           </a>
         ),
       )}
-      <button type="button" lang="fr" aria-disabled="true" title={t('lang.frSoon')} {...mark} style={s(`${th.item}; cursor: default; ${th.soon}`)}>
-        {t('lang.fr')}
-      </button>
     </span>
   );
 }
