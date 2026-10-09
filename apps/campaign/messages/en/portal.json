@@ -1,1 +1,414 @@
-{}
+{
+  "meta": {
+    "dashboard": "Your application | Decker Pex Levi",
+    "application": "Your application details | Decker Pex Levi",
+    "documents": "Your documents | Decker Pex Levi"
+  },
+  "header": {
+    "logoAlt": "Decker Pex Levi",
+    "tour": "Show me around",
+    "myDetails": "My details",
+    "signOut": "Sign out",
+    "portal": "Portal"
+  },
+  "mail": {
+    "setPassword": "Set a password",
+    "signedInFrom": "You are signed in as <e>{email}</e>, from the details you gave us. Nothing here is visible outside the firm.",
+    "passwordSet": "Signed in as <e>{email}</e>. You can sign back in from any device with your password or your Google account.",
+    "submitted": "Status updates for this case are emailed to <e>{email}</e>, and this page always shows the current stage. Sign in any time from Track my application.",
+    "submittedPasswordSet": "Status updates for this case are emailed to <e>{email}</e>. Sign in any time with your email and password, or with Google."
+  },
+  "timeline": {
+    "title": "Where your application stands",
+    "now": "Current stage · {stage}",
+    "nodes": {
+      "eligibility": "Eligibility check",
+      "consultation": "Consultation call",
+      "portal": "Portal opened",
+      "application": "Your application",
+      "documents": "Your documents",
+      "submitted": "Submitted to the firm",
+      "review": "Review by the firm"
+    },
+    "meta": {
+      "completed": "Completed",
+      "signedIn": "You are signed in",
+      "sections": "{done} of {total} sections",
+      "uploaded": "{done} of {total} uploaded",
+      "waiting": "Waiting for you",
+      "afterSubmit": "After you submit"
+    }
+  },
+  "status": {
+    "enquiry": "Enquiry",
+    "account_created": "Account created",
+    "application_incomplete": "Application incomplete",
+    "application_submitted": "Application Submitted",
+    "under_review": "Under Review",
+    "info_required": "Additional Information Required",
+    "review_completed": "Review Completed",
+    "contacting": "Contacting Applicant"
+  },
+  "dashboard": {
+    "kicker": "Your application",
+    "headline": {
+      "start": "Your application is ready to start.",
+      "back": "Welcome back. Pick up where you left off.",
+      "ready": "Your application is ready to submit."
+    },
+    "sub": {
+      "start": "Your portal is open and your answers are saved. Next comes the information our lawyers need to review your case.",
+      "continue": "Everything you entered is saved. Finish the remaining information and documents, then send it to the firm for review."
+    },
+    "progress": "Application and documents · {percent}% complete",
+    "checklist": {
+      "eligibility": "Eligibility check completed",
+      "account": "Account created",
+      "application": "Complete your application",
+      "documents": "Submit documents",
+      "review": "Decker Pex Levi review"
+    },
+    "current": {
+      "kicker": "Current status",
+      "title": "Application not yet submitted",
+      "nextSection": "Next: {section}.",
+      "allIn": "Everything is in. Submit when you are ready.",
+      "docsLeft": "Your information is complete. {count, plural, one {# document} other {# documents}} left to add.",
+      "saved": "Everything is saved as you go. You can stop and come back whenever you like.",
+      "start": "Start my application",
+      "continue": "Continue my application",
+      "documents": "Go to documents"
+    }
+  },
+  "submitted": {
+    "kicker": "{route} · Filed {date}",
+    "route": {
+      "germany": "Germany · Art. 116(2) route",
+      "austria": "Austria · §58c route",
+      "both": "Germany and Austria routes",
+      "unsure": "Route to be confirmed"
+    },
+    "intro": "Case <e>{caseRef}</e> · Decker Pex Levi is handling your application.",
+    "after": {
+      "one": {
+        "title": "We check what you sent",
+        "body": "A case manager confirms the records are readable and tells you if anything is missing."
+      },
+      "two": {
+        "title": "A lawyer reviews the case",
+        "body": "You get a written assessment of your route and the records still needed."
+      },
+      "three": {
+        "title": "We contact you",
+        "body": "By email first, at the address you registered with. Replies within two business days."
+      }
+    },
+    "action": {
+      "kicker": "Action required from you",
+      "titleOne": "We need one document from you",
+      "titleMany": "We need {count} documents from you",
+      "titleInfo": "We need more information from you",
+      "bodyInfo": "Our team has asked for more information on your case. Check your email for the details, or upload the records requested.",
+      "reupload": "We could not open this file. Please upload a new copy.",
+      "requested": "Our team has asked for this record.",
+      "button": "Upload document"
+    },
+    "steps": {
+      "eligibility": "Eligibility",
+      "application": "Application",
+      "documents": "Documents",
+      "research": "Records research",
+      "filed": "Filed with authority",
+      "passport": "Passport appointment"
+    },
+    "stepMeta": {
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "received": "{done} of {total} received",
+      "pending": "Pending",
+      "notFiled": "Not filed yet",
+      "notScheduled": "Not scheduled"
+    },
+    "activityTitle": "Case activity",
+    "activity": {
+      "account_created": "Portal account created.",
+      "booking_created": "Free consultation call booked.",
+      "application_started": "Application started.",
+      "document_uploaded": "Document received: {title}.",
+      "document_uploaded_generic": "Document received.",
+      "application_submitted": "Application submitted.",
+      "status_changed": "Status updated: {status}."
+    },
+    "caseTitle": "Your case",
+    "facts": {
+      "route": "Route",
+      "ancestor": "Ancestor",
+      "documents": "Documents",
+      "documentsValue": "{done} of {total} received",
+      "routeValue": {
+        "germany": "Germany · Art. 116(2)",
+        "austria": "Austria · §58c",
+        "both": "Germany and Austria",
+        "unsure": "To be confirmed"
+      }
+    },
+    "handler": "Your case handler is {name}. Replies within two business days.",
+    "handlerNone": "Replies within two business days."
+  },
+  "tour": {
+    "label": "Portal tour",
+    "quick": "Quick tour",
+    "step": "Step {n} of {total}",
+    "start": "Start the tour",
+    "next": "Next",
+    "finish": "Got it, let's start",
+    "skip": "Skip tour",
+    "back": "Back",
+    "steps": {
+      "welcome": {
+        "title": "Welcome to your portal",
+        "body": "This is your personal space for the application. Here is a short tour of the 5 things you need to know. It takes under a minute."
+      },
+      "timeline": {
+        "title": "Where your case stands",
+        "body": "This line shows every stage of your case, from your first answers to the citizenship decision. The highlighted point is where you are now."
+      },
+      "checklist": {
+        "title": "Your to-do list",
+        "body": "These are the steps still open on your side. Each one gets a tick when it is done, and the bar above shows how far along you are."
+      },
+      "action": {
+        "title": "Your next step, always here",
+        "body": "This button always takes you to the one thing to do next. Right now that is your application: about 12 minutes of questions on your family."
+      },
+      "docs": {
+        "title": "Upload what you have",
+        "body": "Add any family records you already hold: birth or marriage certificates, old passports, letters. A phone photo is fine. Whatever is missing, we search the archives for."
+      },
+      "account": {
+        "title": "Saved automatically, updates by email",
+        "body": "Everything you enter is saved as you go, so you can stop and come back any time. We email you whenever your case moves forward."
+      }
+    }
+  },
+  "details": {
+    "kicker": "Your account",
+    "title": "My details",
+    "close": "Close",
+    "name": "Full name",
+    "nameError": "Please enter a first and last name.",
+    "email": "Email",
+    "emailNote": "This is the address we use for your case. To change it, contact us and we will verify the new address first.",
+    "phone": "Phone",
+    "phoneError": "Please enter a phone number with at least 7 digits.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "savedLine": "Your details are updated. Our team sees the change straight away.",
+    "saveError": "We could not save your details. Please try again.",
+    "passwordTitle": "Password",
+    "passwordHelp": "To change your password, we email you a secure link.",
+    "reset": "Email me a reset link",
+    "resetSent": "Sent to <e>{email}</e> at <e>{time}</e>. It is valid for one hour.",
+    "resetError": "We could not send the link just now. Please try again in a moment."
+  },
+  "application": {
+    "back": "Portal",
+    "headerProgress": "Application · {percent}% complete",
+    "railTitle": "Your application",
+    "kicker": "Step 3 of 4 · Application · Section {n} of 5",
+    "rail": {
+      "questions": "{count, plural, one {# question} other {# questions}}",
+      "final": "Final step",
+      "complete": "Complete",
+      "inProgress": "In progress"
+    },
+    "momentum": {
+      "start": "Let's start with the basics. This section takes about two minutes.",
+      "almost": "Almost ready. One section left before your documents.",
+      "pastHalf": "You are past halfway, {left, plural, one {# section} other {# sections}} to go.",
+      "toGo": "{left, plural, one {# section} other {# sections}} to go, and everything saves as you type."
+    },
+    "review": {
+      "complete": "Complete",
+      "incomplete": "Incomplete",
+      "answered": "All questions answered",
+      "blank": "Some questions still blank",
+      "goTo": "Go to {section}"
+    },
+    "prev": "Back",
+    "next": "Save and continue",
+    "toDocuments": "Continue to documents",
+    "footnote": "Saved automatically as you type. You can close this and return from your portal at any time.",
+    "saving": "Saving…",
+    "saved": "All changes saved",
+    "saveError": "We could not save your latest changes. Check your connection; we will keep trying.",
+    "sections": {
+      "about": {
+        "title": "About you",
+        "intro": "Your details as they appear on your current passport or birth certificate.",
+        "fields": {
+          "fullName": { "label": "Full legal name", "placeholder": "As on your passport" },
+          "dob": { "label": "Date of birth", "placeholder": "DD / MM / YYYY" },
+          "birthPlace": { "label": "Place of birth", "placeholder": "City, country" },
+          "citizenship": {
+            "label": "Current citizenship",
+            "placeholder": "e.g. United States",
+            "hint": "List all if you hold more than one"
+          }
+        }
+      },
+      "ancestor": {
+        "title": "Your ancestor",
+        "intro": "The relative who left Germany or Austria. Approximate dates are fine where you are unsure.",
+        "fields": {
+          "anName": {
+            "label": "Their full name at birth",
+            "placeholder": "Including maiden name",
+            "hint": "Names often changed after emigration"
+          },
+          "anRel": { "label": "Relationship to you", "placeholder": "e.g. maternal grandmother" },
+          "anDob": { "label": "Their date of birth", "placeholder": "DD / MM / YYYY" },
+          "anBirthPlace": { "label": "Their place of birth", "placeholder": "City, country" },
+          "anLeft": { "label": "When they left", "placeholder": "Year or approximate year" }
+        }
+      },
+      "line": {
+        "title": "The family line",
+        "intro": "The chain of births and marriages that connects you to your ancestor. This is what the authorities examine most closely.",
+        "fields": {
+          "line1": {
+            "label": "Generation between you and them",
+            "placeholder": "Full name",
+            "hint": "Leave blank if they are your parent"
+          },
+          "line2": { "label": "Second generation, if any", "placeholder": "Full name" },
+          "nameChanges": {
+            "label": "Any name changes in the line",
+            "placeholder": "Anglicised surnames, adoptions, remarriages",
+            "hint": "Tell us anything you are unsure about"
+          }
+        }
+      },
+      "contact": {
+        "title": "How to reach you",
+        "intro": "Where we send your case updates and requests for records.",
+        "fields": {
+          "email": { "label": "Email", "placeholder": "you@example.com" },
+          "phone": { "label": "Phone", "placeholder": "Including country code" },
+          "address": {
+            "label": "Postal address",
+            "placeholder": "Street, city, state, ZIP",
+            "hint": "Needed for the consular stage"
+          }
+        }
+      },
+      "review": {
+        "title": "Review and records",
+        "intro": "Check what you have told us, then move on to the documents."
+      }
+    }
+  },
+  "documents": {
+    "headerLabel": "Application · Documents",
+    "kicker": "Step 4 of 4 · Documents and submission",
+    "title": "Send us what you already have.",
+    "intro": "Key records carry the case. The rest help. Anything you cannot find, we search the archives for.",
+    "received": "{done} of {total} received",
+    "todo": "Not yet sent",
+    "todoCount": "{count, plural, one {# item} other {# items}}",
+    "got": "Received",
+    "gotCount": "{count, plural, one {# file} other {# files}}",
+    "tags": {
+      "unreadable": "Unreadable",
+      "failed": "Upload failed",
+      "uploading": "Uploading",
+      "keyReceived": "Key record · received",
+      "received": "Received",
+      "requested": "Requested",
+      "key": "Key record",
+      "helpful": "Helpful"
+    },
+    "actions": {
+      "replace": "Replace",
+      "retry": "Try again",
+      "cancel": "Cancel",
+      "upload": "Upload",
+      "camera": "Take a photo"
+    },
+    "file": {
+      "uploading": "Uploading <n>{name}</n>",
+      "unreadable": "<n>{name}</n>: we could not open this file",
+      "unreadableNoName": "We could not open this file",
+      "requested": "Our team has asked for this record."
+    },
+    "errors": {
+      "type": "<n>{name}</n>: this file type is not supported. Use PDF, JPG, PNG, HEIC or DOCX.",
+      "size": "<n>{name}</n>: this file is larger than 20 MB.",
+      "empty": "<n>{name}</n>: this file is empty.",
+      "network": "<n>{name}</n>: the upload did not finish. Check your connection and try again.",
+      "rejected": "<n>{name}</n>: we could not accept this file. Try another copy."
+    },
+    "slots": {
+      "birth_certificate": {
+        "title": "Ancestor's birth certificate",
+        "why": "Establishes their citizenship at birth. The single most important record in your case."
+      },
+      "marriage_certificates": {
+        "title": "Marriage certificates",
+        "why": "Connects surnames across generations where a name changed."
+      },
+      "emigration_naturalization": {
+        "title": "Emigration or naturalization records",
+        "why": "Shows when and how they left, and when they took a new citizenship."
+      },
+      "persecution_proof": {
+        "title": "Proof of persecution or departure date",
+        "why": "Any record placing them outside the country after 1933: a ship manifest, a visa, an affidavit."
+      },
+      "passport": {
+        "title": "Your passport",
+        "why": "Confirms your identity and current citizenship."
+      },
+      "family_tree": {
+        "title": "Family tree or written account",
+        "why": "Your own account of the line. A handwritten note or an email is fine."
+      },
+      "photo_id": {
+        "title": "Photo ID for each applicant",
+        "why": "Required for every family member included in the case."
+      },
+      "other": {
+        "title": "Any other supporting record",
+        "why": "Letters, photographs, property records, school registers."
+      }
+    },
+    "submit": {
+      "kicker": "Submit for review",
+      "lines": {
+        "finishApplication": "Finish the application first. Your documents are saved and waiting here.",
+        "unreadable": "One file could not be opened. Replace it, or submit now and we will ask for it during the review.",
+        "allIn": "Everything is in. A lawyer picks up your case once you submit.",
+        "canSubmit": "You can submit with what you have. We will tell you what is still needed and search the archives for the rest."
+      },
+      "button": "Submit my application",
+      "hint": "You can add missing records later from your portal.",
+      "backToApplication": "Back to application",
+      "saveAndReturn": "Save and return to portal",
+      "formats": "PDF, JPG, PNG, HEIC or DOCX. Up to 20 MB per file.",
+      "privacy": "Held confidentially by the firm, visible only to the team on your case, and removed on request.",
+      "submitted": "Your application is with the firm. Documents you add here reach the team on your case straight away.",
+      "backToCase": "Back to your case",
+      "error": "We could not send your application. Please try again."
+    }
+  },
+  "submitting": {
+    "title": "Sending your application to the firm",
+    "body": "Encrypting your documents and assigning your case to a lawyer. This takes a few seconds."
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "body": "We could not load your portal. Your answers and documents are safe. Please try again in a moment.",
+    "retry": "Try again"
+  }
+}
