@@ -1,0 +1,104 @@
+/*
+ * CRM (/admin) styles that need real selectors (dialog, pseudo-elements, focus, media queries). Everything else in the
+ * CRM is styled inline with s()/x() using the prototype's declarations. Colours are the prototype's own; they sit on
+ * the same brand tokens as the rest of the app (see @dpl/ui/base.css).
+ */
+
+.adm {
+  min-height: 100vh;
+  background: var(--color-neutral-100);
+  color: #14202b;
+  font-family: var(--font-sans);
+}
+.adm button,
+.adm input,
+.adm select,
+.adm textarea {
+  font-family: var(--font-sans);
+}
+.adm main:focus { outline: none; }
+
+/* skip link, visible on keyboard focus only */
+.adm-skip {
+  position: absolute;
+  inset-inline-start: 12px;
+  top: -64px;
+  z-index: 200;
+  background: #14202b;
+  color: #f8f5f0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.adm-skip:focus { top: 12px; }
+
+/* text for screen readers only */
+.adm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* the "Edit details & password" dialog: a transparent full-screen <dialog> holding the card */
+.adm-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: hidden;
+}
+.adm-dialog:not([open]) { display: none; }
+.adm-dialog[open] { display: flex; align-items: center; justify-content: center; }
+.adm-dialog::backdrop {
+  background: rgba(20, 32, 43, 0.55);
+  animation: fadeIn 200ms ease both;
+}
+
+/* table: names behave like links on hover and keyboard focus */
+.adm-rowlink:hover { text-decoration: underline !important; text-underline-offset: 3px; }
+
+/* inputs in the CRM keep the prototype's focus treatment (border colour); buttons and links keep the global ring */
+.adm input:focus-visible,
+.adm textarea:focus-visible,
+.adm select:focus-visible { outline: 2px solid rgba(20, 32, 43, 0.35); outline-offset: 1px; }
+
+/* native checkboxes and selects in the brand colour */
+.adm input[type='checkbox'] { accent-color: #14202b; width: 16px; height: 16px; }
+
+/* the board scrolls sideways on narrow screens; give the touch scroll some momentum and room */
+[data-board] { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+
+/* the inline list/board must not push the page wider than the viewport */
+.adm main { min-width: 0; }
+
+/* header on narrow screens: logo and sign out share the first row, the section links get their own */
+@media (max-width: 960px) {
+  .adm [data-admin-utils] { order: 2; }
+  .adm [data-admin-sections] { order: 3; width: 100%; margin-inline-start: 0 !important; }
+}
+
+@media (max-width: 640px) {
+  .adm [data-stats] { gap: 10px 20px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-dialog::backdrop { animation: none; }
+  .adm [data-edit-card],
+  .adm [role='tooltip'],
+  .adm [data-toasts] > * { animation: none !important; }
+}
