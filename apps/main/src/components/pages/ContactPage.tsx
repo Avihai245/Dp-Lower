@@ -1,6 +1,6 @@
 import type { Locale } from '@dpl/core';
 import { campaignUrl } from '@dpl/db/links';
-import { getContent } from '@dpl/i18n';
+import { campaignIsBilingual, getContent } from '@dpl/i18n';
 import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import { ClientMessages } from '@/components/ClientMessages';
@@ -28,8 +28,11 @@ export async function ContactPage({ locale }: { locale: Locale }) {
   }));
 
   // the client area lives in the campaign app
-  const signIn = campaignUrl(`/sign-in?source=main-site${locale === 'he' ? '' : '&lang=en'}`, locale);
-  const eligibility = campaignUrl(`/eligibility?source=main-site${locale === 'he' ? '' : '&lang=en'}`, locale);
+  const bilingual = campaignIsBilingual(process.env.NEXT_PUBLIC_CAMPAIGN_LOCALES);
+  const inLocale = bilingual ? locale : 'en';
+  const choice = bilingual && locale === 'en' ? '&lang=en' : '';
+  const signIn = campaignUrl(`/sign-in?source=main-site${choice}`, inLocale);
+  const eligibility = campaignUrl(`/eligibility?source=main-site${choice}`, inLocale);
 
   return (
     <PageFade>

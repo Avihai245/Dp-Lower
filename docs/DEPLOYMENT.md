@@ -47,6 +47,8 @@ Region: Tokyo is about 200 ms from Israel for every database round trip, Frankfu
 
 Set them in each Vercel project (Settings, Environment Variables, Production + Preview). Generate secrets with `openssl rand -hex 32`.
 
+**Language of the campaign pages** (both projects, same value): `NEXT_PUBLIC_CAMPAIGN_LOCALES` is `en` (or unset) for English only, the current decision; `en,he` publishes the Hebrew edition too. It is read at build time, so changing it needs a new deploy.
+
 **Campaign (`dpl-campaign`)**
 
 | Variable | Value |

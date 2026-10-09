@@ -5,6 +5,8 @@ that came with the design are the only Hebrew written by the designer; everythin
 Hebrew-speaking lawyer or editor before launch. This file lists where the text lives, the terminology that was chosen
 (so it can be changed in one pass) and every phrase the authors were unsure about.
 
+> The campaign's public pages are English only at present (`NEXT_PUBLIC_CAMPAIGN_LOCALES`, see ARCHITECTURE section 5), so the campaign Hebrew below is built, tested and switched off. The firm website, the team's CRM and the Hebrew emails are the live Hebrew today. Review the campaign texts before turning the Hebrew edition on.
+
 ## Where the Hebrew lives
 
 | Area | Files |

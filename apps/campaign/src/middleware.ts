@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
 import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies, returnCookie } from './lib/attribution';
 import { entryNeedsSession, entryTarget } from './lib/landing-entry';
+import { isBilingual } from './lib/bilingual';
 import { isRootFile, looksLikeRootFile } from './lib/root-files';
 
 const intl = createMiddleware(routing);
@@ -58,7 +59,15 @@ export default async function middleware(req: NextRequest) {
   // English entry page is taken to the Hebrew edition; see @dpl/i18n language-choice (an explicit choice wins, crawlers
   // are never redirected). Pages inside the funnel and the portal keep the language of the lead that opened them.
   const langParam = req.nextUrl.searchParams.get('lang');
-  if (!prefix && LANGUAGE_ENTRY.includes(pathname)) {
+  // English only (the default): the Hebrew edition of the public pages is switched off, and any address under /he goes to
+  // the English page it mirrors. The staff area keeps its Hebrew interface.
+  if (!isBilingual() && prefix && !matches(path, ['/admin'])) {
+    const url = req.nextUrl.clone();
+    url.pathname = path;
+    url.searchParams.delete('lang');
+    return withAttribution(req, NextResponse.redirect(url, 307));
+  }
+  if (isBilingual() && !prefix && LANGUAGE_ENTRY.includes(pathname)) {
     const hebrew = shouldGoHebrew({
       pathname,
       method: req.method,
@@ -95,7 +104,7 @@ export default async function middleware(req: NextRequest) {
 
   const response = withAttribution(req, intl(req));
   // ?lang=en is a choice too (the firm's site passes it on): remember it so the next page agrees
-  if (!prefix && chosenLanguage({ cookie: null, langParam }) === 'en' && req.cookies.get(LANG_COOKIE)?.value !== 'en') {
+  if (isBilingual() && !prefix && chosenLanguage({ cookie: null, langParam }) === 'en' && req.cookies.get(LANG_COOKIE)?.value !== 'en') {
     response.cookies.set(LANG_COOKIE, 'en', { ...LANG_COOKIE_OPTIONS, secure: req.nextUrl.protocol === 'https:' });
   }
   if (!matches(path, SESSION_AWARE)) return response;

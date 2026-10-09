@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { absoluteUrl, alternates } from '@dpl/i18n';
 import { LOCALES } from '@dpl/core';
+import { isBilingual } from '@/lib/bilingual';
 import { SITE_URL } from '@/lib/seo';
 
 /** Date of the content the pages were built from (a lastmod that is "now" teaches crawlers to ignore it); bump it when they change. */
@@ -14,11 +15,11 @@ const PAGES: Array<{ path: string; priority: number }> = [
 /** The public pages of the campaign site, in both languages, each with hreflang alternates. */
 export default function sitemap(): MetadataRoute.Sitemap {
   return PAGES.flatMap(({ path, priority }) =>
-    LOCALES.map((locale) => ({
+    LOCALES.filter((locale) => locale === 'en' || isBilingual()).map((locale) => ({
       url: absoluteUrl(SITE_URL, locale, path),
       lastModified: CONTENT_UPDATED,
       priority,
-      alternates: { languages: alternates(SITE_URL, path) },
+      ...(isBilingual() ? { alternates: { languages: alternates(SITE_URL, path) } } : {}),
     })),
   );
 }

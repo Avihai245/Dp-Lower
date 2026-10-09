@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, type Locale } from '@dpl/core';
+import { campaignIsBilingual } from '@dpl/i18n';
 
 export type CampaignEntry = 'eligibility' | 'sign-in';
 
@@ -12,6 +13,8 @@ const campaignOrigin = (): string =>
  * keeps it for lead attribution). Same URLs as the shell's `campaignUrl` helper: swap this for that import when merging.
  */
 export function campaignHref(locale: Locale, entry: CampaignEntry): string {
+  // the campaign's public pages are English only unless NEXT_PUBLIC_CAMPAIGN_LOCALES says otherwise
+  if (!campaignIsBilingual(process.env.NEXT_PUBLIC_CAMPAIGN_LOCALES)) return `${campaignOrigin()}/${entry}?source=main-site`;
   const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`;
   return `${campaignOrigin()}${prefix}/${entry}?source=main-site${locale === DEFAULT_LOCALE ? '&lang=en' : ''}`;
 }

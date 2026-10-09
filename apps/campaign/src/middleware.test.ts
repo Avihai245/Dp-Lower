@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const session = vi.hoisted(() => ({ user: null as { id: string } | null, calls: 0 }));
 vi.mock('@dpl/db/middleware', () => ({
@@ -17,10 +17,13 @@ const get = (url: string, cookie?: string) =>
 const location = (res: Response) => (res.headers.get('location') ?? '').replace('http://localhost:3001', '');
 const cookieNames = (res: NextResponse) => res.cookies.getAll().map((c) => c.name);
 
+// the tests below were written for the bilingual setting; the English-only ones say so themselves
 beforeEach(() => {
   session.user = null;
   session.calls = 0;
+  vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', 'en,he');
 });
+afterEach(() => vi.unstubAllEnvs());
 
 describe('platform deep links (?entry=)', () => {
   it('sends eligibility straight to the quiz and records where the visit came from', async () => {
@@ -130,7 +133,34 @@ describe('files at the root', () => {
   });
 });
 
-describe('the language a visitor starts in', () => {
+describe('English only (the setting by default)', () => {
+  beforeEach(() => vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', 'en'));
+  const page = (url: string, headers: Record<string, string> = {}) =>
+    middleware(new NextRequest(`http://localhost:3001${url}`, { headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0 Chrome/126', ...headers } }));
+
+  it('the Hebrew edition of the public pages is off: every address under /he goes to its English page, query kept', async () => {
+    for (const [from, to] of [['/he', '/'], ['/he/', '/'], ['/he/eligibility?source=ad&utm_source=x', '/eligibility?source=ad&utm_source=x'], ['/he/privacy', '/privacy'], ['/he/portal', '/portal'], ['/he/go/abc.def', '/go/abc.def'], ['/he/sign-in?next=%2Fportal', '/sign-in?next=%2Fportal']] as const) {
+      const res = await page(from);
+      expect(res.status, from).toBe(307);
+      expect(location(res), from).toBe(to);
+    }
+  });
+
+  it('the staff area keeps its Hebrew interface', async () => {
+    const res = await page('/he/admin');
+    expect(res.status).toBe(307);
+    // not redirected to English: the staff member is sent to sign in, in Hebrew
+    expect(location(res)).toBe('/he/sign-in?next=%2Fhe%2Fadmin');
+  });
+
+  it('a visitor in Israel is not redirected anywhere: the country default belongs to the bilingual setting', async () => {
+    for (const p of ['/', '/eligibility', '/privacy', '/sign-in']) {
+      expect((await page(p, { 'x-vercel-ip-country': 'IL' })).status, p).toBe(200);
+    }
+  });
+});
+
+describe('the language a visitor starts in (bilingual setting)', () => {
   const page = (url: string, headers: Record<string, string> = {}) =>
     middleware(new NextRequest(`http://localhost:3001${url}`, { headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0 Chrome/126', ...headers } }));
   const IL = { 'x-vercel-ip-country': 'IL' };

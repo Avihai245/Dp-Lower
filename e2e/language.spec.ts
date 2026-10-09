@@ -1,4 +1,5 @@
 import { expect, test, type Browser } from '@playwright/test';
+import { campaignIsBilingual } from './support/funnel';
 
 /**
  * The language a visitor starts in, and the language switch, on both sites.
@@ -91,7 +92,8 @@ test.describe('firm website', () => {
     await context.close();
   });
 
-  test('the links into the campaign pass the language on', async ({ browser }) => {
+  test('the links into the campaign pass the language on (bilingual setting)', async ({ browser }) => {
+    test.skip(!(await campaignIsBilingual()), 'the campaign is English only (default setting): see english-only.spec.ts');
     const { context, page } = await visitor(browser, IL, MAIN);
     await page.goto('/?lang=en');
     const eligibility = page.locator('a[href*="/eligibility"]').first();
@@ -100,7 +102,11 @@ test.describe('firm website', () => {
   });
 });
 
-test.describe('campaign site', () => {
+test.describe('campaign site (bilingual setting)', () => {
+  test.beforeAll(async () => {
+    test.skip(!(await campaignIsBilingual()), 'the campaign is English only (default setting): see english-only.spec.ts');
+  });
+
   test('an entry page: Hebrew from Israel, English elsewhere, and the firm-site link keeps the visitor on the language they read', async ({ playwright }) => {
     const il = await playwright.request.newContext({ baseURL: CAMPAIGN, extraHTTPHeaders: IL });
     const html = { accept: 'text/html' };

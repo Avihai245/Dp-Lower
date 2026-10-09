@@ -4,6 +4,7 @@ import { x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import NextLink from 'next/link';
 import { getPathname, usePathname } from '@/i18n/navigation';
+import { isBilingual } from '@/lib/bilingual';
 
 /**
  * English / Hebrew switch for the header (the prototype has none). Styled like the "Track my application" link beside
@@ -14,6 +15,8 @@ export function LanguageSwitch() {
   const locale = useLocale();
   const pathname = usePathname();
   const t = useTranslations('common.language');
+  // English only (the default): there is no other edition to switch to
+  if (!isBilingual()) return null;
   const other = locale === 'he' ? 'en' : 'he';
   // a plain link to the other language's real URL (English has no prefix): no redirect hop for visitors or crawlers
   const href = getPathname({ locale: other, href: pathname });

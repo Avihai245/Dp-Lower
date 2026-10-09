@@ -1,5 +1,6 @@
 import { stripBidiControls, type Locale } from '@dpl/core';
 import { absoluteUrl, alternates } from '@dpl/i18n';
+import { isBilingual } from './bilingual';
 import type { Metadata } from 'next';
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001').replace(/\/$/, '');
@@ -36,7 +37,7 @@ export function pageMetadata(p: PageMeta): Metadata {
   return {
     title: p.title,
     description: p.description,
-    alternates: { canonical: url, languages: alternates(SITE_URL, p.path) },
+    alternates: isBilingual() ? { canonical: url, languages: alternates(SITE_URL, p.path) } : { canonical: url },
     robots: p.noindex
       ? { index: false, follow: true }
       : { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
@@ -47,7 +48,7 @@ export function pageMetadata(p: PageMeta): Metadata {
       description: p.description,
       siteName: 'Decker Pex Levi Law Offices',
       locale: OG_LOCALE[p.locale],
-      alternateLocale: [OG_LOCALE[other]],
+      ...(isBilingual() ? { alternateLocale: [OG_LOCALE[other]] } : {}),
       images: [{ url: image, ...size, alt: p.title }],
     },
     twitter: { card: 'summary_large_image', title: p.title, description: p.description, images: [{ url: image, alt: p.title }] },

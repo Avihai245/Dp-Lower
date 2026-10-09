@@ -48,6 +48,8 @@ e2e/                       Playwright end-to-end tests
 pnpm build
 pnpm --filter @dpl/campaign start -p 3001 &    # http://localhost:3001
 pnpm --filter @dpl/main start -p 3000 &        # http://localhost:3000
+# the Hebrew tests need the bilingual build: NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he in apps/*/.env.local before `pnpm build`
+# (the default is English only for the campaign's public pages: then run e2e/english-only.spec.ts)
 pnpm e2e                                       # or: pnpm exec playwright test e2e/journey.spec.ts
 ```
 

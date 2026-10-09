@@ -37,3 +37,4 @@ export const departmentOf = (slug: string): string => en.team.find((m) => m.slug
 export * from './urls';
 
 export * from './language-choice';
+export * from './campaign-locales';

@@ -202,3 +202,13 @@ export function linkIn(payload: EventRecord['payload'], pattern: RegExp): string
 }
 
 export const uuid = randomUUID;
+
+/**
+ * Is the campaign running with its Hebrew edition on (NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he)? In the default English-only
+ * setting every address under /he is redirected to the English page. The Hebrew tests need the bilingual build; the
+ * English-only tests need the default one.
+ */
+export async function campaignIsBilingual(): Promise<boolean> {
+  const res = await fetch(`${BASE_URL}/he`, { redirect: 'manual', headers: { accept: 'text/html' } });
+  return res.status !== 307 && res.status !== 308;
+}

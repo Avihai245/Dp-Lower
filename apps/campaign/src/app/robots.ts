@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { isBilingual } from '@/lib/bilingual';
 import { SITE_URL } from '@/lib/seo';
 
-const PRIVATE = ['/api/', '/portal', '/admin', '/sign-in', '/create-password', '/go/', '/auth/', '/unsubscribe', '/eligibility', '/details', '/booking', '/offer'].flatMap((p) => [p, `/he${p}`]);
+const PRIVATE = ['/api/', '/portal', '/admin', '/sign-in', '/create-password', '/go/', '/auth/', '/unsubscribe', '/eligibility', '/details', '/booking', '/offer'].flatMap((p) => (isBilingual() ? [p, `/he${p}`] : [p]));
 
 const AI_AND_SEARCH_BOTS = [
   'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot',
