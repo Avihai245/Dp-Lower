@@ -18,10 +18,14 @@ export const TRANSACTIONAL_TEMPLATES = [
   'application-received',
   'password-reset',
   'contact-received',
+  // Supabase auth emails other than password recovery (magic link, signup / email-change confirmation, one-time code)
+  'auth-link',
 ] as const;
 export type TransactionalTemplateId = (typeof TRANSACTIONAL_TEMPLATES)[number];
 
 export type EmailTemplateId = WelcomeTemplateId | TransactionalTemplateId;
+
+export const ALL_TEMPLATES: readonly EmailTemplateId[] = [...TRANSACTIONAL_TEMPLATES, ...WELCOME_TEMPLATES];
 
 export const isNurtureTemplate = (id: EmailTemplateId): id is WelcomeTemplateId => id.startsWith('welcome-');
 
@@ -33,6 +37,8 @@ export interface EmailLead {
   /** null for contact-form senders who are not leads */
   caseRef: string | null;
   route: LeadRoute | null;
+  /** only used by booking-confirmation ("We will call ... and ask for ..."); optional */
+  phone?: string | null;
 }
 
 export interface EmailLinks {
@@ -50,6 +56,8 @@ export interface EmailLinks {
   booking: string;
 }
 
+export type AuthLinkKind = 'magiclink' | 'signup' | 'invite' | 'email_change' | 'email' | 'reauthentication';
+
 /** Template-specific data. Each template reads only the fields listed here. */
 export interface EmailData {
   'file-open'?: { applicationState: 'not_started' | 'in_progress' | 'complete'; docsReceived: number; docsTotal: number };
@@ -60,6 +68,8 @@ export interface EmailData {
   'document-rejected'?: { docType: DocType; note?: string | null };
   'password-reset'?: { resetUrl: string };
   'contact-received'?: { name: string };
+  /** `url` is the confirmation / sign-in link; `code` the one-time code (shown when present) */
+  'auth-link'?: { url?: string | null; kind: AuthLinkKind; code?: string | null };
 }
 
 export interface EmailContext {

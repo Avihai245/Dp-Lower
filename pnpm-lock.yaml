@@ -245,6 +245,9 @@ importers:
       '@dpl/core':
         specifier: workspace:*
         version: link:../core
+      '@dpl/i18n':
+        specifier: workspace:*
+        version: link:../i18n
 
   packages/i18n:
     dependencies:
