@@ -1,0 +1,109 @@
+/*
+ * Landing page rules that need real selectors (pseudo-classes, media queries) and so cannot be inline styles.
+ * Everything else on the landing page is inline via s() / x() from @dpl/ui, copied from the design prototype.
+ */
+
+/*
+ * Every button is a pill. The prototype forces it with `.btn { border-radius: 999px !important }` over the 12px that
+ * most of its inline button styles also declare; base.css has the 999px without !important, so the inline value wins.
+ */
+.btn {
+  border-radius: 999px !important;
+}
+/* a link styled as a button centres a wrapped label like a <button> does */
+a.btn {
+  text-align: center;
+}
+
+/* anchor jumps (#paths, #process, #team, #faq, the skip link) must land below the sticky header, which is 70-105px tall */
+.dpl-landing [id] {
+  scroll-margin-top: 96px;
+}
+
+/* the global focus ring is the same navy as the dark sections, where it would be invisible */
+.dpl-dark :focus-visible {
+  outline-color: #f8f5f0;
+}
+
+/* keyboard users: a way past the header; only visible while focused */
+.dpl-skip {
+  position: absolute;
+  inset-inline-start: 12px;
+  top: -64px;
+  z-index: 100;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: #14202b;
+  color: #f8f5f0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 160ms ease;
+}
+.dpl-skip:focus {
+  top: 12px;
+  color: #f8f5f0;
+}
+
+/* text for assistive technology only (the final value of an animated figure) */
+.dpl-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Header language switch. The header row is already full at desktop widths (the prototype wraps its labels between
+ * 961px and about 1440px), so above 960px the switch is lifted out of the row, into the top corner above the call to
+ * action, and costs no width. At <= 960px the nav links are hidden and it sits in the row beside the logo; on phones
+ * the header wraps (logo + switch on the first line, the eligibility button on the second), so the switch goes to the
+ * far end of the first line.
+ */
+[data-lang-switch] {
+  white-space: nowrap;
+}
+@media (min-width: 961px) {
+  [data-lang-switch] {
+    position: absolute;
+    top: 0;
+    /* flush with the call to action; the padding widens the hit area without moving the text */
+    inset-inline-end: calc(clamp(20px, 4.6vw, 160px) - 6px);
+    padding: 2px 6px 0 !important;
+    font-size: 12px !important;
+    line-height: 16px;
+    letter-spacing: 0.04em;
+    /* no underline in the corner; the bronze underline still appears on hover (hover.css wins on specificity) */
+    border-bottom-color: transparent !important;
+  }
+}
+@media (max-width: 640px) {
+  [data-lang-switch] {
+    margin-inline-start: auto;
+  }
+}
+
+/*
+ * Review marquee (Reputation): 88s linear loop of the track, slid by half its width (see ReviewMarquee). Declared with
+ * longhands, without animation-play-state, so that `[data-marquee]:hover > * { animation-play-state: paused }` in
+ * globals.css can pause it; reduced motion is handled there too.
+ */
+[data-marquee] > * {
+  animation-name: reviewScroll;
+  animation-duration: 88s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* the hero "scroll to explore" line is decoration: still for visitors who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  [data-scroll-line] {
+    animation: none !important;
+  }
+}
