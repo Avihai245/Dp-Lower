@@ -1,0 +1,39 @@
+/*
+ * Landing sections 10-21 (process through footer), the floating chat, the call-request modal, the mobile CTA bar and
+ * the /privacy page. Almost everything is styled inline with s()/x() exactly as in the prototype; this file only holds
+ * what an inline style cannot express (pseudo-classes on dark surfaces, media queries, reduced motion).
+ */
+
+/*
+ * In the prototype every .btn is a pill: `.btn { border-radius: 999px !important }`. base.css has no !important, so the
+ * inline `border-radius: 12px` that the prototype also sets on these buttons would win. This class restores the pill for
+ * the buttons built in this folder.
+ */
+.lm-btn { border-radius: 999px !important; }
+
+/* base.css draws a navy focus ring; on the navy sections and the chat header it would be invisible */
+[data-lm-dark] :focus-visible { outline-color: #f8f5f0; }
+[data-chat-head] :focus-visible { outline-color: #f8f5f0; }
+
+/* the video poster button fills its 16:9 frame (which clips overflow), so its ring has to sit inside */
+[data-lm-play]:focus-visible { outline: 3px solid #f8f5f0; outline-offset: -8px; }
+
+/* programmatic focus targets (chat log, dialog shells) are not tab stops and need no ring */
+[data-lm-focus-target]:focus { outline: none; }
+
+/* the chat panel casts its shadow towards the page in both reading directions */
+[data-chat-panel] { box-shadow: calc(-18px * var(--dir, 1)) 0 60px rgba(20, 32, 43, 0.16); }
+
+/* thin scrollbar room inside the chat log, same as the prototype's default */
+[data-chat-log] { overscroll-behavior: contain; }
+
+/* the fixed CTA bar (<= 640px) must never hide the last line of the footer */
+@media (max-width: 640px) {
+  [data-landing-footer] { padding-bottom: 104px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-chat-panel], [data-advisor-overlay], [data-advisor-card], [data-faq-panel] { animation: none !important; }
+  [data-typing] > i { animation: none !important; opacity: 0.6; }
+  [data-lm-sign] { transition: none !important; }
+}
