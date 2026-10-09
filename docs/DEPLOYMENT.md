@@ -29,7 +29,7 @@ no code changes are needed to go live. Placeholders you must replace are in `<an
    The migrations create the private `documents` bucket, the RLS policies, the call-booking template (Sunday to Thursday, six slots a day, two calls per slot, Asia/Jerusalem) and the Realtime publication. Nothing else to run.
 3. **Authentication, URL configuration** (Authentication, URL Configuration): Site URL `https://euro-passports.com`; Redirect URLs: `https://euro-passports.com/**`, `https://www.lawoffice.org.il/**`.
 4. **Authentication, Providers**: Email enabled (leave "Confirm email" as is: the app creates and confirms users itself); minimum password length 8. Google: paste the client ID and secret from step 7.
-5. **Authentication, Hooks, Send Email**: HTTPS hook `https://euro-passports.com/api/auth/send-email`, generate the secret and keep it for `SEND_EMAIL_HOOK_SECRET` (format `v1,whsec_...`). With this hook Supabase never sends mail itself: password-reset and sign-in emails are rendered by the app, in the user's language, and delivered through the same Zapier path as every other email, so no SMTP server is needed.
+5. **Authentication, Hooks, Send Email**: HTTPS hook `https://euro-passports.com/api/auth/send-email`, generate the secret and keep it for `SEND_EMAIL_HOOK_SECRET` (format `v1,whsec_...`; `supabase/snippets/auth-send-email-hook.sql` documents the equivalent local setting). With this hook Supabase never sends mail itself: password-reset and sign-in emails are rendered by the app, in the user's language, and delivered through the same Zapier path as every other email, so no SMTP server is needed.
 6. **Database, Backups**: enable daily backups (Pro) or schedule `pg_dump`. The `documents` bucket holds passports and civil records: keep it private (it is by default) and restrict who has dashboard access.
 7. Realtime: nothing to do (the migration adds the CRM tables to the publication).
 
@@ -83,7 +83,7 @@ If you use a single hook, set only `ZAPIER_WEBHOOK_URL` and keep the filter step
 
 For each app: New Project, import the repository, set **Root Directory** to the app folder, Framework Preset Next.js, Node 22. Install Command `pnpm install --frozen-lockfile` (run from the repository root: enable "Include source files outside of the Root Directory"). Add the domains and the environment variables above. The apex `lawoffice.org.il` should redirect to `www` (Vercel Domains).
 
-**Scheduled work.** `POST /api/cron/dispatch` (campaign) sends the nurture emails that are due and delivers the outbox. `apps/campaign/vercel.json` schedules it every 10 minutes (Vercel Pro). On the Hobby plan Vercel only allows daily crons: use the Supabase scheduler instead (see `supabase/snippets/`: a `pg_cron` + `pg_net` job that POSTs to the same URL with the same bearer token). Until the first dispatch runs, nothing is lost: events wait in the table.
+**Scheduled work.** `/api/cron/dispatch` (campaign) sends the nurture emails that are due and delivers the outbox. `apps/campaign/vercel.json` schedules it every 5 minutes (Vercel Pro; Vercel sends `Authorization: Bearer $CRON_SECRET` itself). **The Hobby plan only allows daily crons and would fail the deploy:** delete the `crons` block from `vercel.json` and run `supabase/snippets/dispatch-cron.sql` in the Supabase SQL editor instead (a `pg_cron` + `pg_net` job, every minute, that calls the same URL with the same bearer token; the secret is kept in Supabase Vault). Until the first dispatch runs, nothing is lost: events wait in the table.
 
 ## 6. First staff user
 
