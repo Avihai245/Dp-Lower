@@ -191,8 +191,17 @@ are in `ARCHITECTURE.md` section 10.
    backgrounds (3.6:1) to `#7a5c2c`, which is already in the palette; the dimmed send button text. Every other accessibility
    rule passes.
 8. **Retention period** for applications and documents.
-9. **Cost confirmation for the hosted Supabase project** (a new project in an organisation of the firm's account). Nothing has been created.
-10. **Voice AI** for the advisor: the button, the callback queue and the event are in place; the provider is a later step.
+9. **What the privacy policy must say about cookies and browser storage.** Nothing is used for advertising or analytics;
+   the inventory is: campaign cookies `dpl_lead` (httpOnly, 30 days: proves this browser created the lead), the Supabase
+   sign-in cookies (portal and CRM sessions), `dpl_src` and `dpl_utm` (30 days: where the visitor first came from, for the
+   lead's source) and `dpl_from` (30 days: where "Back to the site" goes); campaign local storage `dpl-quiz-v1` and
+   `dpl-lead-draft-v1` (the unsent answers and details; cleared when the details are saved or the applicant signs out);
+   firm website local storage `dpl-a11y` (accessibility settings) and session storage `dpl-attribution` (first-touch
+   campaign parameters and referring site until the tab closes, sent with an enquiry form). Third parties: embedded
+   YouTube videos (`youtube-nocookie.com`, loaded on the home pages and the media page) and, if the firm turns it on,
+   Cloudflare Turnstile on the public forms.
+10. **Cost confirmation for the hosted Supabase project** (a new project in an organisation of the firm's account). Nothing has been created.
+11. **Voice AI** for the advisor: the button, the callback queue and the event are in place; the provider is a later step.
 
 ## 8. How to repeat the checks
 
