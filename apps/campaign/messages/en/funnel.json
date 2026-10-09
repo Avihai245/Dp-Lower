@@ -1,1 +1,65 @@
-{}
+{
+  "quiz": {
+    "questions": {
+      "country": {
+        "text": "Which country is your family connection to?",
+        "help": "If your family history touches both, choose the one you know most about. We will look at both routes either way.",
+        "options": {
+          "germany": "Germany",
+          "austria": "Austria",
+          "both": "Both",
+          "unsure": "I am not sure"
+        }
+      },
+      "relative": {
+        "text": "Who in your family left Germany or Austria?",
+        "help": "Choose the closest relative to you.",
+        "options": {
+          "parent": "My parent",
+          "grandparent": "My grandparent",
+          "great_grandparent": "My great-grandparent",
+          "further": "Further back than that"
+        }
+      },
+      "when": {
+        "text": "Roughly when did they leave?",
+        "help": "An approximate decade is enough at this stage.",
+        "options": {
+          "before_1933": "Before 1933",
+          "between_1933_1945": "Between 1933 and 1945",
+          "after_1945": "After 1945",
+          "unsure": "I am not sure"
+        }
+      },
+      "persecution": {
+        "text": "Was their departure connected to persecution?",
+        "help": "This includes fleeing, forced emigration, deportation, or losing citizenship.",
+        "options": {
+          "yes": "Yes",
+          "no": "No",
+          "unsure": "I am not sure"
+        }
+      },
+      "records": {
+        "text": "Which family records do you already have?",
+        "help": "Nothing is required now. This tells us how much research your case will need.",
+        "options": {
+          "several": "Several documents",
+          "one_or_two": "One or two",
+          "none": "None yet"
+        }
+      },
+      "residence": {
+        "text": "Where do you live today?",
+        "help": "Your country of residence determines which consulate handles the final step.",
+        "options": {
+          "us": "United States",
+          "ca": "Canada",
+          "uk": "United Kingdom",
+          "il": "Israel",
+          "other": "Somewhere else"
+        }
+      }
+    }
+  }
+}
