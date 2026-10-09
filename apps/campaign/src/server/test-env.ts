@@ -31,6 +31,7 @@ export async function makeLead(
     route?: 'germany' | 'austria' | 'both' | 'unsure' | null;
     name?: string;
     stage?: 'lead' | 'account' | 'application' | 'review' | 'filed' | 'granted';
+    status?: 'enquiry' | 'account_created' | 'application_incomplete' | 'application_submitted' | 'under_review' | 'info_required' | 'review_completed' | 'contacting';
     unsubscribedAt?: Date | null;
     submittedAt?: Date | null;
     source?: string;
@@ -48,6 +49,7 @@ export async function makeLead(
       route: o.route === undefined ? 'germany' : o.route,
       answers: o.answers ?? {},
       stage: o.stage ?? 'lead',
+      ...(o.status ? { status: o.status } : {}),
       source: o.source ?? 'campaign-ger-aus',
       created_at: o.createdAt.toISOString(),
       unsubscribed_at: o.unsubscribedAt?.toISOString() ?? null,

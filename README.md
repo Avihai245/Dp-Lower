@@ -36,7 +36,7 @@ e2e/                       Playwright end-to-end tests
 | Command | What it checks |
 |---|---|
 | `pnpm typecheck` / `pnpm lint` | TypeScript and ESLint in every package and app |
-| `pnpm test` | about 1,240 unit and integration tests (the integration ones need `pnpm db:start`): domain rules, schemas, email templates against the design's HTML, the nurture scheduler, auth plumbing against a real GoTrue, UI logic, message parity between English and Hebrew |
+| `pnpm test` | about 1,400 unit and integration tests (the integration ones need `pnpm db:start`): domain rules, schemas, email templates against the design's HTML, the nurture scheduler, auth plumbing against a real GoTrue, UI logic, message parity between English and Hebrew |
 | `pnpm db:test` | SQL tests of the row level security, booking capacity and the outbox |
 | `pnpm e2e` | Playwright against the production builds of both apps (start them first, see below): the funnel (API and UI), the client portal, the CRM, the firm website's forms and navigation, SEO crawl of the whole sitemap, security headers and CSP, an axe accessibility scan, and the full journey from the landing page to a reviewed case in English and Hebrew |
 

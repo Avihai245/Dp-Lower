@@ -6,6 +6,7 @@ import {
   createPortalLinkToken,
   createUnsubscribeToken,
   portalUrl,
+  unsubscribeOneClickUrl,
   unsubscribeUrl,
 } from '@dpl/db/links';
 import { enqueueEmail } from '@dpl/db/outbox';
@@ -81,6 +82,7 @@ async function leadContext(db: Db, a: QueueEmailArgs): Promise<EmailContext> {
       portal: portalUrl(portalToken, locale),
       booking: portalUrl(bookingToken, locale),
       unsubscribe: unsubToken ? unsubscribeUrl(unsubToken, locale) : null,
+      unsubscribeOneClick: unsubToken ? unsubscribeOneClickUrl(unsubToken) : null,
     },
     data: a.data ?? (a.template === 'file-open' ? await fileOpenData(db, a.lead.id) : undefined),
   };
@@ -108,7 +110,8 @@ export async function queueEmailEvent(a: QueueEmailArgs): Promise<EventRow | nul
       locale: ctx.locale,
       to: { email: a.lead.email, name: a.lead.full_name },
       rendered,
-      unsubscribeUrl: ctx.links.unsubscribe,
+      // the header's address answers a mail provider's one-click POST; the link in the body leads to the page that asks first
+      unsubscribeUrl: ctx.links.unsubscribeOneClick ?? ctx.links.unsubscribe,
     });
     const hour = (a.at ?? new Date()).toISOString().slice(0, 13);
     const dedupeKey = a.dedupeKey ?? `email:${a.template}:${a.lead.id}:${hour}`;

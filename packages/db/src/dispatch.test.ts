@@ -81,7 +81,7 @@ describe('deliverPending', () => {
   });
 
   describe('nurture emails are checked again at delivery', () => {
-    const lead = { id: 'l1', email: 'anna@example.com', unsubscribed_at: null, submitted_at: null, stage: 'lead' };
+    const lead = { id: 'l1', email: 'anna@example.com', unsubscribed_at: null, submitted_at: null, stage: 'lead', status: 'account_created' };
     const nurture = (o: Partial<EventRow> = {}) =>
       ev({ id: 'n1', channel: 'email', type: 'email.send', created_at: new Date().toISOString(), payload: { category: 'nurture', template: 'welcome-2', to: { email: 'Anna@example.com' } }, ...o });
 
@@ -91,8 +91,8 @@ describe('deliverPending', () => {
       expect(calls).toHaveLength(1);
     });
 
-    it('drops one for a person who unsubscribed, submitted or moved past the application, without posting it', async () => {
-      for (const changed of [{ unsubscribed_at: '2026-10-02T00:00:00Z' }, { submitted_at: '2026-10-02T00:00:00Z' }, { stage: 'review' }]) {
+    it('drops one for a person who unsubscribed, submitted, moved past the application or whose case the team has set a status for, without posting it', async () => {
+      for (const changed of [{ unsubscribed_at: '2026-10-02T00:00:00Z' }, { submitted_at: '2026-10-02T00:00:00Z' }, { stage: 'review' }, { status: 'review_completed' }]) {
         calls.length = 0;
         const { db, patches } = fakeDb([nurture()], [{ ...lead, ...changed }]);
         expect(await deliverPending(db), JSON.stringify(changed)).toMatchObject({ sent: 0, cancelled: 1 });

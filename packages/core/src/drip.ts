@@ -1,4 +1,4 @@
-import type { LeadRoute, LeadStage } from './statuses';
+import type { LeadRoute, LeadStage, LeadStatus } from './statuses';
 
 /** Day (after the lead is created) on which each of the 15 welcome emails goes out. Index + 1 = email number. */
 export const WELCOME_DAYS = [0, 2, 3, 5, 8, 11, 14, 18, 22, 26, 30, 34, 38, 42, 46] as const;
@@ -14,6 +14,7 @@ export interface DripLeadState {
   unsubscribedAt: Date | null;
   submittedAt: Date | null;
   stage: LeadStage;
+  status: LeadStatus;
   hasBooking: boolean;
   docsReceived: number;
   docsTotal: number;
@@ -27,7 +28,7 @@ export interface DripRecord {
 }
 
 export type SkipReason = 'already_booked' | 'documents_started' | 'missed_window';
-export type StopReason = 'unsubscribed' | 'submitted' | 'past_application';
+export type StopReason = 'unsubscribed' | 'submitted' | 'past_application' | 'status_closed';
 
 export type DripDecision =
   | { action: 'send'; number: number; scheduledFor: Date }
@@ -37,17 +38,27 @@ export type DripDecision =
 export const welcomeScheduledFor = (createdAt: Date, number: number): Date =>
   new Date(createdAt.getTime() + WELCOME_DAYS[number - 1]! * 86_400_000);
 
+/**
+ * The statuses of a case the team is dealing with: once one is set (the team can set them before the application is
+ * submitted, for example for a file handed in on paper, a lead the firm is already talking to, or a case that is done)
+ * the applicant is no longer someone to nurture. The other three (enquiry, account created, application in progress)
+ * are the applicant's own.
+ */
+export const CLOSED_STATUSES: readonly LeadStatus[] = ['application_submitted', 'under_review', 'info_required', 'review_completed', 'contacting'];
+
 /** Why the whole sequence should stop for this lead, if it should. */
-export function dripStopReason(s: Pick<DripLeadState, 'unsubscribedAt' | 'submittedAt' | 'stage'>): StopReason | null {
+export function dripStopReason(s: Pick<DripLeadState, 'unsubscribedAt' | 'submittedAt' | 'stage' | 'status'>): StopReason | null {
   if (s.unsubscribedAt) return 'unsubscribed';
   if (s.submittedAt) return 'submitted';
   if (s.stage === 'review' || s.stage === 'filed' || s.stage === 'granted') return 'past_application';
+  if (CLOSED_STATUSES.includes(s.status)) return 'status_closed';
   return null;
 }
 
 /**
  * What the dispatcher should do for one lead right now.
- *  - stops after unsubscribe, submission or when the case has moved past the application;
+ *  - stops after unsubscribe, submission, when the case has moved past the application or when the team has set a status
+ *    (under review, more information needed, review completed, contacting the applicant);
  *  - email 3 ("your call is still open") is skipped when a call is booked;
  *  - emails 2 and 4 (asking for records) are sent only to someone who has not uploaded anything yet: they are skipped
  *    as soon as one document is in;

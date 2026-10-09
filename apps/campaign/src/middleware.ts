@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
 import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies, returnCookie } from './lib/attribution';
 import { entryNeedsSession, entryTarget } from './lib/landing-entry';
+import { isRootFile, looksLikeRootFile } from './lib/root-files';
 
 const intl = createMiddleware(routing);
 
@@ -35,6 +36,11 @@ function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
 
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // a file that exists at the root (the icons, robots.txt, sitemap.xml, llms.txt) is served as it is; any other single
+  // segment with a dot ("/wp-login.php", "/.env") is a 404, not a "language" for the router to choke on
+  if (looksLikeRootFile(pathname)) {
+    return isRootFile(pathname) ? NextResponse.next() : NextResponse.rewrite(new URL('/en/page-not-found', req.url), { status: 404 });
+  }
   const path = stripLocale(pathname);
   const prefix = pathname === '/he' || pathname.startsWith('/he/') ? '/he' : '';
 
@@ -64,6 +70,7 @@ export default async function middleware(req: NextRequest) {
   return response;
 }
 
-// Emailed /go/<payload>.<signature> links contain a dot, which the general rule would skip as a "static file":
-// they need the locale rewrite too.
-export const config = { matcher: ['/((?!api|_next|_vercel|.*\\..*).*)', '/go/:path*', '/he/go/:path*'] };
+// Not the API, the build output and files in folders (/images/logo.webp). A single segment with a dot (/favicon.ico,
+// /wp-login.php) is included: it is either a file of ROOT_FILES or a 404. Emailed /go/<payload>.<signature> links contain
+// a dot too and need the locale rewrite, so they are listed on their own.
+export const config = { matcher: ['/((?!api|_next|_vercel|.*/.*\\..*).*)', '/go/:path*', '/he/go/:path*'] };

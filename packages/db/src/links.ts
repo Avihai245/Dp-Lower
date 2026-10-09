@@ -43,4 +43,6 @@ const localePrefix = (l: Locale) => (l === DEFAULT_LOCALE ? '' : `/${l}`);
 export const portalUrl = (token: string, locale: Locale = DEFAULT_LOCALE) => `${campaignSiteUrl()}${localePrefix(locale)}/go/${token}`;
 export const unsubscribeUrl = (token: string, locale: Locale = DEFAULT_LOCALE) =>
   `${campaignSiteUrl()}${localePrefix(locale)}/unsubscribe?t=${token}`;
+/** The address for the `List-Unsubscribe` header: a mail provider's one-click button POSTs here (RFC 8058). */
+export const unsubscribeOneClickUrl = (token: string) => `${campaignSiteUrl()}/api/unsubscribe/one-click?t=${token}`;
 export const campaignUrl = (path: string, locale: Locale = DEFAULT_LOCALE) => `${campaignSiteUrl()}${localePrefix(locale)}${path}`;

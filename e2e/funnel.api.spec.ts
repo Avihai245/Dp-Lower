@@ -265,6 +265,8 @@ test.describe('POST /api/leads', () => {
     expect(statuses.slice(10)).toEqual([429, 429]);
     const limited = await request.post('/api/leads', { data: {}, headers: { 'x-forwarded-for': ip } });
     expect((await limited.json()).error).toBe('rate_limited');
+    // a client (and a mail provider) is told when to come back
+    expect(limited.headers()['retry-after']).toBe('60');
     // another address is unaffected
     const other = await request.post('/api/leads', { data: {}, headers: { 'x-forwarded-for': newIp() } });
     expect(other.status()).toBe(400);
@@ -899,6 +901,44 @@ test.describe('unsubscribe', () => {
     expect((await client.post('/api/unsubscribe', { data: { token: 'x'.repeat(40) } })).status()).toBe(400);
     expect((await client.post('/api/unsubscribe', { data: { token: signAppToken({ lid: lead.leadId, p: 'portal' }) } })).status()).toBe(400);
     await client.dispose();
+  });
+
+  test('RFC 8058 one-click: the POST of a mail provider to the List-Unsubscribe address stops the nurture emails', async ({ playwright }) => {
+    const owner = await newClient(playwright);
+    const lead = await createLead(owner, 'oneclick');
+    const welcome = await emailEvent(lead.leadId, 'welcome-1');
+    const address = welcome.payload.listUnsubscribe as string;
+    expect(address).toMatch(/\/api\/unsubscribe\/one-click\?t=[\w.-]+$/);
+    // the link in the body is the page that asks first, with the same token
+    const token = address.split('?t=')[1]!;
+    expect(String(welcome.payload.html)).toContain(`/unsubscribe?t=${token}`);
+
+    // the provider's request comes from its own servers: no cookie, no Origin
+    const provider = await playwright.request.newContext({ extraHTTPHeaders: { 'x-forwarded-for': newIp() } });
+    // a request without the fixed body, or with a token that is not an unsubscribe token, changes nothing
+    expect((await provider.post(address, { form: { other: 'x' } })).status()).toBe(400);
+    expect((await provider.post(address, { data: '' })).status()).toBe(400);
+    expect((await provider.post(`${BASE_URL}/api/unsubscribe/one-click?t=${'x'.repeat(40)}`, { form: { 'List-Unsubscribe': 'One-Click' } })).status()).toBe(400);
+    expect((await provider.post(`${BASE_URL}/api/unsubscribe/one-click?t=${signAppToken({ lid: lead.leadId, p: 'portal' })}`, { form: { 'List-Unsubscribe': 'One-Click' } })).status()).toBe(400);
+    expect((await leadByEmail(lead.email))?.unsubscribed_at).toBeNull();
+
+    const done = await provider.post(address, { form: { 'List-Unsubscribe': 'One-Click' } });
+    expect(done.status()).toBe(200);
+    expect((await leadByEmail(lead.email))?.unsubscribed_at).toBeTruthy();
+    // what was still queued for this person is cancelled, and the CRM hears of it once (a repeated POST changes nothing)
+    expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'email.send' && e.payload.category === 'nurture' && e.status === 'pending')).toEqual([]);
+    expect((await provider.post(address, { form: { 'List-Unsubscribe': 'One-Click' } })).status()).toBe(200);
+    expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'unsubscribed')).toHaveLength(1);
+
+    // opened in a browser, the same address is the confirmation page, not an unsubscribe
+    const other = await createLead(owner, 'oneclick-get');
+    const otherAddress = ((await emailEvent(other.leadId, 'welcome-1')).payload.listUnsubscribe as string);
+    const get = await provider.get(otherAddress, { maxRedirects: 0 });
+    expect(get.status()).toBe(303);
+    expect(new URL(get.headers().location!, BASE_URL).pathname).toBe('/unsubscribe');
+    expect((await leadByEmail(other.email))?.unsubscribed_at).toBeNull();
+    await provider.dispose();
+    await owner.dispose();
   });
 });
 

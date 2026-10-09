@@ -50,6 +50,8 @@ export interface EmailLinks {
   privacy: string;
   /** null for transactional emails */
   unsubscribe: string | null;
+  /** the address for the `List-Unsubscribe` header, which a mail provider's one-click button POSTs to (RFC 8058); falls back to `unsubscribe` */
+  unsubscribeOneClick?: string | null;
   /** absolute URLs of the email-safe images (PNG/JPG) */
   logo: string;
   teamPhoto: string;

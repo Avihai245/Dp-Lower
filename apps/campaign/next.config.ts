@@ -69,7 +69,15 @@ const config: NextConfig = {
     return config;
   },
   async headers() {
-    return [{ source: '/:path*', headers: [...securityHeaders, { key: 'Content-Security-Policy', value: contentSecurityPolicy() }] }];
+    // images and the icons are not content-hashed: a day in every cache, then a week of serving the old file while a new one is fetched
+    const staticCache = [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }];
+    return [
+      { source: '/:path*', headers: [...securityHeaders, { key: 'Content-Security-Policy', value: contentSecurityPolicy() }] },
+      { source: '/images/:path*', headers: staticCache },
+      { source: '/email/:path*', headers: staticCache },
+      { source: '/favicon.ico', headers: staticCache },
+      { source: '/apple-touch-icon.png', headers: staticCache },
+    ];
   },
   async redirects() {
     return [

@@ -211,6 +211,7 @@ export async function scheduleDueEmails(
         unsubscribedAt: lead.unsubscribed_at ? new Date(lead.unsubscribed_at) : null,
         submittedAt: lead.submitted_at ? new Date(lead.submitted_at) : null,
         stage: lead.stage,
+        status: lead.status,
         hasBooking: booked.has(lead.id),
         docsReceived: received.get(lead.id) ?? 0,
         docsTotal: DOC_TYPES.length,

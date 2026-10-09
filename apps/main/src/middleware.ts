@@ -1,7 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
-import { missingPageLocale } from './lib/known-routes';
+import { isRootFile, missingPageLocale } from './lib/known-routes';
 import { legacyPath } from './lib/legacy-urls';
 
 const intl = createMiddleware(routing);
@@ -30,6 +30,8 @@ function legacyTarget(req: NextRequest): string | null {
 export default function middleware(req: NextRequest) {
   const target = legacyTarget(req);
   if (target) return NextResponse.redirect(new URL(target, req.url), 301);
+  // a file that exists at the root (the icons, robots.txt, sitemap.xml, llms.txt) is served as it is
+  if (isRootFile(req.nextUrl.pathname)) return NextResponse.next();
   // Not a page of the site: a server-rendered 404 in the visitor's language (a page calling notFound() would reach the
   // browser as an empty shell). The 404 page itself is an ordinary page that this rewrite points at.
   const missing = missingPageLocale(req.nextUrl.pathname);
@@ -37,4 +39,6 @@ export default function middleware(req: NextRequest) {
   return intl(req);
 }
 
-export const config = { matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'] };
+// Not the API, the build output and files in folders (/images/logo.webp). A single segment with a dot (/favicon.ico,
+// /wp-login.php) is included: it is either a file of ROOT_FILES or a 404, and must not reach the router as a "language".
+export const config = { matcher: ['/((?!api|_next|_vercel|.*/.*\\..*).*)'] };

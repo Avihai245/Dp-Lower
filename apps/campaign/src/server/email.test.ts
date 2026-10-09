@@ -120,9 +120,11 @@ describe.skipIf(!hasDb)('queueEmail (local Supabase)', () => {
     const p = (await event(`welcome:${l.id}:4`))!.payload as Payload;
     expect(p.category).toBe('nurture');
     expect(p.html).toMatch(/\/unsubscribe\?t=/);
-    // the same signed address, for the List-Unsubscribe header of a sending app that can set one
-    expect(p.listUnsubscribe).toMatch(/\/unsubscribe\?t=[\w.-]+$/);
-    expect(p.html).toContain(p.listUnsubscribe!.replace(/&/g, '&amp;'));
+    // the List-Unsubscribe header of a sending app that can set one: the one-click address (a mail provider POSTs to it),
+    // with the same signed token as the link in the body, which opens the page that asks first
+    expect(p.listUnsubscribe).toMatch(/\/api\/unsubscribe\/one-click\?t=[\w.-]+$/);
+    const token = /\/unsubscribe\?t=([\w.-]+)/.exec(p.html)![1];
+    expect(p.listUnsubscribe!.endsWith(`?t=${token}`)).toBe(true);
     expect(await event(`welcome:${unsub.id}:4`)).toBeNull();
     // transactional emails still reach an unsubscribed lead
     await mail.queueEmail({

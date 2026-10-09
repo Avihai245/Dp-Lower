@@ -1,5 +1,5 @@
 import { createAdminSupabase } from '@dpl/db/admin';
-import { ApiError, handle, json } from '@dpl/db/http';
+import { ApiError, handle, json, limitOrThrow } from '@dpl/db/http';
 import { resolveLead } from '@dpl/db/lead-session';
 import { activeBooking } from '@/server/bookings';
 import { serializeLead } from '@/server/leads';
@@ -7,7 +7,8 @@ import { serializeLead } from '@/server/leads';
 export const dynamic = 'force-dynamic';
 
 /** The caller's own file (lead cookie or signed-in user): what the funnel screens and the set-password screen need. */
-export const GET = handle(async () => {
+export const GET = handle(async (req) => {
+  await limitOrThrow(req, 'lead-read', { windowSeconds: 60, max: 300 });
   const db = createAdminSupabase();
   const who = await resolveLead(db);
   if (!who) throw new ApiError(401, 'unauthorized');

@@ -9,7 +9,8 @@ vi.mock('@dpl/db/middleware', () => ({
   },
 }));
 
-import middleware from './middleware';
+import middleware, { config } from './middleware';
+import { ROOT_FILES } from './lib/root-files';
 
 const get = (url: string, cookie?: string) =>
   middleware(new NextRequest(`http://localhost:3001${url}`, cookie ? { headers: { cookie } } : undefined));
@@ -87,5 +88,33 @@ describe('protected pages', () => {
     await get('/');
     await get('/privacy');
     expect(session.calls).toBe(0);
+  });
+});
+
+describe('files at the root', () => {
+  const matched = (p: string) => new RegExp(`^${config.matcher[0]}$`).test(p);
+
+  it('single segments with a dot reach the middleware; folders, the API and the build output do not; emailed /go links do', () => {
+    for (const p of ['/', '/he/eligibility', '/favicon.ico', '/wp-login.php', '/.env']) expect(matched(p), p).toBe(true);
+    for (const p of ['/api/leads', '/_next/static/a.js', '/images/DPL_logo.webp', '/email/dpl-logo.png', '/he/favicon.ico']) expect(matched(p), p).toBe(false);
+    expect(config.matcher).toContain('/go/:path*');
+    expect(config.matcher).toContain('/he/go/:path*');
+  });
+
+  it('the icons, robots.txt, sitemap.xml and llms.txt are served as they are', async () => {
+    for (const p of ROOT_FILES) {
+      const res = await get(p);
+      expect(res.status, p).toBe(200);
+      expect(res.headers.get('x-middleware-next'), p).toBe('1');
+    }
+    expect(session.calls).toBe(0);
+  });
+
+  it('any other single segment with a dot is a 404, never a 500', async () => {
+    for (const p of ['/wp-login.php', '/.env', '/index.html', '/ads.txt', '/favicon.ico.bak']) {
+      const res = await get(p);
+      expect(res.status, p).toBe(404);
+      expect(res.headers.get('x-middleware-rewrite'), p).toContain('/en/page-not-found');
+    }
   });
 });

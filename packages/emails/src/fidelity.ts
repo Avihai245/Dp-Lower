@@ -5,13 +5,13 @@
  * Not part of the runtime package surface (index.ts does not export it).
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import { JSDOM } from 'jsdom';
 import { getContent } from '@dpl/i18n';
 import type { EmailContext, EmailTemplateId } from './types';
 
-export const DESIGN_DIR =
-  process.env.DESIGN_DIR ??
-  '/tmp/claude-0/-home-user-Dp-Lower/da03b263-f960-5b12-8d27-94b18ce889b9/scratchpad/design/form-design-blockers/project';
+/** The design's own email files, kept in the repository (`fixtures/design`) so that the comparison runs everywhere, CI included. */
+export const DESIGN_DIR = process.env.DESIGN_DIR ?? path.join(import.meta.dirname, '../fixtures/design');
 
 export const hasDesignSources = (): boolean => fs.existsSync(`${DESIGN_DIR}/Lead Email.html`);
 

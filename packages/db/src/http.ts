@@ -9,6 +9,8 @@ export class ApiError extends Error {
     public status: number,
     public code: string,
     public details?: unknown,
+    /** extra response headers (`Retry-After` on a 429) */
+    public headers?: Record<string, string>,
   ) {
     super(code);
   }
@@ -23,7 +25,7 @@ export function handle<C = unknown>(fn: (req: NextRequest, ctx: C) => Promise<Re
       return await fn(req, ctx);
     } catch (e) {
       if (e instanceof ApiError) {
-        return NextResponse.json({ error: e.code, details: e.details }, { status: e.status });
+        return NextResponse.json({ error: e.code, details: e.details }, { status: e.status, ...(e.headers ? { headers: e.headers } : {}) });
       }
       console.error('[api] unhandled error', req.method, req.nextUrl.pathname, e);
       return NextResponse.json({ error: 'internal_error' }, { status: 500 });
@@ -77,7 +79,8 @@ export function assertSameOrigin(req: NextRequest): void {
 /** Throws 429 when `ip` exceeds `max` calls per window on `bucket`. */
 export async function limitOrThrow(req: Request, bucket: string, opts: { windowSeconds: number; max: number }): Promise<void> {
   const allowed = await rateLimit(createAdminSupabase(), `${bucket}:${clientIp(req)}`, opts);
-  if (!allowed) throw new ApiError(429, 'rate_limited');
+  // the window is the longest a caller could have to wait: a well-behaved client (and a mail provider) knows when to come back
+  if (!allowed) throw new ApiError(429, 'rate_limited', undefined, { 'Retry-After': String(opts.windowSeconds) });
 }
 
 /** Cloudflare Turnstile. Disabled (always true) until TURNSTILE_SECRET is configured. */

@@ -274,6 +274,18 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       }
     });
 
+    it('stops when the team has set a status, although the case is still at an early stage; the applicant\'s own statuses carry on', async () => {
+      const now = new Date();
+      const old = new Date(now.getTime() - 5 * DAY);
+      const closed = await lead({ createdAt: old, status: 'review_completed' });
+      const contacting = await lead({ createdAt: old, status: 'contacting' });
+      const own = await lead({ createdAt: old, status: 'application_incomplete' });
+      const result = await run([closed, contacting, own], now);
+      expect(result).toMatchObject({ leads: 3, stopped: 2 });
+      for (const l of [closed, contacting]) expect(await eventsOf(l)).toHaveLength(0);
+      expect((await eventsOf(own)).length).toBeGreaterThan(0);
+    });
+
     it('ignores leads older than 47 days and leads created by Google sign-in that never answered the questions', async () => {
       const now = new Date();
       const ancient = await lead({ createdAt: new Date(now.getTime() - 48 * DAY) });

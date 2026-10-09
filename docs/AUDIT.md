@@ -95,7 +95,7 @@ axe (WCAG 2.0/2.1 A and AA) finds no violation other than colour contrast on any
 | Plan stage | Implemented in | Verified by |
 |---|---|---|
 | 0 Infrastructure: monorepo, lint, tests, CI, env examples, assets, robots/llms | `pnpm-workspace.yaml`, `packages/*`, `apps/*`, `.github/workflows/ci.yml` (verify, database + integration, build, Playwright), `.env.example` files, `app/{robots,sitemap}.ts`, `llms*.txt` routes | CI; `e2e/seo.spec.ts`, `e2e/hygiene.spec.ts` |
-| 1 Design system | `packages/ui` (tokens, `s()`/`x()` direction-aware styles, reveal/count-up/marquee/accordion, hero video, accessibility widget, chat, sticky call to action) | `e2e/main.spec.ts`, `e2e/a11y.spec.ts`, `tools/visual` |
+| 1 Design system | `packages/ui` (tokens, fonts, `s()`/`x()` direction-aware styles, `RevealObserver`, hooks); the components that only one site uses stay in that site: header, footer, accessibility widget, chat, sticky call to action, mega menu in `apps/main/src/components/shell`; header, hero video, review marquee, count-up figures, advisor and chat in `apps/campaign/src/components/landing` | `e2e/main.spec.ts`, `e2e/a11y.spec.ts`, `tools/visual` |
 | 2 i18n | next-intl, `/` and `/he`, `lang`/`dir`, hreflang, message parity test, French removed from the language switch | `apps/*/src/i18n/messages.test.ts`, `e2e/seo.spec.ts`, `packages/i18n/src/bidi.test.ts` |
 | 3 Firm website | `apps/main` (home, about, services + 22, team + 37, testimonials, insights + 8, media, contact, legal, 404); forms with zod on both sides; campaign links; SEO and structured data | `e2e/main.spec.ts`, `e2e/seo.spec.ts` (every sitemap URL), unit tests of the pure parts |
 | 4 Landing page and funnel | `apps/campaign` (21 landing sections, chat, advisor, six-question quiz, details, booking, offer, deep links) | `e2e/funnel.api.spec.ts`, `e2e/funnel.ui.spec.ts`, `e2e/journey.spec.ts` |
@@ -117,8 +117,8 @@ axe (WCAG 2.0/2.1 A and AA) finds no violation other than colour contrast on any
 | 06 Personalised offer | `components/funnel/OfferView.tsx`, `logic/offer.ts` |
 | 07 Create a password | `/create-password`, `/api/auth/set-password`; the account is linked to the existing lead (`portal-session.ts`) |
 | 08 Portal opens | `components/portal/Dashboard.tsx` |
-| 09 Complete the application | `components/portal/application`, autosave to `applications` |
-| 10 Upload the records | `components/portal/documents`, signed upload URLs, private bucket |
+| 09 Complete the application | `components/portal/ApplicationEditor.tsx`, `useApplicationAutosave.ts`, autosave to `applications` |
+| 10 Upload the records | `components/portal/DocumentsScreen.tsx`, `useDocumentUploads.ts`, signed upload URLs, private bucket |
 | 11 Submit | `submitApplication` (`server/portal-application.ts`): status, `application.submitted`, nurture stops |
 | 12 The team reviews and sets the status | CRM status panel, `status.changed` + email, visible in the portal at once (also before submission) |
 | 13 The client follows the case | portal sign-in, status page, emails |
@@ -135,6 +135,13 @@ are in `ARCHITECTURE.md` section 10.
 | Fonts with `next/font/google` | Self-hosted `@fontsource-variable` packages | No request to a third party at run time (the CSP keeps `font-src 'self'`), no network needed at build time; same families |
 | `dispatch-events` Supabase Edge Function and `pg_cron` every 15 minutes | A Next.js route `/api/cron/dispatch` called by Vercel Cron every 5 minutes (or by `pg_cron` + `pg_net`, `supabase/snippets/dispatch-cron.sql`) | One codebase, testable with Vitest, one place for the secrets |
 | Supabase project created up front | Everything runs on the local Supabase stack | Waits for the firm's confirmation of the cost (section 7) |
+| `documents.status`: empty, uploading, uploaded, approved, rejected, requested | `missing`, `requested`, `received`, `reupload` | The CRM's own words (the design's staff controls: "Mark received", "Request again"); an upload in progress is client state, approval is "received" |
+| `applications.sections` and `progress` | `applications.data` (all answers) and `current_section`; progress is computed from the data | One document per applicant, the five sections are a view of it |
+| Dates as ISO with `Intl` formatting | Dates stay as the design's display text and are parsed into ISO where a machine needs them (`apps/main/src/lib/dates.ts`) | Keeps the content files identical to the design; the structured-data error is fixed |
+| Client validation with the same zod schema | Client rules mirror the zod schema (`packages/core/src/schemas.ts`); the server always validates with zod | Keeps zod and the server code out of the browser bundle |
+| Uploads: PDF, JPG, PNG, HEIC up to 20 MB | Also HEIF, WebP and Word (`.docx`), same limit, checked by sniffing the real file type | Applicants hold records in these formats |
+| Links from the firm site: `euro-passports.com/?entry=…&source=main-site` | `/eligibility?source=main-site` and `/sign-in?source=main-site` (`?entry=` works too) | One redirect fewer; both set the same cookies |
+| Nurture stops on submission, unsubscribe or a closed status | Also when the case has moved past the application or the team has set a status (under review, more information needed, review completed, contacting); an email overdue by more than 36 hours is skipped, not sent late; queued emails older than 48 hours are cancelled; at least 20 hours between two emails | Nobody gets a burst after downtime or an email for a case that has moved on |
 
 ## 4. Differences from the design (each needs the firm's eye)
 

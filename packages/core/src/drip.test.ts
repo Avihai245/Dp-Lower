@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { planDrip, WELCOME_DAYS, welcomeScheduledFor, type DripLeadState } from './drip';
+import { CLOSED_STATUSES, dripStopReason, planDrip, WELCOME_DAYS, welcomeScheduledFor, type DripLeadState } from './drip';
+import { LEAD_STATUSES } from './statuses';
 
 const created = new Date('2026-10-01T10:00:00Z');
 const day = (n: number, extraHours = 0) => new Date(created.getTime() + n * 86_400_000 + extraHours * 3_600_000);
@@ -8,6 +9,7 @@ const base: DripLeadState = {
   unsubscribedAt: null,
   submittedAt: null,
   stage: 'account',
+  status: 'account_created',
   hasBooking: false,
   docsReceived: 0,
   docsTotal: 8,
@@ -62,6 +64,18 @@ describe('planDrip', () => {
     expect(planDrip({ ...base, unsubscribedAt: day(1) }, [], day(5))).toEqual([{ action: 'stop', reason: 'unsubscribed' }]);
     expect(planDrip({ ...base, submittedAt: day(1) }, [], day(5))).toEqual([{ action: 'stop', reason: 'submitted' }]);
     expect(planDrip({ ...base, stage: 'review' }, [], day(5))).toEqual([{ action: 'stop', reason: 'past_application' }]);
+  });
+
+  it('stops once the team has set a status, even while the case is still at an early stage', () => {
+    for (const status of ['application_submitted', 'under_review', 'info_required', 'review_completed', 'contacting'] as const) {
+      expect(planDrip({ ...base, stage: 'lead', status }, [], day(5)), status).toEqual([{ action: 'stop', reason: 'status_closed' }]);
+    }
+    // the applicant's own statuses carry on
+    for (const status of ['enquiry', 'account_created', 'application_incomplete'] as const) {
+      expect(dripStopReason({ ...base, status }), status).toBeNull();
+    }
+    // every status is one or the other
+    expect(LEAD_STATUSES.filter((s) => !CLOSED_STATUSES.includes(s))).toEqual(['enquiry', 'account_created', 'application_incomplete']);
   });
 
   it('does not send a burst after downtime: old emails are skipped, one current email is sent', () => {

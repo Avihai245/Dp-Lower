@@ -1,5 +1,5 @@
 import 'server-only';
-import { dripStopReason, hmacSha256Hex, type LeadStage } from '@dpl/core';
+import { dripStopReason, hmacSha256Hex, type LeadStage, type LeadStatus } from '@dpl/core';
 import type { Db, EventRow } from './types';
 
 const BACKOFF_MINUTES = [2, 10, 60, 360, 1440];
@@ -90,7 +90,7 @@ export async function deliverPending(db: Db, limit = 25): Promise<DispatchResult
   return result;
 }
 
-type NurtureLead = { id: string; email: string; unsubscribed_at: string | null; submitted_at: string | null; stage: LeadStage };
+type NurtureLead = { id: string; email: string; unsubscribed_at: string | null; submitted_at: string | null; stage: LeadStage; status: LeadStatus };
 
 const asDate = (v: string | null): Date | null => (v ? new Date(v) : null);
 
@@ -104,7 +104,7 @@ async function nurtureCancellations(db: Db, events: EventRow[]): Promise<Map<str
   if (nurture.length === 0) return out;
 
   const ids = [...new Set(nurture.map((e) => e.lead_id).filter((id): id is string => !!id))];
-  const { data } = await db.from('leads').select('id, email, unsubscribed_at, submitted_at, stage').in('id', ids);
+  const { data } = await db.from('leads').select('id, email, unsubscribed_at, submitted_at, stage, status').in('id', ids);
   const leads = new Map((data ?? []).map((l) => [l.id, l as NurtureLead]));
 
   for (const e of nurture) {
@@ -113,7 +113,7 @@ async function nurtureCancellations(db: Db, events: EventRow[]): Promise<Map<str
       out.set(e.id, 'cancelled: the lead no longer exists');
       continue;
     }
-    const stopped = dripStopReason({ unsubscribedAt: asDate(lead.unsubscribed_at), submittedAt: asDate(lead.submitted_at), stage: lead.stage });
+    const stopped = dripStopReason({ unsubscribedAt: asDate(lead.unsubscribed_at), submittedAt: asDate(lead.submitted_at), stage: lead.stage, status: lead.status });
     const sentTo = (e.payload as { to?: { email?: string } }).to?.email?.toLowerCase();
     if (stopped) out.set(e.id, `cancelled: the sequence has stopped (${stopped})`);
     else if (sentTo && sentTo !== lead.email.toLowerCase()) out.set(e.id, 'cancelled: the address was corrected');
