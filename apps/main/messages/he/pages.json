@@ -22,7 +22,7 @@
     },
     "attorney": {
       "title": "{name}, {role} | דקר פקס לוי, משרדי עורכי דין",
-      "fallbackDescription": "{name}, {role}, {dept}."
+      "fallbackDescription": "{name}, {role}, {dept} במשרד דקר פקס לוי."
     }
   },
   "breadcrumbs": {

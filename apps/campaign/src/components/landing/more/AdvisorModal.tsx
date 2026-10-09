@@ -3,6 +3,7 @@ import { isPhone } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useId, useLayoutEffect, useRef, useState, type Dispatch, type FormEvent, type RefObject, type SetStateAction } from 'react';
+import { Turnstile } from '@/components/funnel/Turnstile';
 import { api } from '@/lib/api';
 import { useLandingUi } from '../ui-context';
 import '../../../styles/landing-more.css';
@@ -58,6 +59,9 @@ function AdvisorDialog({
   const [stage, setStage] = useState<Stage>('form');
   const [count, setCount] = useState(COUNTDOWN_SECONDS);
   const [problem, setProblem] = useState<Problem>(null);
+  // the Turnstile token (only when a site key is configured; the server decides what a missing one means)
+  const captcha = useRef<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
   const [busy, setBusy] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -131,6 +135,7 @@ function AdvisorDialog({
         locale,
         source: 'landing-advisor',
         ...(honeypot ? { website: honeypot } : {}),
+        ...(captcha.current ? { turnstileToken: captcha.current } : {}),
       },
     });
     if (!alive.current) return;
@@ -140,8 +145,10 @@ function AdvisorDialog({
       setStage('received');
       return;
     }
-    // 400 means the server did not accept the number; 429 the rate limit; anything else (including no network) is a failure to send
-    setProblem(res.status === 429 || res.error === 'rate_limited' ? 'rate_limited' : res.status === 400 ? 'phone' : 'failed');
+    // a token is single use: ask for a fresh one before the next attempt
+    setCaptchaReset((n) => n + 1);
+    // 400 means the server did not accept the number (or the captcha); 429 the rate limit; anything else (including no network) is a failure to send
+    setProblem(res.status === 429 || res.error === 'rate_limited' ? 'rate_limited' : res.error === 'captcha_failed' ? 'failed' : res.status === 400 ? 'phone' : 'failed');
   }
 
   function changeNumber() {
@@ -224,6 +231,7 @@ function AdvisorDialog({
                 {problemText}
               </div>
             )}
+            <Turnstile onToken={(token) => (captcha.current = token)} resetKey={captchaReset} />
             <button
               type="submit"
               disabled={busy}

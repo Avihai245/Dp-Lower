@@ -93,7 +93,7 @@ export function MyDetailsModal({
   const sendReset = async () => {
     setResetting(true);
     setResetFailed(false);
-    const res = await api('/api/auth/forgot', { method: 'POST', body: { email: lead.email } });
+    const res = await api('/api/auth/forgot', { method: 'POST', body: { email: lead.email, locale } });
     setResetting(false);
     if (!res.ok) {
       setResetFailed(true);

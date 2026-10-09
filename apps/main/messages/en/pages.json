@@ -22,7 +22,7 @@
     },
     "attorney": {
       "title": "{name}, {role} | Decker Pex Levi Law Offices",
-      "fallbackDescription": "{name}, {role}, {dept}."
+      "fallbackDescription": "{name}, {role}, {dept} at Decker Pex Levi Law Offices."
     }
   },
   "breadcrumbs": {

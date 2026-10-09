@@ -30,9 +30,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     type: 'profile',
     image: member.photo,
     title: t('meta.attorney.title', { name: member.name, role }),
+    // a one-line bio ("Leads the North America team.") is too thin for a search snippet on its own
     description: cut(
-      member.bio ||
-        t('meta.attorney.fallbackDescription', { name: member.name, role: member.role, dept: member.dept }),
+      member.bio && member.bio.length >= 60
+        ? member.bio
+        : [t('meta.attorney.fallbackDescription', { name: member.name, role: member.role, dept: member.dept }), member.bio].filter(Boolean).join(' '),
       158,
     ),
   });
