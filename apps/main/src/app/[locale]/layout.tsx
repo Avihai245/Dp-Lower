@@ -39,7 +39,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} dir={dirOf(locale as Locale)}>
+    <html lang={locale} dir={dirOf(locale as Locale)} suppressHydrationWarning>
       <body>
         <ClientMessages namespaces={['site']}>{children}</ClientMessages>
       </body>

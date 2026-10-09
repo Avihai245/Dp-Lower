@@ -3,5 +3,10 @@
   "language": {
     "name": "English",
     "switchLabel": "English — מעבר לאנגלית"
+  },
+  "notFound": {
+    "title": "הדף לא נמצא",
+    "body": "הדף שחיפשתם אינו קיים או שהועבר.",
+    "home": "חזרה לדף הבית"
   }
 }

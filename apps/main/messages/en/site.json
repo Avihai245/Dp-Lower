@@ -38,12 +38,30 @@
       "lede": "Over thirty years in immigration, visa and citizenship law, from Tel Aviv and Jerusalem.",
       "cta": "About Decker Pex Levi",
       "items": {
-        "about": { "name": "About the firm", "note": "Who we are and how we work" },
-        "team": { "name": "Our team", "note": "Thirty-seven people, by department" },
-        "stories": { "name": "Client stories", "note": "Reviews and testimonials" },
-        "recognition": { "name": "Recognition", "note": "Dun's 100 and BDI" },
-        "offices": { "name": "Offices", "note": "Tel Aviv and Jerusalem" },
-        "portal": { "name": "Client portal", "note": "Sign in or continue a case" }
+        "about": {
+          "name": "About the firm",
+          "note": "Who we are and how we work"
+        },
+        "team": {
+          "name": "Our team",
+          "note": "Thirty-seven people, by department"
+        },
+        "stories": {
+          "name": "Client stories",
+          "note": "Reviews and testimonials"
+        },
+        "recognition": {
+          "name": "Recognition",
+          "note": "Dun's 100 and BDI"
+        },
+        "offices": {
+          "name": "Offices",
+          "note": "Tel Aviv and Jerusalem"
+        },
+        "portal": {
+          "name": "Client portal",
+          "note": "Sign in or continue a case"
+        }
       }
     },
     "passports": {
@@ -66,8 +84,14 @@
       "lede": "Legal guides written by the attorneys who file the cases, and the firm's media appearances.",
       "cta": "Knowledge center",
       "items": {
-        "center": { "name": "Knowledge center", "note": "Articles and legal guides" },
-        "media": { "name": "Media", "note": "Interviews, podcast, YouTube" }
+        "center": {
+          "name": "Knowledge center",
+          "note": "Articles and legal guides"
+        },
+        "media": {
+          "name": "Media",
+          "note": "Interviews, podcast, YouTube"
+        }
       }
     }
   },
@@ -77,9 +101,18 @@
     "lede": "An attorney will call you, hear the matter, and tell you plainly whether there is a case. No charge and no obligation.",
     "nextTitle": "What happens next",
     "next": [
-      { "num": "01", "text": "An attorney, not an intake clerk, calls you back within one business day." },
-      { "num": "02", "text": "You tell the story once. We say plainly whether there is a case, and what it would need." },
-      { "num": "03", "text": "If we take it on, you know the fee before any work starts." }
+      {
+        "num": "01",
+        "text": "An attorney, not an intake clerk, calls you back within one business day."
+      },
+      {
+        "num": "02",
+        "text": "You tell the story once. We say plainly whether there is a case, and what it would need."
+      },
+      {
+        "num": "03",
+        "text": "If we take it on, you know the fee before any work starts."
+      }
     ],
     "rating": "<b>4.9</b> average across <n>380+</n> client reviews",
     "labels": {
@@ -137,11 +170,19 @@
     },
     "telAviv": {
       "title": "Tel Aviv",
-      "lines": ["11 Menachem Begin Road, Ramat Gan", "Rogovin Tidhar Tower, floor 25", "P.O.B 1213, 5268104, Israel"]
+      "lines": [
+        "11 Menachem Begin Road, Ramat Gan",
+        "Rogovin Tidhar Tower, floor 25",
+        "P.O.B 1213, 5268104, Israel"
+      ]
     },
     "jerusalem": {
       "title": "Jerusalem",
-      "lines": ["10 Yad Harutzim Street, floor 2", "P.O.B 53347, 9342148", "Jerusalem, Israel"]
+      "lines": [
+        "10 Yad Harutzim Street, floor 2",
+        "P.O.B 53347, 9342148",
+        "Jerusalem, Israel"
+      ]
     },
     "pagesTitle": "Pages",
     "pages": {
@@ -201,5 +242,10 @@
     },
     "doneTitle": "<n>{name}</n>, we have your details.",
     "doneLine": "An attorney from the relevant department will call <n>{phone}</n>, usually within one business day."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you are looking for does not exist or has moved.",
+    "home": "Back to the home page"
   }
 }
