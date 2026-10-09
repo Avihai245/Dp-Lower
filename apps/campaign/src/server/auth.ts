@@ -25,6 +25,17 @@ export function publicOrigin(req: Request): string {
   return `${proto}://${host}`;
 }
 
+/** Browsers send Origin on every form POST; when it is present it must be this site (requests without it are not browsers). */
+export function isSameOriginRequest(req: Request): boolean {
+  const origin = req.headers.get('origin');
+  if (!origin) return true;
+  try {
+    return new URL(origin).origin === publicOrigin(req);
+  } catch {
+    return false;
+  }
+}
+
 /** A redirect to an app path (already localised) on the visitor's own origin. Never takes a user-supplied URL. */
 export const redirectTo = (req: Request, path: string, status: 302 | 303 | 307 = 303): NextResponse =>
   NextResponse.redirect(new URL(path, publicOrigin(req)), status);

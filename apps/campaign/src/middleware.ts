@@ -59,4 +59,6 @@ export default async function middleware(req: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'] };
+// Emailed /go/<payload>.<signature> links contain a dot, which the general rule would skip as a "static file":
+// they need the locale rewrite too.
+export const config = { matcher: ['/((?!api|_next|_vercel|.*\\..*).*)', '/go/:path*', '/he/go/:path*'] };

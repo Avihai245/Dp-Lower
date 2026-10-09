@@ -33,3 +33,24 @@ export async function openFromEmailLink(req: Request, locale: Locale, token: str
     return expired();
   }
 }
+
+export type EmailLinkState = 'expired' | 'confirm' | 'open';
+
+/**
+ * What a GET on /go/[token] should do, decided WITHOUT changing anything:
+ *  - 'expired': bad, replaced or unknown token;
+ *  - 'confirm': the mailbox has not been verified yet and this browser is not the one that created the lead. Opening the
+ *    link now would run the pre-registration defence (revoking the password, sessions and cookie that were set up
+ *    before). Mail security scanners and link previewers open links with a GET, so that must wait for a person to press
+ *    the confirmation button (a POST), otherwise a scanner could log the real applicant out minutes after sign-up;
+ *  - 'open': nothing destructive can happen, sign in right away.
+ */
+export async function inspectEmailLink(token: string): Promise<EmailLinkState> {
+  const link = await readPortalLinkToken(token);
+  if (!link) return 'expired';
+  const db = createAdminSupabase();
+  const { data: lead } = await db.from('leads').select('*').eq('id', link.leadId).maybeSingle();
+  if (!lead || lead.session_epoch !== link.epoch) return 'expired';
+  if (lead.email_verified_at) return 'open';
+  return (await isSameBrowser(db, lead)) ? 'open' : 'confirm';
+}

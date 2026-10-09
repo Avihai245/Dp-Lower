@@ -455,7 +455,10 @@ test.describe('result email', () => {
 
     // a second click in the same hour answers ok without a second email
     expect((await client.post('/api/results/email')).status()).toBe(200);
-    expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'email.send')).toHaveLength(1);
+    const mails = (await eventsOf(lead.leadId)).filter((e) => e.type === 'email.send');
+    expect(mails.filter((e) => e.payload.template === 'file-open')).toHaveLength(1);
+    // creating the lead also started the nurture sequence: welcome-1, queued exactly once
+    expect(mails.filter((e) => e.payload.template === 'welcome-1')).toHaveLength(1);
 
     const anonymous = await newClient(playwright);
     expect((await anonymous.post('/api/results/email')).status()).toBe(401);
@@ -547,9 +550,16 @@ test.describe('portal entry, passwords and emailed links', () => {
     const row = await leadByEmail(lead.email);
     const tokenHash = await recoveryTokenHash(lead.email);
 
-    // the owner opens the reset link in the browser that created the lead: no revocation, lands on the reset screen
+    // a mail scanner "clicks" the link with a GET: that only forwards to the confirmation page and uses nothing up
     const url = `/auth/callback?token_hash=${encodeURIComponent(tokenHash)}&type=recovery&next=${encodeURIComponent('/create-password?mode=reset')}`;
-    const res = await owner.get(url, { maxRedirects: 0 });
+    const scan = await (await newClient(playwright)).get(url, { maxRedirects: 0 });
+    expect(scan.status()).toBe(303);
+    expect(new URL(scan.headers().location!).pathname).toBe('/open-link');
+    expect(setCookies(scan).some((c) => /auth-token/.test(c))).toBe(false);
+
+    // the owner opens the reset link in the browser that created the lead and presses the button: no revocation,
+    // lands on the reset screen
+    const res = await owner.post('/auth/callback', { form: { token_hash: tokenHash, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
     expect(res.status()).toBe(303);
     expect(new URL(res.headers().location!).pathname + new URL(res.headers().location!).search).toBe('/create-password?mode=reset');
     expect((await leadByEmail(lead.email))?.email_verified_at).toBeTruthy();
@@ -560,7 +570,9 @@ test.describe('portal entry, passwords and emailed links', () => {
     expect(await passwordSignIn(lead.email, 'second-password-2')).toBe(true);
 
     // a Hebrew link keeps the language prefix; a tampered or unknown token goes back to sign-in with a message
-    const he = await (await newClient(playwright)).get('/he/auth/callback?token_hash=garbage&type=recovery', { maxRedirects: 0 });
+    const heGet = await (await newClient(playwright)).get('/he/auth/callback?token_hash=garbage&type=recovery', { maxRedirects: 0 });
+    expect(new URL(heGet.headers().location!).pathname).toBe('/he/open-link');
+    const he = await (await newClient(playwright)).post('/he/auth/callback', { form: { token_hash: 'garbage', type: 'recovery' }, maxRedirects: 0 });
     expect(he.status()).toBe(303);
     expect(new URL(he.headers().location!).pathname + new URL(he.headers().location!).search).toBe('/he/sign-in?error=link');
     const oauthDenied = await (await newClient(playwright)).get('/auth/callback?error=access_denied', { maxRedirects: 0 });
@@ -585,9 +597,17 @@ test.describe('portal entry, passwords and emailed links', () => {
     const link = linkIn(mail.payload, /https?:\/\/[^\s"'<>]+\/go\/[\w.-]+/)!;
     expect(link).toBeTruthy();
 
-    // ...and opens it: signed in, sent to the portal
+    // a mail scanner opening the link (GET, no cookies) must change nothing: it is forwarded to the confirmation page
     const before = await leadByEmail(lead.email);
-    const go = await owner.get(new URL(link).pathname, { maxRedirects: 0 });
+    const scan = await (await newClient(playwright)).get(new URL(link).pathname, { maxRedirects: 0 });
+    expect(scan.status()).toBe(303);
+    expect(new URL(scan.headers().location!).pathname).toBe('/open-link');
+    expect(setCookies(scan).some((c) => /auth-token/.test(c))).toBe(false);
+    expect(await leadByEmail(lead.email)).toMatchObject({ email_verified_at: null, session_epoch: before?.session_epoch });
+    expect(await passwordSignIn(lead.email, 'attacker-pass-1')).toBe(true);
+
+    // ...a person presses "Open my portal" (the form POST): signed in, sent to the portal
+    const go = await owner.post(new URL(link).pathname, { maxRedirects: 0 });
     expect(go.status()).toBe(303);
     expect(new URL(go.headers().location!).pathname).toBe('/portal');
     expect(setCookies(go).some((c) => /^sb-[\w-]+-auth-token/.test(c))).toBe(true);
@@ -631,7 +651,7 @@ test.describe('portal entry, passwords and emailed links', () => {
     const row = (await leadByEmail(lead.email))!;
     for (const n of ['https://evil.example/', '//evil.example', '/\\evil.example', 'javascript:alert(1)']) {
       const token = signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n }, 3600);
-      const res = await owner.get(`/go/${token}`, { maxRedirects: 0 });
+      const res = await owner.post(`/go/${token}`, { maxRedirects: 0 });
       expect(res.status()).toBe(303);
       const location = new URL(res.headers().location!);
       expect(location.origin).toBe(BASE_URL);
@@ -689,15 +709,14 @@ test.describe('staff', () => {
     expect(mail.payload.template).toBe('password-reset');
 
     // the recovery link signs the staff member in and goes to the admin area; no lead is invented for them
-    const res = await client.get(`/auth/callback?token_hash=${encodeURIComponent(await recoveryTokenHash(email))}&type=recovery`, { maxRedirects: 0 });
+    const res = await client.post('/auth/callback', { form: { token_hash: await recoveryTokenHash(email), type: 'recovery' }, maxRedirects: 0 });
     expect(res.status()).toBe(303);
     expect(new URL(res.headers().location!).pathname).toBe('/admin');
     expect(setCookies(res).some((c) => /^sb-[\w-]+-auth-token/.test(c))).toBe(true);
     expect(await leadByEmail(email)).toBeNull();
 
     // an explicit next is validated like everybody else's: it can never leave the site
-    const hash = encodeURIComponent(await recoveryTokenHash(email));
-    const again = await client.get(`/auth/callback?token_hash=${hash}&type=recovery&next=${encodeURIComponent('//evil.example')}`, { maxRedirects: 0 });
+    const again = await client.post('/auth/callback', { form: { token_hash: await recoveryTokenHash(email), type: 'recovery', next: '//evil.example' }, maxRedirects: 0 });
     expect(new URL(again.headers().location!).origin).toBe(BASE_URL);
     await client.dispose();
   });

@@ -111,6 +111,9 @@ const DYNAMIC: Record<string, string[]> = {
   'signIn.notice.${notice}': ['link', 'oauth', 'googleUnavailable', 'rateLimited', 'network', 'generic'].map((k) => `signIn.notice.${k}`),
   'signIn.notice.${error}': ['link', 'oauth', 'googleUnavailable', 'rateLimited', 'network', 'generic'].map((k) => `signIn.notice.${k}`),
   'signIn.hints.${hint}': ['invalid', 'noPassword'].map((k) => `signIn.hints.${k}`),
+  'openLink.${kind}.title': ['portal', 'reset'].map((k) => `openLink.${k}.title`),
+  'openLink.${kind}.lede': ['portal', 'reset'].map((k) => `openLink.${k}.lede`),
+  'openLink.${kind}.submit': ['portal', 'reset'].map((k) => `openLink.${k}.submit`),
 };
 
 function sources(dir: string, out: string[] = []): string[] {

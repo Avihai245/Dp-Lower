@@ -1,7 +1,7 @@
 import 'server-only';
 import { signToken, verifyToken } from '@dpl/core';
 import { cookies } from 'next/headers';
-import { appSecret, isProd } from './env';
+import { appSecret, secureCookies } from './env';
 import { createServerSupabase } from './server';
 import type { Db, LeadRow } from './types';
 
@@ -16,7 +16,7 @@ const MAX_AGE = 60 * 60 * 24 * 30;
 const cookieOptions = (maxAge: number) => ({
   httpOnly: true,
   sameSite: 'lax' as const,
-  secure: isProd(),
+  secure: secureCookies(),
   path: '/',
   maxAge,
 });

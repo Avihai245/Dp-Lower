@@ -21,6 +21,12 @@ export const campaignSiteUrl = (): string => process.env.NEXT_PUBLIC_CAMPAIGN_UR
 
 export const isProd = (): boolean => process.env.NODE_ENV === 'production';
 
+/**
+ * Cookies get the Secure flag in production, except when the site is served from a local address (`next start` on
+ * http://localhost for end-to-end tests), where browsers and clients would otherwise refuse to send them back.
+ */
+export const secureCookies = (): boolean => isProd() && !/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(process.env.NEXT_PUBLIC_SITE_URL ?? '');
+
 /** Secret for the lead cookie and unsubscribe/booking tokens. Required in production. */
 export function appSecret(): string {
   const s = process.env.APP_SECRET;
