@@ -1,0 +1,36 @@
+/*
+ * Rules the inline styles of the about, team, attorney, testimonials, media and contact pages cannot express
+ * (components/pages, components/contact). Everything else is ported inline with s()/x() from the prototype.
+ */
+
+/* visually hidden, still read by screen readers (live regions, counts) */
+.dpl-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Honeypot of the consultation form: real visitors never see or reach it (aria-hidden, tabindex -1), bots fill it.
+ * Moved off the inline-start edge instead of display:none, which many bots recognise; in RTL that edge is the right one,
+ * which never creates scrollable overflow.
+ */
+.dpl-hp {
+  position: absolute;
+  inset-inline-start: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* the focus ring of an invalid field uses the error colour */
+.dpl-field-error:focus-visible {
+  outline-color: #9a3b2e;
+}
