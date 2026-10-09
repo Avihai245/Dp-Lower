@@ -10,7 +10,7 @@ const LINK = 'color: #c5cbd2; text-decoration: none';
 export async function UtilityBar() {
   const t = await getTranslations('site');
   return (
-    <div data-util style={s('background: #14202b; color: #c5cbd2')}>
+    <div data-util role="region" aria-label={t('util.label')} style={s('background: #14202b; color: #c5cbd2')}>
       <div
         data-pad
         style={s('margin: 0 auto; padding: 9px clamp(20px, 4.6vw, 120px); display: flex; align-items: center; gap: 26px; flex-wrap: wrap; font-size: 13px')}

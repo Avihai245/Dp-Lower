@@ -8,7 +8,7 @@ import { Ltr } from '@/components/shell/Ltr';
 export async function CloseBand() {
   const t = await getTranslations('site');
   return (
-    <section style={s('background: #efe9df; border-top: 1px solid #ded7ca; margin-top: 88px')}>
+    <section aria-labelledby="close-band-title" style={s('background: #efe9df; border-top: 1px solid #ded7ca; margin-top: 88px')}>
       <div data-pad style={s('margin: 0 auto; padding: 64px clamp(20px, 4.6vw, 120px) 68px')}>
         <div
           data-resp="2"
@@ -19,6 +19,7 @@ export async function CloseBand() {
               {t('closeBand.eyebrow')}
             </div>
             <h2
+              id="close-band-title"
               data-big
               style={s("font-family: 'Newsreader', Georgia, serif; font-weight: 400; font-size: clamp(28px, 3.2vw, 44px); line-height: 1.1; letter-spacing: -0.018em; color: #14202b; margin: 0 0 14px; max-width: 24ch")}
             >

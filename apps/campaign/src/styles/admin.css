@@ -17,6 +17,9 @@
   font-family: var(--font-sans);
 }
 .adm main:focus { outline: none; }
+/* what applicants typed (a name of 120 letters without a space) must not push a panel out of the screen: `anywhere`, unlike
+   `break-word`, also lowers the width a flex or grid item needs, so the text next to a button shrinks instead of running under it */
+.adm [data-lead-page] { overflow-wrap: anywhere; }
 
 /* skip link, visible on keyboard focus only */
 .adm-skip {

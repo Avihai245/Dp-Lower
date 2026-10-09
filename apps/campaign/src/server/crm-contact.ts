@@ -14,8 +14,9 @@ import type { StaffSession } from './staff';
 
 type Actor = StaffSession['actor'];
 
-const isEmailTaken = (e: { code?: string; message?: string }): boolean =>
-  e.code === 'email_exists' || e.code === 'user_already_exists' || /already (been )?registered|already exists/i.test(e.message ?? '');
+/** The auth server's answer to an address that already has an account: its own code, or (this version) a raw unique violation. */
+const isEmailTaken = (e: { code?: string | number; message?: string }): boolean =>
+  e.code === 'email_exists' || e.code === 'user_already_exists' || String(e.code) === '23505' || /already (been )?registered|already exists|duplicate key|users_email/i.test(e.message ?? '');
 
 /**
  * "Edit details & password" -> Save. Updates the lead AND the Supabase user, so the applicant signs in with the new
@@ -46,9 +47,10 @@ export async function updateContact(
   if (emailChanged) {
     const { data: clash } = await db.from('leads').select('id').eq('email', a.email).neq('id', a.leadId).maybeSingle();
     if (clash) return fail('email_taken', 'email');
-    // a lead without an account of its own cannot take an address that already has one (staff, someone else's); a lead
-    // with one is refused by the auth server below
-    if (!lead.user_id && (await db.rpc('auth_user_id_by_email', { p_email: a.email })).data) return fail('email_taken', 'email');
+    // an address that already has a sign-in account (a member of staff, someone else's) cannot become this lead's address:
+    // a lead without an account would be the way into it, one with an account cannot be moved onto a second account
+    const owner = (await db.rpc('auth_user_id_by_email', { p_email: a.email })).data as string | null;
+    if (owner && owner !== lead.user_id) return fail('email_taken', 'email');
   }
 
   if (lead.user_id && (emailChanged || changed.includes('name'))) {

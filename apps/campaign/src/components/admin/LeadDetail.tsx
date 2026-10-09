@@ -67,6 +67,7 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
   return (
     <div
       data-pad
+      data-lead-page
       style={s("padding:18px 24px 64px;max-width:1440px;margin:0 auto;box-sizing:border-box;font-family:'Manrope',system-ui,sans-serif;color:#14202b")}
     >
       {/* back, position, previous / next */}

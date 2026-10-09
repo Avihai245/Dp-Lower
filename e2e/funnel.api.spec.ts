@@ -969,13 +969,15 @@ test.describe('unsubscribe', () => {
     expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'unsubscribed')).toHaveLength(1);
 
     // opened in a browser, the same address is the confirmation page, not an unsubscribe
-    const other = await createLead(owner, 'oneclick-get');
+    const second = await newClient(playwright);
+    const other = await createLead(second, 'oneclick-get');
     const otherAddress = ((await emailEvent(other.leadId, 'welcome-1')).payload.listUnsubscribe as string);
     const get = await provider.get(otherAddress, { maxRedirects: 0 });
     expect(get.status()).toBe(303);
     expect(new URL(get.headers().location!, BASE_URL).pathname).toBe('/unsubscribe');
     expect((await leadByEmail(other.email))?.unsubscribed_at).toBeNull();
     await provider.dispose();
+    await second.dispose();
     await owner.dispose();
   });
 });

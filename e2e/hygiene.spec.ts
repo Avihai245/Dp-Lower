@@ -88,7 +88,8 @@ test.describe('fonts', () => {
     });
   }
 
-  test('English pages never download the Hebrew fonts (the language switch is not prefetched) and log no unused-preload warning', async ({ page }) => {
+  test('English pages do not download the Hebrew fonts (the language switch is not prefetched) and log no unused-preload warning', async ({ page }) => {
+    // the one exception: the campaign header writes the other language's name, "עברית", in the Hebrew-capable family (7 KB)
     for (const url of [`${CAMPAIGN}/`, `${CAMPAIGN}/sign-in`, `${MAIN}/`, `${MAIN}/team`]) {
       const fonts: string[] = [];
       const warnings: string[] = [];
@@ -100,7 +101,8 @@ test.describe('fonts', () => {
       });
       await page.goto(url, { waitUntil: 'networkidle' });
       await page.waitForTimeout(1500);
-      expect(fonts.filter((f) => /hebrew|frank-ruhl|assistant/.test(f)), url).toEqual([]);
+      const hebrew = fonts.filter((f) => /hebrew|frank-ruhl|assistant/.test(f)).map((f) => f.replace(/^.*\//, '').replace(/\.[0-9a-f]{8}\.woff2$/, ''));
+      expect(hebrew, url).toEqual(url.startsWith(CAMPAIGN) ? ['assistant-hebrew-wght-normal'] : []);
       expect(warnings, url).toEqual([]);
       page.removeAllListeners('response');
       page.removeAllListeners('console');
