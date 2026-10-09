@@ -1,6 +1,10 @@
+import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
+import { ClientMessages } from '@/components/ClientMessages';
+import '@/styles/funnel.css';
 
-// Owned by the auth worker: wrap with <ClientMessages namespaces={[...]}> and add the page chrome here.
-export default function AuthLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+/** Set password, sign in and the expired-link page: the screens are Client Components and read the `auth` messages. */
+export default async function AuthLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
+  setRequestLocale((await params).locale);
+  return <ClientMessages namespaces={['auth']}>{children}</ClientMessages>;
 }

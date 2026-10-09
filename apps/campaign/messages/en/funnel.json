@@ -1,4 +1,32 @@
 {
+  "brand": {
+    "logoAlt": "Decker Pex Levi"
+  },
+  "meta": {
+    "eligibility": {
+      "title": "Eligibility check | Decker Pex Levi",
+      "description": "Six short questions about your family history. No payment, no obligation."
+    },
+    "details": {
+      "title": "Your details | Decker Pex Levi",
+      "description": "Add your details to see your result and book a free call with a lawyer."
+    },
+    "booking": {
+      "title": "Book your free call | Decker Pex Levi",
+      "description": "Choose a time for a free call with a lawyer."
+    },
+    "offer": {
+      "title": "Your result | Decker Pex Levi",
+      "description": "Your eligibility result and the next step."
+    }
+  },
+  "steps": {
+    "label": "Progress",
+    "answers": "Answers",
+    "details": "Details",
+    "call": "Call",
+    "result": "Result"
+  },
   "quiz": {
     "questions": {
       "country": {
@@ -60,6 +88,142 @@
           "other": "Somewhere else"
         }
       }
+    },
+    "header": "Eligibility check · {label}",
+    "label": "Question {n} of {total}",
+    "progress": "Eligibility check progress",
+    "nudge": {
+      "unsure": "That is completely fine. Most families begin without the records. Finding them is part of what we do.",
+      "halfway": "You are halfway through.",
+      "last": "Last one, then we'll ask where to send your result."
+    },
+    "lastQuestion": "Last question",
+    "remaining": "{count, plural, one {# question left} other {# questions left}}",
+    "reassure": "No payment · No obligation · Your answers stay private",
+    "backToSite": "← Back to the site",
+    "previous": "← Previous",
+    "seeResult": "See my result"
+  },
+  "lead": {
+    "title": "Where should we send your result?",
+    "lede": "Your answers are saved. Add your details to see your result and book a free call with a lawyer.",
+    "name": {
+      "label": "Full name",
+      "placeholder": "First and last name",
+      "error": "Please enter your first and last name."
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "you@example.com",
+      "error": "Please enter a valid email address."
+    },
+    "phone": {
+      "label": "Phone",
+      "placeholder": "+1 555 000 0000",
+      "error": "Please enter a phone number so the lawyer can call you.",
+      "hint": "For your free call only."
+    },
+    "continue": "Continue",
+    "privacy": "Free and private. We never share your details.",
+    "errors": {
+      "generic": "Something went wrong on our side. Please try again in a moment.",
+      "rateLimited": "Too many attempts. Please wait a minute and try again.",
+      "network": "We could not reach the server. Check your connection and try again.",
+      "captcha": "We could not verify that you are not a robot. Please try again."
+    },
+    "existing": {
+      "title": "Check your inbox.",
+      "lede": "There is already a file open for <b>{email}</b>. For your security we have emailed you a link to continue where you left off.",
+      "note": "The link opens your file on any device. Nothing on the file was changed.",
+      "resend": "Send the link again",
+      "resent": "We sent it again. It can take a minute to arrive.",
+      "change": "Use a different email"
+    }
+  },
+  "booking": {
+    "headline": "Choose a time for your free call.",
+    "headlineNamed": "{name}, choose a time for your free call.",
+    "opener": "A lawyer will call you, go through your answers and tell you which route fits your family. {minutes} minutes, free, no obligation.",
+    "seatsLeft": "{count, plural, one {One free call left this week} other {# free calls left this week}}",
+    "chooseDay": "1. Choose a day",
+    "chooseTime": "2. Choose a time",
+    "bookFor": "Book my call for {time}",
+    "chooseAbove": "Choose a time above",
+    "skip": "Skip for now and see my result",
+    "timeZone": "Times are in your local time zone ({timezone}).",
+    "seeResult": "See my result",
+    "loading": "Loading available times",
+    "loadError": "We could not load the available times. Please try again.",
+    "retry": "Try again",
+    "none": "There are no free times in the next few days. You can skip this step and we will be in touch, or check back soon.",
+    "notice": {
+      "taken": "That time was just taken. Here are the times that are still free.",
+      "failed": "We could not book that time just now. Please try again.",
+      "rateLimited": "Too many attempts. Please wait a minute and try again.",
+      "network": "We could not reach the server. Check your connection and try again."
+    },
+    "done": {
+      "title": "Your call is booked.",
+      "when": "{date} · {time}",
+      "callTo": "We will call <num>{phone}</num> and ask for {name}.",
+      "callToNumber": "We will call your number.",
+      "length": "{minutes} minutes, free.",
+      "confirm": "{name}, we have sent the details to <bdi>{email}</bdi>. If something changes, the email has a link to move or cancel it.",
+      "change": "Change the time"
+    }
+  },
+  "offer": {
+    "headline": {
+      "unknown": "{hasName, select, yes {{name}, you may have a claim, and a lawyer can tell you which one.} other {You may have a claim, and a lawyer can tell you which one.}}",
+      "both": "{hasName, select, yes {{name}, you may have a claim in Germany and in Austria.} other {You may have a claim in Germany and in Austria.}}",
+      "german": "{hasName, select, yes {{name}, you may have a claim to German citizenship.} other {You may have a claim to German citizenship.}}",
+      "austrian": "{hasName, select, yes {{name}, you may have a claim to Austrian citizenship.} other {You may have a claim to Austrian citizenship.}}"
+    },
+    "lede": "What decides it now is {relative, select, parent {your parent's} grandparent {your grandparent's} great_grandparent {your great-grandparent's} other {your family's}} paperwork. Open your portal, tell us about the family line, and a lawyer takes it from there.",
+    "callLine": "Your free call is booked for {date} at {time}.",
+    "portal": {
+      "badge": "Your portal is open",
+      "title": "Your answers are already inside. Here is what happens next:"
+    },
+    "includes": [
+      "You add your family details, in about 12 minutes",
+      "A licensed lawyer reads your case and confirms your route",
+      "We search the archives for any records you cannot find"
+    ],
+    "discount": {
+      "text": "<b>Up to 30% off our fee</b> if you start your application today. Nothing to pay now.",
+      "placeholder": "Marketing placeholder, pending legal approval. Replace before launch."
+    },
+    "goPortal": "Go to my portal",
+    "noPassword": "No password needed. It is already yours.",
+    "emailResult": "Email me my result instead",
+    "emailed": "Sent to <bdi>{email}</bdi>. The link in it opens this same file whenever you are ready.",
+    "file": {
+      "show": "Review the answers I gave",
+      "hide": "Hide my answers",
+      "rows": {
+        "route": "Route",
+        "who": "Who left",
+        "departure": "Departure",
+        "records": "Records held"
+      },
+      "values": {
+        "toConfirm": "To confirm",
+        "datedFromRecords": "We date it from the records",
+        "noneYetSearch": "None yet, we search for them",
+        "germanyAndAustria": "Germany and Austria"
+      },
+      "who": {
+        "parent": "Parent",
+        "grandparent": "Grandparent",
+        "great_grandparent": "Great-grandparent",
+        "further": "Further back than that"
+      }
+    },
+    "disclaimer": "Not a legal assessment. Eligibility and the granting of citizenship are not guaranteed.",
+    "errors": {
+      "portal": "We could not open your portal just now. Please try again.",
+      "email": "We could not send the email just now. Please try again."
     }
   }
 }
