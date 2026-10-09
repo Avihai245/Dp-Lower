@@ -121,7 +121,7 @@ The design deliberately contains placeholders, each visibly marked in the pages:
 4. Hebrew copy: all Hebrew text was written by an AI translator and must be read by a Hebrew-speaking lawyer or editor before launch (it lives in the same `messages/he/*.json` files and `packages/emails`).
 5. The "Speak with an AI Advisor" button records a callback request for the team; no voice AI is connected. The wording says so.
 6. Confirm the Instagram link in the footers (`sabatier_group_ai_marketing`) and the domains used in canonical URLs.
-7. Booking hours: the weekly template (Sunday to Thursday, 09:00 to 17:00, two calls per slot, not tied to a lawyer) is a default; adjust it in `/admin/availability`. Once each lawyer (Team, role `lawyer`) has set their own hours there, calls are assigned to them; remove the unassigned template's times when it is no longer wanted.
+7. Booking hours: the weekly template (Sunday to Thursday, 09:00 to 17:00, two calls per slot, not tied to a lawyer) is a default; adjust it in `/admin/availability`. Once each lawyer (Team, role `lawyer`) has set their own hours there, calls are assigned to them; remove the unassigned template's times when it is no longer wanted. The booking step says "N free calls left this week" with the real number of free seats from now to the end of the firm's week (Sunday to Saturday), and says nothing once the week has none; a wide calendar therefore shows a large number, and the number is lowered by setting fewer seats, not by the page.
 
 ## 10. Operations
 

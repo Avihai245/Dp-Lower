@@ -86,6 +86,10 @@ test.describe('availability', () => {
     expect(body.days.length).toBeGreaterThan(0);
     expect(body.days.length).toBeLessThanOrEqual(5);
 
+    // seatsLeft is the number behind "N free calls left this week": the free seats from now to the Saturday that ends the firm's week
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: body.timezone }).format(new Date());
+    const noon = new Date(`${today}T12:00:00Z`);
+    const weekEnd = new Date(noon.getTime() + (6 - noon.getUTCDay()) * 86_400_000).toISOString().slice(0, 10);
     let seats = 0;
     let previous = '';
     for (const day of body.days as Day[]) {
@@ -100,7 +104,7 @@ test.describe('availability', () => {
         expect(s.firmTime).toMatch(/^\d{2}:\d{2}$/);
         expect(s.remaining).toBeGreaterThanOrEqual(1);
         expect(s.remaining).toBeLessThanOrEqual(2);
-        seats += s.remaining;
+        if (day.date <= weekEnd) seats += s.remaining;
       }
     }
     expect(body.seatsLeft).toBe(seats);

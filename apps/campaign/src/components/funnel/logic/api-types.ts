@@ -36,7 +36,7 @@ export type LeadSubmitResponse =
 /** GET /api/availability */
 export interface AvailabilityResponse {
   days: SlotDay[];
-  /** free seats in the days listed */
+  /** free seats from now to the end of the firm's week: the number in "N free calls left this week" */
   seatsLeft: number;
   /** the firm's IANA zone: the dates in `days` are calendar dates there */
   timezone: string;

@@ -101,6 +101,11 @@ test('the whole English journey: six questions, details, booking, result, portal
   const days = page.locator('[aria-labelledby=book-day] button');
   await expect(days).toHaveCount(5);
   await expect(page.getByText('Times are in your local time zone (America/New_York).')).toBeVisible();
+  // the honest "N free calls left this week": the real number, whatever it is, and nothing when the week is over
+  const left = ((await (await page.request.get('/api/availability')).json()) as { seatsLeft: number }).seatsLeft;
+  const leftLine = page.getByText(/free calls? left this week$/);
+  if (left > 0) await expect(leftLine).toHaveText(left === 1 ? 'One free call left this week' : `${left} free calls left this week`);
+  else await expect(leftLine).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Choose a time above' })).toBeDisabled();
   await days.nth(3).click();
   const slots = page.locator('[aria-labelledby=book-time] button');
@@ -425,6 +430,35 @@ test('a booked call survives a reload, can be changed, and the old booking is re
   expect(rows.map((r) => r.status).sort()).toEqual(['cancelled', 'confirmed']);
   expect(problems).toEqual([]);
   await context.close();
+});
+
+test('the "free calls left this week" line tells the real number, in both languages, and is absent when there is none', async ({ browser }) => {
+  const cases = [
+    { locale: 'en' as const, prefix: '', timezone: 'America/New_York', lines: { 3: '3 free calls left this week', 1: 'One free call left this week', 40: '40 free calls left this week' } },
+    { locale: 'he' as const, prefix: '/he', timezone: 'Asia/Jerusalem', lines: { 3: 'נותרו 3 שיחות ייעוץ חינם השבוע', 2: 'נותרו שתי שיחות ייעוץ חינם השבוע', 1: 'נותרה שיחת ייעוץ חינם אחת השבוע' } },
+  ];
+  for (const c of cases) {
+    const { context, page, problems } = await visitor(browser, { locale: c.locale, timezone: c.timezone });
+    await context.request.post('/api/leads', { data: leadBody(newEmail(`ui-left-${c.locale}`)) });
+    let seatsLeft = 0;
+    await page.route('**/api/availability', async (route) => {
+      const res = await route.fetch();
+      await route.fulfill({ response: res, json: { ...(await res.json()), seatsLeft } });
+    });
+    const line = page.getByText(/free calls? left this week$|שיחות ייעוץ חינם השבוע$|שיחת ייעוץ חינם אחת השבוע$/);
+    for (const [n, text] of Object.entries(c.lines)) {
+      seatsLeft = Number(n);
+      await page.goto(`${c.prefix}/booking`);
+      await expect(page.locator('[aria-labelledby=book-day] button')).toHaveCount(5);
+      await expect(line).toHaveText(text);
+    }
+    seatsLeft = 0;
+    await page.goto(`${c.prefix}/booking`);
+    await expect(page.locator('[aria-labelledby=book-day] button')).toHaveCount(5);
+    await expect(line).toHaveCount(0);
+    expect(problems).toEqual([]);
+    await context.close();
+  }
 });
 
 test('skipping the call goes straight to the result, without a booking', async ({ browser }) => {

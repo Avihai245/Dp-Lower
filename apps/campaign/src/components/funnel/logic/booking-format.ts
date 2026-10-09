@@ -6,9 +6,8 @@ import { FIRM_TIMEZONE, isValidTimeZone, zonedParts, type Locale } from '@dpl/co
  */
 export const intlLocale = (l: Locale): string => (l === 'he' ? 'he-IL' : 'en-US');
 
-/** The "N free calls left" line is only shown when the real number is low; a big number is not news. */
-export const SEATS_LINE_MAX = 6;
-export const showSeatsLine = (seatsLeft: number): boolean => seatsLeft > 0 && seatsLeft <= SEATS_LINE_MAX;
+/** The "N free calls left this week" line says what is true: it is shown while there is a free seat left this week. */
+export const showSeatsLine = (seatsLeft: number): boolean => seatsLeft > 0;
 
 /** The visitor's IANA time zone, or the firm's when the browser cannot tell. */
 export function visitorTimeZone(): string {

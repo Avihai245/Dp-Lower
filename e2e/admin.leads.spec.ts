@@ -95,9 +95,12 @@ test.describe('lead list and board', () => {
 
   test('a card can be dragged to another column', async ({ adminPage: page, world }) => {
     await update('leads', `id=${eq(world.gamma.id)}`, { stage: 'account', status: 'account_created' });
-    await openList(page, '?view=board');
+    // searched for by name, so that this is the only card on the board: on the shared database other tests add leads while
+    // this one runs, and a card that slides under the pointer between the press and the move would be the one dragged
+    await openList(page, `?view=board&q=${encodeURIComponent(world.gamma.name)}`);
+    await expect(page.locator('[data-lead-card]')).toHaveCount(1);
     const card = page.locator(`[data-lead-card="${world.gamma.id}"]`);
-    // drop on the top of the column (its header): on the shared database the other columns can be very tall
+    // drop on the top of the column (its header): the columns of a shared database can be very tall
     const top = { x: 60, y: 24 };
     await card.dragTo(page.locator('[data-board-col="filed"]'), { targetPosition: top });
     await expect(page.locator('[data-board-col="filed"]').locator(`[data-lead-card="${world.gamma.id}"]`)).toBeVisible();

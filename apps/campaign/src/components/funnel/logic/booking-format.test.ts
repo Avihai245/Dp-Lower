@@ -1,6 +1,6 @@
 import { isValidTimeZone } from '@dpl/core';
 import { describe, expect, it } from 'vitest';
-import { SEATS_LINE_MAX, dayLabel, showSeatsLine, slotLabel, timeLabel, visitorTimeZone, weekdayLabel, whenLabel } from './booking-format';
+import { dayLabel, showSeatsLine, slotLabel, timeLabel, visitorTimeZone, weekdayLabel, whenLabel } from './booking-format';
 
 // 09:00 in Jerusalem (UTC+3 in October) on Monday 12 October 2026
 const MON_0900_IL = '2026-10-12T06:00:00.000Z';
@@ -81,10 +81,8 @@ describe('booking formatting', () => {
   });
 
   describe('the "calls left" line', () => {
-    it('is shown only when the real number is low, never for a big number or none', () => {
-      expect(SEATS_LINE_MAX).toBe(6);
-      expect([0, 1, 2, 6].map(showSeatsLine)).toEqual([false, true, true, true]);
-      expect([7, 12, 60].map(showSeatsLine)).toEqual([false, false, false]);
+    it('is shown for the real number, whatever it is, and never when nothing is left this week', () => {
+      expect([0, 1, 2, 6, 7, 12, 60].map(showSeatsLine)).toEqual([false, true, true, true, true, true, true]);
     });
   });
 

@@ -51,7 +51,7 @@ change plus a test; `Accepted` is a decision recorded in section 6; `Open` needs
 | B-08 | One firm-wide pool of call slots, bookings never assigned | Fixed: see 1.2 |
 | B-09 | The quiz draft stayed in the browser | Fixed: cleared once the details are saved and on sign-out, the quiz resumes from the file, answer changes are saved to it |
 | B-10 | A later deep link did not change where "Back to the site" goes | Fixed: separate `dpl_from` cookie; the first touch stays in `dpl_src` |
-| B-11 | "N free calls left this week" never showed with real data | See 1.2 |
+| B-11 | "N free calls left this week" never showed with real data (it was hidden above six) | Fixed: the line shows the real number of free seats from now to the end of the firm's week and is absent when there are none (`seatsThisWeek`; unit and e2e tests) |
 | B-12 | Saving details in the CRM sent no email | Fixed: `details-changed` email to the new address, a notice without links to the old one; the designed "gets an email confirming the change" |
 | B-13 | The portal's email field is read-only | Open: needs the firm's approval (6) |
 | B-14 | A status the team set before submission was invisible in the portal | Fixed: shown on the dashboard and in the stage line |
@@ -77,7 +77,7 @@ change plus a test; `Accepted` is a decision recorded in section 6; `Open` needs
 | A-10 | Firm structured data only on the home page; no share image size | Fixed: on every page; a 1200x630 share image with size and alt text |
 | A-11 | Colour contrast of the palette | Open: a design decision, proposal in 7 |
 
-### 1.2 Per-lawyer availability and the booking lifecycle (B-05, B-08, B-11)
+### 1.2 Per-lawyer availability and the booking lifecycle (B-05, B-08)
 
 See the section "Booking" of `ARCHITECTURE.md`. Summary of the behaviour: each lawyer has their own weekly hours and blocked
 days (an administrator edits any calendar, a lawyer only their own; the former firm-wide template stays as the

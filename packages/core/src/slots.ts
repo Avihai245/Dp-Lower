@@ -156,6 +156,19 @@ export function isSlotAvailable(days: readonly SlotDay[], startsAt: string): boo
   return days.some((d) => d.slots.some((s) => s.startsAt === iso));
 }
 
-/** Free seats left in the visitor-facing horizon. Used for the honest "N calls left" line (only shown when low). */
+/** Free seats over the days given. */
 export const seatsLeft = (days: readonly SlotDay[]): number =>
   days.reduce((n, d) => n + d.slots.reduce((m, s) => m + s.remaining, 0), 0);
+
+/** The Saturday that ends the firm's week (a week starts on Sunday) in which the calendar date `date` falls. */
+export const endOfFirmWeek = (date: string): string => addDays(date, 6 - weekdayOfDate(date));
+
+/**
+ * Free seats from now to the end of the firm's current week: the number behind "N free calls left this week", so that
+ * the words are true. `days` must reach the end of that week (a horizon of seven days with slots always does); a day
+ * after it does not count, so on a Thursday evening after the last call the number is 0 and the line is not shown.
+ */
+export function seatsThisWeek(days: readonly SlotDay[], now: Date, timezone: string = FIRM_TIMEZONE): number {
+  const last = endOfFirmWeek(zonedParts(now, timezone).date);
+  return seatsLeft(days.filter((d) => d.date <= last));
+}

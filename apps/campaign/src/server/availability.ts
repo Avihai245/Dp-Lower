@@ -1,5 +1,5 @@
 import 'server-only';
-import { FIRM_TIMEZONE, computeAvailability, isValidTimeZone, seatsLeft, zonedParts, addDays, type SlotDay } from '@dpl/core';
+import { FIRM_TIMEZONE, computeAvailability, isValidTimeZone, seatsThisWeek, zonedParts, addDays, type SlotDay } from '@dpl/core';
 import type { Db } from '@dpl/db/types';
 import type { AvailabilityResponse } from '@/components/funnel/logic/api-types';
 
@@ -13,6 +13,8 @@ export interface CallSettings {
 const DEFAULTS: CallSettings = { timezone: FIRM_TIMEZONE, callMinutes: 20, noticeMinutes: 120, horizonDays: 5 };
 /** How far ahead the booked seats are loaded; `computeAvailability` looks at most this many days forward. */
 const LOOKAHEAD_DAYS = 45;
+/** Days with free slots always computed, so the seats left in the firm's week are known whatever the listing shows. */
+const WEEK_DAYS = 7;
 
 const positiveInt = (v: unknown, fallback: number, max: number): number => {
   const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;
@@ -39,6 +41,8 @@ export async function loadCallSettings(db: Db): Promise<CallSettings> {
  * The next bookable days with their free slots, from the weekly hours (each lawyer's and the unassigned template), the
  * blocked days/slots (a lawyer's own, or closed for everyone), the lawyers who take calls and the seats already taken.
  * Slots are UTC instants; the dates are calendar dates in the firm's zone. A slot is listed while any provider is free.
+ * `seatsLeft` is the number of free seats from now to the end of the firm's week, whatever the listing shows: it is the
+ * number in "N free calls left this week", which is only shown while it is more than zero.
  */
 export async function loadAvailability(db: Db, now: Date = new Date()): Promise<AvailabilityResponse> {
   const settings = await loadCallSettings(db);
@@ -58,7 +62,7 @@ export async function loadAvailability(db: Db, now: Date = new Date()): Promise<
   ]);
   for (const r of [rules, exceptions, booked, lawyers]) if (r.error) throw new Error(`availability query failed: ${r.error.message}`);
 
-  const days: SlotDay[] = computeAvailability({
+  const upcoming: SlotDay[] = computeAvailability({
     now,
     rules: (rules.data ?? []).map((r) => ({
       weekday: r.weekday,
@@ -71,10 +75,15 @@ export async function loadAvailability(db: Db, now: Date = new Date()): Promise<
     bookings: (booked.data ?? []).map((b) => ({ startsAt: b.starts_at, staffId: b.assigned_to })),
     lawyers: (lawyers.data ?? []).map((s) => s.user_id),
     timezone: settings.timezone,
-    horizonDays: settings.horizonDays,
+    horizonDays: Math.max(settings.horizonDays, WEEK_DAYS),
     noticeMinutes: settings.noticeMinutes,
     lookaheadDays: LOOKAHEAD_DAYS,
   });
 
-  return { days, seatsLeft: seatsLeft(days), timezone: settings.timezone, callMinutes: settings.callMinutes };
+  return {
+    days: upcoming.slice(0, settings.horizonDays),
+    seatsLeft: seatsThisWeek(upcoming, now, settings.timezone),
+    timezone: settings.timezone,
+    callMinutes: settings.callMinutes,
+  };
 }

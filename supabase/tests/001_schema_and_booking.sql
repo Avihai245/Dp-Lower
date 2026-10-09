@@ -4,7 +4,7 @@ begin;
 do $$
 declare
   v_lead1 uuid; v_lead2 uuid; v_lead3 uuid; v_lead4 uuid;
-  v_slot timestamptz;
+  v_slot timestamptz; v_next timestamptz;
   v_b public.bookings;
   v_msg text;
   v_ref1 text; v_ref2 text;
@@ -87,8 +87,13 @@ begin
   end;
   delete from public.availability_exceptions;
 
-  -- rescheduling replaces the previous booking --------------------------------------
-  v_b := public.book_slot(v_lead1, v_slot + interval '1 day', null);
+  -- rescheduling replaces the previous booking (the next working day: a Thursday's day after is a Friday) -------
+  select (((current_date + g.i) + time '10:30') at time zone 'Asia/Jerusalem') into v_next
+  from generate_series(2, 21) as g(i)
+  where extract(dow from current_date + g.i) between 0 and 4
+    and (((current_date + g.i) + time '10:30') at time zone 'Asia/Jerusalem') > v_slot
+  order by g.i limit 1;
+  v_b := public.book_slot(v_lead1, v_next, null);
   assert (select count(*) from public.bookings where lead_id = v_lead1 and status = 'confirmed') = 1, 'one active booking per lead';
   assert (select count(*) from public.bookings where lead_id = v_lead1 and status = 'cancelled') = 1, 'previous booking cancelled';
   -- ...which frees the seat in the original slot

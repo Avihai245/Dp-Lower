@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeAvailability, isSlotAvailable, seatsLeft, type BookedSeat, type SlotRule } from './slots';
+import { computeAvailability, endOfFirmWeek, isSlotAvailable, seatsLeft, seatsThisWeek, type BookedSeat, type SlotRule } from './slots';
 import { zonedParts } from './timezone';
 
 const TIMES = ['09:00', '10:30', '12:00', '14:00', '15:30', '17:00'];
@@ -61,6 +61,46 @@ describe('computeAvailability', () => {
   it('counts remaining seats', () => {
     const days = computeAvailability({ now, rules, exceptions: [], bookings: [] });
     expect(seatsLeft(days)).toBe(5 * 6 * 2);
+  });
+
+  describe('the seats behind "N free calls left this week"', () => {
+    const seven = (at: Date) => computeAvailability({ now: at, rules, exceptions: [], bookings: [], horizonDays: 7 });
+
+    it('the firm week runs from Sunday to Saturday', () => {
+      expect(['2026-10-11', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17'].map(endOfFirmWeek)).toEqual(Array(5).fill('2026-10-17'));
+      expect(endOfFirmWeek('2026-10-18')).toBe('2026-10-24');
+    });
+
+    it('is the whole week on Sunday morning and shrinks with the days and hours', () => {
+      const sunday = new Date('2026-10-11T04:00:00Z'); // 07:00 in Jerusalem
+      expect(seatsThisWeek(seven(sunday), sunday)).toBe(5 * 6 * 2);
+      // Tuesday 15:00 in Jerusalem, two hours of notice: only 17:00 is left today, then Wednesday and Thursday
+      const tuesday = new Date('2026-10-13T12:00:00Z');
+      expect(seatsThisWeek(seven(tuesday), tuesday)).toBe((1 + 6 + 6) * 2);
+    });
+
+    it('does not count the next week, so there is nothing to say once this week is over', () => {
+      // Thursday 15 Oct, 14:00 in Jerusalem: 17:00 today is left; Sunday's calls belong to the next week
+      const thursday = new Date('2026-10-15T11:00:00Z');
+      expect(seatsLeft(seven(thursday))).toBeGreaterThan(2);
+      expect(seatsThisWeek(seven(thursday), thursday)).toBe(2);
+      // Friday: the whole listing is next week
+      expect(seatsThisWeek(seven(now), now)).toBe(0);
+    });
+
+    it('takes the seats that are booked off', () => {
+      const sunday = new Date('2026-10-11T04:00:00Z');
+      const first = '2026-10-11T06:00:00.000Z';
+      const days = computeAvailability({ now: sunday, rules, exceptions: [], bookings: pooled(first, first, '2026-10-12T06:00:00.000Z'), horizonDays: 7 });
+      expect(seatsThisWeek(days, sunday)).toBe(5 * 6 * 2 - 3);
+    });
+
+    it('uses the firm zone to tell which week it is: Saturday night UTC is already Sunday in Jerusalem', () => {
+      const saturdayNight = new Date('2026-10-17T22:30:00Z'); // 01:30 on Sunday 18 Oct in Jerusalem
+      expect(seatsThisWeek(seven(saturdayNight), saturdayNight)).toBe(5 * 6 * 2);
+      // the same instant is still Saturday in New York, whose week has nothing left to offer
+      expect(seatsThisWeek(seven(saturdayNight), saturdayNight, 'America/New_York')).toBe(0);
+    });
   });
 
   it('returns nothing without rules', () => {
