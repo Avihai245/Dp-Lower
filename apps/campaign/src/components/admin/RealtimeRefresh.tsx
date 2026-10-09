@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 
 /** Tables whose changes matter to what the CRM shows (all are in the supabase_realtime publication). */
-const TABLES = ['leads', 'documents', 'lead_notes', 'activity_log', 'callback_requests', 'contact_submissions', 'bookings'] as const;
+const TABLES = ['leads', 'documents', 'applications', 'lead_notes', 'activity_log', 'callback_requests', 'contact_submissions', 'bookings'] as const;
 
 /** Changes that arrive within this window are answered by one refresh. */
 const COALESCE_MS = 800;
@@ -18,7 +18,7 @@ const STALE_AFTER_MS = 30_000;
  *  - A burst of changes is coalesced into one refresh (the first change starts the timer; later ones join it, so a busy
  *    database can never postpone the refresh forever).
  *  - A tab in the background does not refresh; it catches up once when it is shown again. This also covers a dropped
- *    socket and the one table Realtime does not carry (applications).
+ *    socket.
  *
  * Renders an invisible marker whose `data-realtime` is the channel state (the end-to-end tests wait for 'subscribed').
  */

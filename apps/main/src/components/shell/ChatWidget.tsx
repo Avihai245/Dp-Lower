@@ -6,15 +6,16 @@ import { useLocale, useTranslations } from 'next-intl';
 import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { TURNSTILE_SITE_KEY, Turnstile } from '@/components/contact/Turnstile';
 import { Link } from '@/i18n/navigation';
+import { currentAttribution } from '@/lib/shell/attribution';
 import {
   autoCapitalize,
   buildChatPayload,
   firstNameOf,
   leadErrors,
-  parseUtm,
   postContact,
   type LeadField,
 } from '@/lib/shell/lead-form';
+import { Ltr } from './Ltr';
 import { useDialog } from './useDialog';
 
 const FONT = "font-family: 'Manrope', system-ui, sans-serif";
@@ -97,7 +98,7 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
     }
     setSending(true);
     setFailure(null);
-    const payload = buildChatPayload({ ...values, topicIndex: topic }, { locale, page: window.location.pathname, utm: parseUtm(window.location.search) });
+    const payload = buildChatPayload({ ...values, topicIndex: topic }, { locale, page: window.location.pathname, ...currentAttribution() });
     const result = await postContact(captcha ? { ...payload, turnstileToken: token ?? undefined } : payload);
     // a Turnstile token is good for one submission
     setToken(null);
@@ -305,7 +306,7 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
                   >
                     {t.rich(failure === 'rate' ? 'chat.errors.rate' : failure === 'captcha' ? 'chat.errors.captcha' : 'chat.errors.failed', {
                       phone: t('phones.telAviv'),
-                      n: (chunks) => <bdi dir="ltr">{chunks}</bdi>,
+                      n: (chunks) => <Ltr>{chunks}</Ltr>,
                     })}
                   </p>
                 )}
@@ -314,7 +315,7 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
                   aria-disabled={!ready || sending}
                   aria-busy={sending}
                   style={s(
-                    `border-radius: 999px; background: #14202b; color: #f8f5f0; border: 1px solid #14202b; ${FONT}; font-weight: 700; font-size: 15px; padding: 15px; cursor: pointer; opacity: ${sending ? 0.7 : ready ? 1 : 0.35}; pointer-events: ${ready && !sending ? 'auto' : 'none'}`,
+                    `border-radius: 999px; background: #14202b; color: #f8f5f0; border: 1px solid #14202b; ${FONT}; font-weight: 700; font-size: 15px; padding: 15px; cursor: pointer; opacity: ${sending ? 0.7 : ready ? 1 : 0.35}; pointer-events: ${sending ? 'none' : 'auto'}`,
                   )}
                 >
                   {sending ? t('chat.sending') : t('chat.submit')}
@@ -328,7 +329,7 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
                   {t.rich('chat.doneTitle', { name: sent.name, n: bdi })}
                 </div>
                 <p style={s('font-size: 14.5px; line-height: 1.6; color: #55606b; margin: 0')}>
-                  {t.rich('chat.doneLine', { phone: sent.phone, n: (chunks) => <bdi dir="ltr">{chunks}</bdi> })}
+                  {t.rich('chat.doneLine', { phone: sent.phone, n: (chunks) => <Ltr>{chunks}</Ltr> })}
                 </p>
               </div>
             )}

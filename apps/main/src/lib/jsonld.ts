@@ -5,7 +5,7 @@ import { articleIsoDate, parseArticleDate } from './dates';
 /**
  * Structured data builders for the services, insights and legal pages. They are pure (the site origin is a parameter)
  * so they can be unit tested; `<JsonLd>` from `@/lib/seo` renders the result. Every page emits one `@graph`, as the
- * prototype's syncMeta did: the firm itself (`#firm`) is described once, on the home page, and referenced by id.
+ * prototype's syncMeta did; the firm itself (`#firm`) comes from the site layout (lib/home/jsonld.ts) and is referenced by id.
  */
 
 type Json = Record<string, unknown>;

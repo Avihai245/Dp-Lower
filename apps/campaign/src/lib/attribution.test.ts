@@ -7,6 +7,7 @@ import {
   decodeAttribution,
   firstTouchCookies,
   parseAttribution,
+  returnCookie,
 } from './attribution';
 
 describe('parseAttribution', () => {
@@ -111,6 +112,23 @@ describe('decodeAttribution (server side)', () => {
       JSON.stringify(Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`utm_k${i}`, 'v']))),
     );
     expect(Object.keys(decodeAttribution(null, many).utm ?? {})).toHaveLength(8);
+  });
+});
+
+describe('returnCookie (where "Back to the site" goes)', () => {
+  it('is the source of the latest deep link, and "direct" when the link names an entry only', () => {
+    expect(returnCookie('?entry=eligibility&source=main-site')).toEqual({ name: 'dpl_from', value: 'main-site' });
+    expect(returnCookie('?source=news')).toEqual({ name: 'dpl_from', value: 'news' });
+    expect(returnCookie('?entry=signin')).toEqual({ name: 'dpl_from', value: 'direct' });
+  });
+  it('says nothing for a visit that names no origin (utm parameters alone are attribution, not a way back)', () => {
+    expect(returnCookie('')).toBeNull();
+    expect(returnCookie('?utm_source=google&utm_medium=cpc')).toBeNull();
+    expect(returnCookie('?source=%20%20')).toBeNull();
+  });
+  it('is independent of the first touch: both are written when a first visit is a deep link', () => {
+    expect(firstTouchCookies('?entry=eligibility&source=main-site', () => false).map((c) => c.name)).toEqual(['dpl_src']);
+    expect(returnCookie('?entry=eligibility&source=main-site')?.value).toBe('main-site');
   });
 });
 

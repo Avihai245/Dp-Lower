@@ -1,6 +1,6 @@
 'use client';
 
-import { digitsOf } from '@dpl/core';
+import { digitsOf, firstNameOf } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, useTransition } from 'react';
@@ -219,7 +219,7 @@ function EditForm({ lead, onClose }: { lead: LeadRowData; onClose: () => void })
       {saved && (
         <div role="status" style={s('display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:14px;line-height:1.5;color:#2f5a3e')}>
           <Check />
-          <span>{saved === 'email' ? t('edit.savedEmailLine') : t('edit.savedLine')}</span>
+          <span>{saved === 'email' ? t('edit.savedEmailLine', { first: (firstNameOf(name) || name.trim()) }) : t('edit.savedLine', { first: (firstNameOf(name) || name.trim()) })}</span>
         </div>
       )}
 

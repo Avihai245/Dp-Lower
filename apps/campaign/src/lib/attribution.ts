@@ -6,6 +6,12 @@
  *            arrived through a platform deep link (`?entry=...`) without a `source`.
  *   dpl_utm  URL-encoded JSON object of the `utm_*` query parameters.
  *
+ * A third cookie answers a different question: where did the CURRENT visit come from, so that "Back to the site" returns
+ * there?
+ *
+ *   dpl_from the `source` of the latest deep link (`?entry=...&source=main-site`), overwritten by every deep link
+ *            ("direct" when the link has an entry but no source). Not attribution: the first touch above never changes.
+ *
  * The server reads them back with `decodeAttribution` below (which also validates them, as cookies are
  * client-controlled). Cookies last 30 days, path=/, SameSite=Lax. Only the first touch is recorded: once either cookie
  * exists nothing is overwritten. Pure functions so the rules are unit-testable; src/middleware.ts sets the cookies.
@@ -13,6 +19,7 @@
 
 export const SRC_COOKIE = 'dpl_src';
 export const UTM_COOKIE = 'dpl_utm';
+export const FROM_COOKIE = 'dpl_from';
 export const DEFAULT_SOURCE = 'campaign-ger-aus';
 export const DIRECT_SOURCE = 'direct';
 export const SOURCE_MAX_LENGTH = 80;
@@ -114,6 +121,19 @@ export function decodeAttribution(
     }
   }
   return { source, utm: decodedUtm };
+}
+
+/**
+ * The cookie that says where this visit came from, or null when the URL names no origin (no `source`, no `entry`). Unlike
+ * the first-touch cookies it is written on every deep link, so a visitor who first came from an advertisement and now
+ * arrives from the firm's website is sent back to the website.
+ */
+export function returnCookie(search: string | URLSearchParams): AttributionCookie | null {
+  const params = typeof search === 'string' ? new URLSearchParams(search) : search;
+  const source = clean(params.get('source'), SOURCE_MAX_LENGTH);
+  const hasEntry = clean(params.get('entry'), 40) !== null;
+  if (!source && !hasEntry) return null;
+  return { name: FROM_COOKIE, value: source ?? DIRECT_SOURCE };
 }
 
 /**

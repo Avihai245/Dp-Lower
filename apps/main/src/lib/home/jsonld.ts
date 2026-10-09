@@ -3,12 +3,13 @@ import { absoluteUrl, type ContentBundle } from '@dpl/i18n';
 import { FIRM } from '../shell/firm';
 
 /**
- * Structured data of the home page: the firm (LegalService + Organization with both offices, phones, founders, practice
- * areas, profiles and the catalogue of its services) and the WebSite. Taken from the prototype's <head>, with the
- * service names and URLs generated from the content so they are always the 22 current practice areas, at their clean
- * /services/<slug> addresses (and /he/services/<slug> for the Hebrew edition).
+ * Structured data of the firm: LegalService + Organization with both offices, phones, founders, practice areas,
+ * profiles and the catalogue of its services, and the WebSite. Taken from the prototype's <head>, where it sat on every
+ * URL: the site layout emits it on every page, so the pages that point at `#firm` (services, articles, attorneys) have it
+ * in the same document. The service names and URLs are generated from the content, so they are always the 22 current
+ * practice areas at their clean /services/<slug> addresses (and /he/services/<slug> for the Hebrew edition).
  */
-export interface HomeJsonLdArgs {
+export interface FirmJsonLdArgs {
   locale: Locale;
   /** origin without a trailing slash, e.g. https://www.lawoffice.org.il */
   siteUrl: string;
@@ -23,7 +24,7 @@ const FOUNDER_SLUGS = ['joshua-pex', 'michael-decker'] as const;
 /** Hebrew team names carry the title "עו"ד" in front, which is not part of a person's name in structured data. */
 const plainName = (name: string): string => name.replace(/^עו"ד\s+/, '');
 
-export function homeJsonLd({ locale, siteUrl, name, catalogName, content }: HomeJsonLdArgs) {
+export function firmJsonLd({ locale, siteUrl, name, catalogName, content }: FirmJsonLdArgs) {
   const origin = siteUrl.replace(/\/$/, '');
   const firmId = `${origin}/#firm`;
   const founders = FOUNDER_SLUGS.map((slug) => content.team.find((m) => m.slug === slug))

@@ -2,6 +2,7 @@ import type { Locale } from '@dpl/core';
 import { getContent } from '@dpl/i18n';
 import { s } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
+import { Ltr } from '@/components/shell/Ltr';
 
 /** "Our offices": Tel Aviv and Jerusalem with address, phones and a map link. Text and map URLs come from the offices content. */
 export async function Offices({ locale }: { locale: Locale }) {
@@ -25,9 +26,9 @@ export async function Offices({ locale }: { locale: Locale }) {
               <address style={s('font-style: normal; font-size: 16px; line-height: 1.7; color: #736d64; margin: 0 0 14px; max-width: 44ch')}>{o.address}</address>
               <div style={s('display: flex; gap: 22px; flex-wrap: wrap; align-items: baseline')}>
                 <a href={o.telHref} style={s('font-size: 17px; font-weight: 600; text-decoration: none')}>
-                  <bdi>{o.tel}</bdi>
+                  <Ltr>{o.tel}</Ltr>
                 </a>
-                <span style={s('font-size: 14.5px; color: #736d64')}>{t('offices.also', { tel: o.tel2 })}</span>
+                <span style={s('font-size: 14.5px; color: #736d64')}>{t.rich('offices.also', { tel: o.tel2, n: (chunks) => <Ltr>{chunks}</Ltr> })}</span>
                 <a href={o.map} target="_blank" rel="noopener" style={s('font-size: 14.5px')}>
                   {t('offices.map')}
                 </a>

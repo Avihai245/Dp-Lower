@@ -50,6 +50,41 @@ export async function ensureAuthUser(db: Db, lead: LeadRow): Promise<{ userId: s
 }
 
 /**
+ * The lead has a portal account from now on: stage "account", status "Account created", one activity line and one
+ * `account.created` event for the firm's CRM. Idempotent; the first caller wins. Every path that gives the applicant a
+ * portal session calls this: the "Go to my portal" button and the emailed /go link (via openPortalSession), and the
+ * Google and password-reset sign-ins (the auth callback), which find or link the lead without creating anything.
+ */
+export async function markAccountCreated(db: Db, lead: LeadRow): Promise<LeadRow> {
+  if (lead.account_created_at) return lead;
+  const { data, error } = await db
+    .from('leads')
+    .update({
+      account_created_at: new Date().toISOString(),
+      stage: advanceStage(lead.stage, 'account_created'),
+      status: advanceStatus(lead.status, 'account_created'),
+    })
+    .eq('id', lead.id)
+    .is('account_created_at', null)
+    .select('*')
+    .maybeSingle();
+  if (error) throw new Error(`lead update failed: ${error.message}`);
+  if (!data) {
+    // a concurrent request marked it first and wrote the activity line and the event
+    const { data: fresh } = await db.from('leads').select('*').eq('id', lead.id).single();
+    return fresh ?? lead;
+  }
+  await logActivity(db, { leadId: lead.id, code: 'account_created', text: 'Portal account created' });
+  await enqueueEvent(db, {
+    type: 'account.created',
+    leadId: lead.id,
+    payload: { lead: leadSnapshot(data) },
+    dedupeKey: `account.created:${lead.id}`,
+  });
+  return data;
+}
+
+/**
  * Signs the current browser in as the lead's user (cookies are written by the server client) and renews the lead
  * cookie. Route Handlers and Server Actions only. The caller must already have established that this browser may
  * enter the lead: valid lead cookie, a verified emailed token, or a fresh OAuth login.
@@ -65,30 +100,37 @@ export async function openPortalSession(db: Db, lead: LeadRow): Promise<LeadRow>
   const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' });
   if (verifyError) throw new Error(`verifyOtp failed: ${verifyError.message}`);
 
-  let current = l;
-  if (!l.account_created_at) {
-    const { data: updated, error: upErr } = await db
-      .from('leads')
-      .update({
-        account_created_at: new Date().toISOString(),
-        stage: advanceStage(l.stage, 'account_created'),
-        status: advanceStatus(l.status, 'account_created'),
-      })
-      .eq('id', l.id)
-      .select('*')
-      .single();
-    if (upErr || !updated) throw new Error(`lead update failed: ${upErr?.message ?? 'unknown'}`);
-    current = updated;
-    await logActivity(db, { leadId: l.id, code: 'account_created', text: 'Portal account created' });
-    await enqueueEvent(db, {
-      type: 'account.created',
-      leadId: l.id,
-      payload: { lead: leadSnapshot(current) },
-      dedupeKey: `account.created:${l.id}`,
-    });
-  }
+  const current = await markAccountCreated(db, l);
   await setLeadCookie(current);
   return current;
+}
+
+/**
+ * The applicant corrected the address of a lead whose mailbox was never proven. The new address is a new identity: the
+ * sign-in user follows it (its password is replaced and its sessions end), the address is unverified again, and every
+ * emailed link and lead cookie issued so far dies (`session_epoch` + 1; the caller reissues this browser's cookie). A
+ * mistyped address can belong to a stranger, who must not keep a working link into the file.
+ * Returns null when the new address is taken by another sign-in user or lead (nothing is changed then).
+ */
+export async function changeLeadEmail(db: Db, lead: LeadRow, email: string, extra: Partial<LeadRow> = {}): Promise<LeadRow | null> {
+  if (lead.user_id) {
+    const { error } = await db.auth.admin.updateUserById(lead.user_id, { email, email_confirm: true, password: randomPassword() });
+    if (error) return null;
+  }
+  const { data, error } = await db
+    .from('leads')
+    .update({ ...extra, email, email_verified_at: null, password_set_at: null, session_epoch: lead.session_epoch + 1 })
+    .eq('id', lead.id)
+    .select('*')
+    .single();
+  if (error || !data) {
+    // keep the two records consistent: put the sign-in user back
+    if (lead.user_id) await db.auth.admin.updateUserById(lead.user_id, { email: lead.email, email_confirm: true });
+    if (error?.code === '23505') return null;
+    throw new Error(`changeLeadEmail failed: ${error?.message ?? 'no row'}`);
+  }
+  if (lead.user_id) await db.rpc('revoke_user_sessions', { p_user: lead.user_id });
+  return data;
 }
 
 /** Was this request made from the browser that created the lead (lead cookie) or one already signed in as it? */

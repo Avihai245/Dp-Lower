@@ -21,10 +21,10 @@ export async function LandingFooter() {
         style={s('display:flex;flex-direction:column;align-items:center;gap:24px;padding-bottom:36px;border-bottom:1px solid #ece6dc')}
       >
         <img
-          src="/images/DPL_logo.webp"
+          src="/images/DPL_logo-sm.webp"
           alt={t('logoAlt')}
-          width={800}
-          height={286}
+          width={320}
+          height={114}
           decoding="async"
           style={s('height:42px;width:auto;display:block')}
         />

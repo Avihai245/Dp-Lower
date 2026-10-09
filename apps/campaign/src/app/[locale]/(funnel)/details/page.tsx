@@ -13,11 +13,19 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 /**
- * A browser that already holds a lead (it came back, or pressed Back from the booking) sees its details filled in.
- * Reading the lead cookie here, on the server, avoids a failing request from visitors who have none yet.
+ * A browser that already holds a lead (it came back, or pressed Back from the booking) sees its details filled in, and
+ * may correct the email address (the same lead moves to it). Reading the lead cookie here, on the server, avoids a
+ * failing request from visitors who have none yet.
  */
 export default async function DetailsPage({ params }: { params: Promise<{ locale: string }> }) {
   setRequestLocale((await params).locale);
   const who = await resolveLead(createAdminSupabase());
-  return <LeadForm initialLead={who ? { fullName: who.lead.full_name, email: who.lead.email, phone: who.lead.phone ?? '' } : null} />;
+  // an applicant who is signed in, or has set a password, cannot change the address of the file here (409 email_locked)
+  const emailLocked = !!who && (who.via === 'session' || !!who.lead.password_set_at);
+  return (
+    <LeadForm
+      initialLead={who ? { fullName: who.lead.full_name, email: who.lead.email, phone: who.lead.phone ?? '' } : null}
+      emailLocked={emailLocked}
+    />
+  );
 }

@@ -1,8 +1,8 @@
 import type { Locale } from '@dpl/core';
-import { getContent } from '@dpl/i18n';
 import { s } from '@dpl/ui';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { LegacyHash } from '@/components/LegacyHash';
 import { AuthorityStrip } from '@/components/home/AuthorityStrip';
 import { Countries } from '@/components/home/Countries';
 import { Hero } from '@/components/home/Hero';
@@ -13,8 +13,7 @@ import { Offices } from '@/components/home/Offices';
 import { Reviews } from '@/components/home/Reviews';
 import { Stages } from '@/components/home/Stages';
 import { TeamBand } from '@/components/home/TeamBand';
-import { homeJsonLd } from '@/lib/home/jsonld';
-import { JsonLd, pageMetadata, SITE_URL } from '@/lib/seo';
+import { pageMetadata } from '@/lib/seo';
 
 type Params = { params: Promise<{ locale: string }> };
 
@@ -28,20 +27,10 @@ export default async function HomePage({ params }: Params) {
   const { locale: requested } = await params;
   setRequestLocale(requested);
   const locale = requested as Locale;
-  const t = await getTranslations('home');
-  const tSite = await getTranslations('site');
 
   return (
     <>
-      <JsonLd
-        data={homeJsonLd({
-          locale,
-          siteUrl: SITE_URL,
-          name: tSite('brand.full'),
-          catalogName: t('meta.catalog'),
-          content: getContent(locale),
-        })}
-      />
+      <LegacyHash />
       <div style={s('animation: fadeIn 280ms ease both')}>
         <Hero locale={locale} />
         <AuthorityStrip />

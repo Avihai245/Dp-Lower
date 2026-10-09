@@ -9,6 +9,7 @@ import { capitalizeName, firstNameOf } from '@dpl/core';
 import type { NextRequest } from 'next/server';
 import { cache } from 'react';
 import { redirect } from '@/i18n/navigation';
+import { announceUpdate } from '@/server/lead-events';
 import { APPLICANT_ACTIVITY_CODES, type PortalState } from '@/components/portal/model/types';
 import { buildPortalState } from '@/components/portal/model/state';
 import type { DetailsInput } from '@/components/portal/model/schemas';
@@ -130,7 +131,7 @@ export async function updateDetails(
   const patch: { full_name?: string; phone?: string } = {};
   if (input.fullName !== undefined) patch.full_name = capitalizeName(input.fullName);
   if (input.phone !== undefined) patch.phone = input.phone.trim();
-  const { data, error } = await db.from('leads').update(patch).eq('id', lead.id).select('full_name, phone').single();
+  const { data, error } = await db.from('leads').update(patch).eq('id', lead.id).select('*').single();
   if (error || !data) return fail('saving the details', error?.message ?? 'no row');
   await logActivity(db, {
     leadId: lead.id,
@@ -138,5 +139,8 @@ export async function updateDetails(
     text: 'Contact details updated by the applicant',
     meta: { fields: Object.keys(patch) },
   });
+  // the firm's CRM keeps the same name and phone number the portal shows
+  const changed = [...(patch.full_name !== undefined && patch.full_name !== lead.full_name ? ['name'] : []), ...(patch.phone !== undefined && patch.phone !== lead.phone ? ['phone'] : [])];
+  await announceUpdate(db, data, changed);
   return { fullName: data.full_name, firstName: firstNameOf(data.full_name), phone: data.phone };
 }

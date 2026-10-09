@@ -1,4 +1,5 @@
-import { docRejectedData, docRequestData, statusData } from '../data';
+import { detailsChangedData, docRejectedData, docRequestData, statusData } from '../data';
+import { getContent } from '@dpl/i18n';
 import { define } from '../doc';
 import { eyebrow, hero, items, para, plate, section, steps } from '../kit';
 import { docText, routeLabel, STATUS_HELP, STATUS_LABELS } from '../labels';
@@ -246,6 +247,78 @@ export const applicationReceived = define('welcome', { en: receivedEn, he: recei
           c.steps.map((s) => k.r(s)),
         ),
       ),
+      actionBand(k, { href: k.ctx.links.portal, label: c.cta, note: c.note }),
+      txFooter(k, { reason: c.reason, legal: true }),
+    ],
+  };
+});
+
+/**
+ * details-changed: the team changed the contact details on the file (CRM "Edit details"). The designed confirmation in the
+ * prototype reads "{first} gets an email confirming the change". When the email address itself changed there are two
+ * emails: one to the new address ("current") and one to the address the file had until now ("previous"), which carries no
+ * link into the file and does not name the new address.
+ */
+const changedEn = {
+  subject: 'Your details were updated',
+  preheader: 'A change was made to the contact details on your file.',
+  kicker: 'Your file',
+  h1: '{first}, your details were updated.',
+  lede: 'Our team updated the contact details on your file: {fields}. Messages about your case come to this address.',
+  fields: { name: 'name', email: 'email address', phone: 'phone number' },
+  cta: 'Open my portal',
+  note: 'If this was not expected, reply to this email and we will check it with you.',
+  reason: 'You received this because the contact details on your file were changed.',
+  previous: {
+    preheader: 'The email address on your file was changed.',
+    h1: 'The email address on your file was changed.',
+    lede: 'Our team changed the email address on a file that used this address. Messages about that file now go to the new address, and no longer to this one.',
+    urgent: 'If you did not expect this, call us right away on {tel} or reply to this email.',
+    reason: 'You received this because this address was on the file until now.',
+  },
+};
+
+const changedHe: typeof changedEn = {
+  subject: 'הפרטים שלכם עודכנו',
+  preheader: 'בוצע שינוי בפרטי הקשר שבתיק שלכם.',
+  kicker: 'התיק שלכם',
+  h1: '{first}, הפרטים שלכם עודכנו.',
+  lede: 'הצוות שלנו עדכן את פרטי הקשר שבתיק שלכם: {fields}. הודעות על התיק מגיעות לכתובת הזו.',
+  fields: { name: 'השם', email: 'כתובת האימייל', phone: 'מספר הטלפון' },
+  cta: 'כניסה לפורטל',
+  note: 'אם לא ציפיתם לכך, השיבו להודעה זו ונבדוק את העניין יחד איתכם.',
+  reason: 'קיבלתם הודעה זו מפני שפרטי הקשר שבתיק שלכם שונו.',
+  previous: {
+    preheader: 'כתובת האימייל שבתיק שונתה.',
+    h1: 'כתובת האימייל שבתיק שונתה.',
+    lede: 'הצוות שלנו שינה את כתובת האימייל בתיק שהשתמש בכתובת הזו. הודעות על התיק מגיעות מעכשיו לכתובת החדשה, ולא לכתובת הזו.',
+    urgent: 'אם לא ציפיתם לכך, התקשרו אלינו מיד למספר {tel} או השיבו להודעה זו.',
+    reason: 'קיבלתם הודעה זו מפני שכתובת זו הייתה בתיק עד עכשיו.',
+  },
+};
+
+export const detailsChanged = define('welcome', { en: changedEn, he: changedHe }, (k, c) => {
+  const { variant, changed } = detailsChangedData(k.ctx);
+  if (variant === 'previous') {
+    const tel = getContent(k.locale).offices[0]?.tel ?? '';
+    return {
+      subject: c.previous.h1,
+      preheader: c.previous.preheader,
+      rows: [
+        top(k),
+        hero(k, { kicker: c.kicker, h1: k.r(c.previous.h1), ledes: [k.r(c.previous.lede)] }),
+        section(k, { bg: 'paper', pad: '30px 44px 34px 44px' }, ...(tel ? [para(k, k.r(c.previous.urgent, { tel: ltr(tel) }), { mb: '0px' })] : [])),
+        txFooter(k, { reason: c.previous.reason, legal: true }),
+      ],
+    };
+  }
+  const fields = changed.length > 0 ? changed.map((f) => c.fields[f]).join(', ') : c.fields.email;
+  return {
+    subject: c.subject,
+    preheader: c.preheader,
+    rows: [
+      top(k),
+      hero(k, { kicker: c.kicker, h1: k.r(c.h1, k.vars), ledes: [k.r(c.lede, { fields })] }),
       actionBand(k, { href: k.ctx.links.portal, label: c.cta, note: c.note }),
       txFooter(k, { reason: c.reason, legal: true }),
     ],

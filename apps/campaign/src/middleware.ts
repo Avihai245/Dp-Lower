@@ -2,7 +2,7 @@ import { refreshSession } from '@dpl/db/middleware';
 import createMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
-import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies } from './lib/attribution';
+import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies, returnCookie } from './lib/attribution';
 import { entryNeedsSession, entryTarget } from './lib/landing-entry';
 
 const intl = createMiddleware(routing);
@@ -15,9 +15,14 @@ const SESSION_AWARE = [...PROTECTED, '/sign-in', '/create-password', '/auth'];
 const stripLocale = (p: string) => p.replace(/^\/he(?=\/|$)/, '') || '/';
 const matches = (path: string, roots: string[]) => roots.some((r) => path === r || path.startsWith(`${r}/`));
 
-/** First-touch attribution (source + utm_*) for the lead API; see lib/attribution.ts. Never overwrites an earlier touch. */
+/**
+ * First-touch attribution (source + utm_*) for the lead API; never overwrites an earlier touch. Also the return-to-site
+ * cookie, which every deep link overwrites. See lib/attribution.ts.
+ */
 function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
-  for (const c of firstTouchCookies(req.nextUrl.searchParams, (name) => req.cookies.has(name))) {
+  const from = returnCookie(req.nextUrl.searchParams);
+  const cookies = [...firstTouchCookies(req.nextUrl.searchParams, (name) => req.cookies.has(name)), ...(from ? [from] : [])];
+  for (const c of cookies) {
     res.cookies.set(c.name, c.value, {
       maxAge: COOKIE_MAX_AGE_SECONDS,
       path: '/',

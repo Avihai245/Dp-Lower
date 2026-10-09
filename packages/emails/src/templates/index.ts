@@ -2,7 +2,7 @@ import type { TemplateDef } from '../doc';
 import type { EmailTemplateId } from '../types';
 import { authLink, passwordReset } from './auth';
 import { bookingCancelled, bookingConfirmation } from './booking';
-import { applicationReceived, documentRejected, documentRequested, statusUpdate } from './case';
+import { applicationReceived, detailsChanged, documentRejected, documentRequested, statusUpdate } from './case';
 import { contactReceived } from './contact';
 import { fileOpen } from './file-open';
 import { welcome1 } from './welcome-01';
@@ -30,6 +30,7 @@ export const TEMPLATES: Record<EmailTemplateId, TemplateDef> = {
   'document-requested': documentRequested,
   'document-rejected': documentRejected,
   'application-received': applicationReceived,
+  'details-changed': detailsChanged,
   'password-reset': passwordReset,
   'contact-received': contactReceived,
   'auth-link': authLink,

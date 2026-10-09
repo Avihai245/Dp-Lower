@@ -233,5 +233,17 @@ export async function removeDocument(db: Db, lead: LeadRow, docType: DocType): P
       text: `Document removed by the applicant: ${enTitle(docType)}`,
       meta: { docType },
     });
+    // the firm's CRM must not keep showing a document that is gone
+    const { count } = await db
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('lead_id', lead.id)
+      .eq('status', 'received');
+    await enqueueEvent(db, {
+      type: 'document.removed',
+      leadId: lead.id,
+      payload: { lead: leadSnapshot(lead), docType, docsReceived: count ?? 0, docsTotal: DOC_TYPES.length },
+      dedupeKey: `document.removed:${lead.id}:${docType}:${randomUUID()}`,
+    });
   }
 }

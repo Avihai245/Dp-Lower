@@ -1,13 +1,27 @@
 import { ARTICLE_SLUGS, getContent, SERVICE_SLUGS, TEAM_SLUGS } from '@dpl/i18n';
 import { describe, expect, it } from 'vitest';
+import enFaq from '../../../campaign/messages/en/landingMore.json';
+import heFaq from '../../../campaign/messages/he/landingMore.json';
 import enSeo from '../../messages/en/seo.json';
 import heSeo from '../../messages/he/seo.json';
 import { buildLlmsFullTxt, buildLlmsTxt, type LlmsOptions } from './llms';
 
 const ORIGIN = 'https://www.lawoffice.org.il';
 const CAMPAIGN = 'https://euro-passports.com';
-const en: LlmsOptions = { locale: 'en', origin: ORIGIN, campaignUrl: CAMPAIGN, strings: enSeo.llms };
-const he: LlmsOptions = { locale: 'he', origin: ORIGIN, campaignUrl: CAMPAIGN, strings: heSeo.llms };
+const en: LlmsOptions = {
+  locale: 'en',
+  origin: ORIGIN,
+  campaignUrl: CAMPAIGN,
+  strings: enSeo.llms,
+  faq: enFaq.faq.items,
+};
+const he: LlmsOptions = {
+  locale: 'he',
+  origin: ORIGIN,
+  campaignUrl: CAMPAIGN,
+  strings: heSeo.llms,
+  faq: heFaq.faq.items,
+};
 
 const count = (haystack: string, needle: string | RegExp) =>
   typeof needle === 'string' ? haystack.split(needle).length - 1 : (haystack.match(needle) ?? []).length;
@@ -94,8 +108,9 @@ describe('llms-full.txt', () => {
     expect(withFaq.length).toBeGreaterThan(0);
     expect(withFaq.length).toBeLessThan(22);
     expect(count(txt, '\n## Questions\n')).toBe(withFaq.length);
-    expect(count(txt, /^Q: /gm)).toBe(total);
-    expect(count(txt, /^A: /gm)).toBe(total);
+    // the services' questions, plus the campaign's own section
+    expect(count(txt, /^Q: /gm)).toBe(total + enFaq.faq.items.length);
+    expect(count(txt, /^A: /gm)).toBe(total + enFaq.faq.items.length);
     for (const s of withFaq) for (const f of s.faq) expect(txt).toContain(`Q: ${f.q}\nA: ${f.a}`);
   });
 
@@ -105,6 +120,16 @@ describe('llms-full.txt', () => {
         `# ${a.title}\nURL: ${ORIGIN}/insights/${a.slug}\nPublished: ${a.date} · ${a.author}\n\n${a.body.join('\n')}`,
       );
     }
+  });
+
+  it('has the campaign questions as their own section between the articles and the team, as the design handoff file does', () => {
+    expect(enFaq.faq.items).toHaveLength(10);
+    const start = txt.indexOf('\n# German & Austrian citizenship — common questions\n');
+    expect(start).toBeGreaterThan(txt.lastIndexOf(`URL: ${ORIGIN}/insights/`));
+    expect(start).toBeLessThan(txt.lastIndexOf('\n# Team\n'));
+    const section = txt.slice(start, txt.lastIndexOf('\n# Team\n'));
+    for (const f of enFaq.faq.items) expect(section).toContain(`Q: ${f.q}\nA: ${f.a}`);
+    expect(count(section, /^Q: /gm)).toBe(10);
   });
 
   it('lists the whole team at the end', () => {
@@ -136,6 +161,11 @@ describe('Hebrew llms files', () => {
     expect(count(full, '\n## למי זה מיועד\n')).toBe(22);
     expect(full).toContain('\nש: ');
     expect(full).toContain('\nת: ');
+  });
+
+  it('carry the campaign questions in Hebrew', () => {
+    expect(full).toContain('\n# אזרחות גרמנית ואוסטרית: שאלות נפוצות\n');
+    for (const f of heFaq.faq.items) expect(full).toContain(`ש: ${f.q}\nת: ${f.a}`);
   });
 
   it('have no unfilled placeholders and no ?p= URLs', () => {

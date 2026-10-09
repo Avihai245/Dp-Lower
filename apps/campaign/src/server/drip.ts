@@ -8,6 +8,7 @@ import {
   type DripRecord,
 } from '@dpl/core';
 import { createAdminSupabase } from '@dpl/db/admin';
+import { cancelPendingNurture } from '@dpl/db/outbox';
 import type { Db, LeadRow } from '@dpl/db/types';
 import { eventByDedupeKey, queueEmailEvent } from './email';
 import type { WelcomeTemplateId } from '@dpl/emails';
@@ -38,14 +39,15 @@ async function queueWelcome(
   number: number,
   scheduledFor: Date,
   now: Date,
+  dedupeKey: string = welcomeKey(lead.id, number),
 ): Promise<boolean> {
   const event = await queueEmailEvent({
     template: templateFor(number),
     lead,
-    dedupeKey: welcomeKey(lead.id, number),
+    dedupeKey,
     at: now,
   });
-  const eventId = event?.id ?? (await eventByDedupeKey(db, welcomeKey(lead.id, number)))?.id ?? null;
+  const eventId = event?.id ?? (await eventByDedupeKey(db, dedupeKey))?.id ?? null;
   if (!eventId) return false;
   const { error } = await db.from('email_sequence_state').upsert(
     {
@@ -71,6 +73,26 @@ export async function startWelcomeSequence(lead: LeadRow): Promise<void> {
     await queueWelcome(createAdminSupabase(), lead, 1, new Date(lead.created_at), new Date());
   } catch (e) {
     console.error('[drip] startWelcomeSequence failed', lead.id, e);
+  }
+}
+
+/**
+ * The applicant corrected the address the emails go to (the lead now carries the new one): everything still waiting for the
+ * old address is cancelled, welcome-1 goes to the new address, and the rest of the sequence carries on as scheduled.
+ * Rows of emails that were only queued (now cancelled) are dropped so the scheduler decides about them again; rows of
+ * emails already delivered stay, so nothing is sent twice. Never throws.
+ */
+export async function restartForNewAddress(lead: LeadRow): Promise<void> {
+  try {
+    const db = createAdminSupabase();
+    await cancelPendingNurture(db, lead.id, 'email_changed');
+    const { error } = await db.from('email_sequence_state').delete().eq('lead_id', lead.id).or('status.eq.queued,number.eq.1');
+    if (error) throw new Error(error.message);
+    if (lead.unsubscribed_at || lead.submitted_at) return;
+    // the epoch changed with the address, so the key differs from the one welcome-1 had at the old address
+    await queueWelcome(db, lead, 1, new Date(lead.created_at), new Date(), `${welcomeKey(lead.id, 1)}:e${lead.session_epoch}`);
+  } catch (e) {
+    console.error('[drip] restartForNewAddress failed', lead.id, e);
   }
 }
 
@@ -105,8 +127,9 @@ async function candidateLeads(db: Db, now: Date, onlyLeadIds?: string[]): Promis
         .lte('created_at', now.toISOString())
         .is('unsubscribed_at', null)
         .is('submitted_at', null)
-        // people who signed in with Google never asked for an eligibility check: no nurture sequence for them
-        .neq('source', 'oauth')
+        // people who signed in with Google and never took the eligibility check get no nurture sequence; once they have
+        // answered the questions they are leads like any other
+        .or('source.neq.oauth,answers.neq.{}')
         .order('created_at', { ascending: true })
         .order('id', { ascending: true })
         .range(from, from + PAGE - 1);

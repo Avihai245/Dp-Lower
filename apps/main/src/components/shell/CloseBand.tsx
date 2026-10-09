@@ -2,6 +2,7 @@ import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { FIRM } from '@/lib/shell/firm';
+import { Ltr } from '@/components/shell/Ltr';
 
 /** "One more step" band that closes the contact page, which has its own form and therefore no lead band. */
 export async function CloseBand() {
@@ -42,7 +43,7 @@ export async function CloseBand() {
                 { hover: 'background: rgba(20,32,43,0.06)' },
               )}
             >
-              {t.rich('closeBand.call', { phone: t('phones.telAviv'), n: (chunks) => <bdi>{chunks}</bdi> })}
+              {t.rich('closeBand.call', { phone: t('phones.telAviv'), n: (chunks) => <Ltr>{chunks}</Ltr> })}
             </a>
           </div>
         </div>

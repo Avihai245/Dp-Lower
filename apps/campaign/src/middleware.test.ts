@@ -64,7 +64,11 @@ describe('first-touch attribution on normal visits', () => {
 
   it('sets nothing for a plain visit and never overwrites an earlier touch', async () => {
     expect(cookieNames((await get('/')) as NextResponse)).toEqual([]);
-    expect(cookieNames((await get('/?source=later', 'dpl_src=first')) as NextResponse)).toEqual([]);
+    expect(cookieNames((await get('/?utm_source=later', 'dpl_src=first')) as NextResponse)).toEqual([]);
+    // a source on a later visit does not replace the first touch, but it does say where "Back to the site" goes
+    const later = (await get('/?source=later', 'dpl_src=first')) as NextResponse;
+    expect(cookieNames(later)).toEqual(['dpl_from']);
+    expect(later.cookies.get('dpl_from')?.value).toBe('later');
   });
 });
 

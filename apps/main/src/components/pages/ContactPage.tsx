@@ -4,6 +4,7 @@ import { getContent } from '@dpl/i18n';
 import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import { ClientMessages } from '@/components/ClientMessages';
+import { Ltr } from '@/components/shell/Ltr';
 import { ContactForm, type MatterOption } from '../contact/ContactForm';
 import { FIRM } from './firm';
 import { SERIF } from './tokens';
@@ -74,7 +75,7 @@ export async function ContactPage({ locale }: { locale: Locale }) {
                       href={office.telHref}
                       style={s('font-size: 16px; font-weight: 600; text-decoration: none')}
                     >
-                      <bdi>{office.tel}</bdi>
+                      <Ltr>{office.tel}</Ltr>
                     </a>
                     <div
                       style={s(
@@ -82,7 +83,7 @@ export async function ContactPage({ locale }: { locale: Locale }) {
                       )}
                     >
                       <span style={s('font-size: 14px; color: #736d64')}>
-                        {t('contact.also')} <bdi>{office.tel2}</bdi>
+                        {t('contact.also')} <Ltr>{office.tel2}</Ltr>
                       </span>
                       <a href={office.map} target="_blank" rel="noopener" style={s('font-size: 14px')}>
                         {t('contact.map')}
@@ -105,13 +106,13 @@ export async function ContactPage({ locale }: { locale: Locale }) {
                 href={`mailto:${FIRM.email}`}
                 style={s('align-self: flex-start; font-size: 16px; text-decoration: none')}
               >
-                <bdi>{FIRM.email}</bdi>
+                <Ltr>{FIRM.email}</Ltr>
               </a>
               <a
                 href={FIRM.mobile.href}
                 style={s('align-self: flex-start; font-size: 16px; text-decoration: none')}
               >
-                {t('contact.mobile')} <bdi>{FIRM.mobile.display}</bdi>
+                {t('contact.mobile')} <Ltr>{FIRM.mobile.display}</Ltr>
               </a>
               <a
                 href={FIRM.whatsapp.href}
@@ -119,7 +120,7 @@ export async function ContactPage({ locale }: { locale: Locale }) {
                 rel="noopener"
                 style={s('align-self: flex-start; font-size: 16px; text-decoration: none')}
               >
-                {t('contact.whatsapp')} <bdi>{FIRM.whatsapp.display}</bdi>
+                {t('contact.whatsapp')} <Ltr>{FIRM.whatsapp.display}</Ltr>
               </a>
               <span style={s('font-size: 15.5px; color: #736d64')}>{t('contact.hours')}</span>
               <span style={s('font-size: 15.5px; color: #736d64')}>{t('contact.languages')}</span>

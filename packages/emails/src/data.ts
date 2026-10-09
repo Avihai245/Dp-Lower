@@ -63,6 +63,12 @@ export function resetData(ctx: EmailContext): { resetUrl: string } {
   return { resetUrl: webUrl(rec(ctx.data).resetUrl) || ctx.links.portal };
 }
 
+export function detailsChangedData(ctx: EmailContext): { variant: 'current' | 'previous'; changed: Array<'name' | 'email' | 'phone'> } {
+  const d = rec(ctx.data);
+  const list = Array.isArray(d.changed) ? d.changed.filter((f): f is 'name' | 'email' | 'phone' => f === 'name' || f === 'email' || f === 'phone') : [];
+  return { variant: d.variant === 'previous' ? 'previous' : 'current', changed: [...new Set(list)] };
+}
+
 export function contactData(ctx: EmailContext): { name: string } {
   return { name: str(rec(ctx.data).name) || ctx.lead.fullName };
 }

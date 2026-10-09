@@ -41,7 +41,7 @@ export function Header() {
         )}
       >
         <Link href="/" style={s('display: block; flex: none')}>
-          <img src="/images/DPL_logo.webp" alt={t('logoAlt')} width={800} height={286} style={s(logoCss)} />
+          <img src="/images/DPL_logo-sm.webp" alt={t('logoAlt')} width={320} height={114} style={s(logoCss)} />
         </Link>
         <nav
           data-navlinks

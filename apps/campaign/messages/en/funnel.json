@@ -115,7 +115,8 @@
     "email": {
       "label": "Email",
       "placeholder": "you@example.com",
-      "error": "Please enter a valid email address."
+      "error": "Please enter a valid email address.",
+      "locked": "The email address of your file can only be changed by contacting us."
     },
     "phone": {
       "label": "Phone",

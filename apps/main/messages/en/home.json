@@ -105,7 +105,7 @@
   },
   "offices": {
     "eyebrow": "Our offices",
-    "also": "Also {tel}",
+    "also": "Also <n>{tel}</n>",
     "map": "Open in maps"
   }
 }

@@ -17,14 +17,15 @@ const BUNDLES: Record<Locale, ContentBundle> = { en, he };
 
 export const getContent = (locale: Locale): ContentBundle => BUNDLES[locale] ?? BUNDLES[DEFAULT_LOCALE];
 
-export const getService = (locale: Locale, slug: string) => getContent(locale).services.find((s) => s.slug === slug);
-export const getArticle = (locale: Locale, slug: string) => getContent(locale).articles.find((a) => a.slug === slug);
-export const getMember = (locale: Locale, slug: string) => getContent(locale).team.find((m) => m.slug === slug);
+export const getService = (locale: Locale, slug: string) =>
+  getContent(locale).services.find((s) => s.slug === slug);
+export const getArticle = (locale: Locale, slug: string) =>
+  getContent(locale).articles.find((a) => a.slug === slug);
+export const getMember = (locale: Locale, slug: string) =>
+  getContent(locale).team.find((m) => m.slug === slug);
 
-/** Slugs are identical in both languages, so static params and the sitemap read them from English. */
-export const SERVICE_SLUGS = en.services.map((s) => s.slug);
-export const ARTICLE_SLUGS = en.articles.map((a) => a.slug);
-export const TEAM_SLUGS = en.team.map((m) => m.slug);
+/** Slugs are identical in both languages, so static params, the sitemap and the 404 check read one list (see slugs.ts). */
+export { ARTICLE_SLUGS, SERVICE_SLUGS, TEAM_SLUGS } from './slugs';
 
 /**
  * The Hebrew `dept` strings are not consistent with each other ("גרמניה ואוסטריה" vs "מחלקת גרמניה ואוסטריה"), so

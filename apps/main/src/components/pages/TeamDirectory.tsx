@@ -64,7 +64,6 @@ export function TeamDirectory({
               style={s(pillCss(on))}
             >
               {pill.label}
-              <span style={s('margin-inline-start: 6px; opacity: 0.7')}>{pill.count}</span>
             </button>
           );
         })}

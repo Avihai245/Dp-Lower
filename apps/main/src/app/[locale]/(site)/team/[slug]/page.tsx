@@ -58,7 +58,7 @@ export default async function Attorney({ params }: Props) {
     '@id': `${url}#person`,
     name: member.name,
     jobTitle: member.role,
-    // refers to the firm's @id as the prototype does; the site-wide LegalService data (not part of this page) defines it
+    // refers to the firm's @id as the prototype does; the site layout emits the firm's LegalService data on every page
     worksFor: { '@id': `${SITE_URL}/#firm` },
     image: member.photo ? `${SITE_URL}${member.photo}` : undefined,
     sameAs: member.linkedin ? [member.linkedin] : undefined,

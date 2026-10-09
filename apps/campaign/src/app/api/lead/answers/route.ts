@@ -6,6 +6,7 @@ import { logActivity } from '@dpl/db/outbox';
 import { asJson } from '@dpl/db/types';
 import { z } from 'zod';
 import { answersDiffer, mergeAnswers } from '@/components/funnel/logic/answers';
+import { announceUpdate } from '@/server/lead-events';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,12 +23,15 @@ export const PUT = handle(async (req) => {
 
   if (answersDiffer(who.lead.answers, answers)) {
     const merged = mergeAnswers(who.lead.answers, answers);
-    const { error } = await db
+    const { data: updated, error } = await db
       .from('leads')
       .update({ answers: asJson(merged), route: routeFromAnswers(merged) })
-      .eq('id', who.lead.id);
-    if (error) throw new Error(`answers update failed: ${error.message}`);
+      .eq('id', who.lead.id)
+      .select('*')
+      .single();
+    if (error || !updated) throw new Error(`answers update failed: ${error?.message ?? 'no row'}`);
     await logActivity(db, { leadId: who.lead.id, code: 'answers_updated', text: 'Eligibility answers updated' });
+    await announceUpdate(db, updated, ['answers']);
   }
   return json({ ok: true });
 });

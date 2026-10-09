@@ -1,4 +1,4 @@
-import { stageIndex, type LeadStage, type LeadStatus } from '@dpl/core';
+import { APPLICANT_STATUS_OPTIONS, stageIndex, type LeadStage, type LeadStatus } from '@dpl/core';
 import type { StatusStep, StepState, Timeline, TimelineMeta, TimelineNode, TimelineNodeId } from './types';
 
 /** "Review by the firm" is finished once the team has completed the review or is already contacting the applicant. */
@@ -34,6 +34,7 @@ export function buildTimeline(i: TimelineInput): Timeline {
   const submitted = !!i.submittedAt;
   const docsAll = i.docsTotal > 0 && i.docsReceived >= i.docsTotal;
   const applicationDone = i.applicationComplete || submitted;
+  const teamSet = (APPLICANT_STATUS_OPTIONS as readonly string[]).includes(i.status);
 
   const candidates: Array<RawNode | null> = [
     { id: 'eligibility', done: true, meta: { kind: 'completed' } },
@@ -59,7 +60,8 @@ export function buildTimeline(i: TimelineInput): Timeline {
     {
       id: 'review',
       done: submitted && REVIEW_FINISHED.includes(i.status),
-      meta: submitted ? { kind: 'status', status: i.status } : { kind: 'afterSubmit' },
+      // a status the team has set is shown at once, also before the applicant submits ("Additional information required")
+      meta: submitted || teamSet ? { kind: 'status', status: i.status } : { kind: 'afterSubmit' },
     },
   ];
   const raw = candidates.filter((n): n is RawNode => n !== null);

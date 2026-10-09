@@ -1,5 +1,5 @@
 'use client';
-import { APPLICATION_SECTIONS } from '@dpl/core';
+import { APPLICANT_STATUS_OPTIONS, APPLICATION_SECTIONS } from '@dpl/core';
 import { s } from '@dpl/ui';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -35,11 +35,23 @@ export function NotSubmittedView({ state }: { state: PortalState }) {
         ? t('dashboard.current.allIn')
         : t('dashboard.current.docsLeft', { count: next.count });
 
+  // a status the team set before the application was submitted ("Additional information required"): the applicant sees it too
+  const teamStatus = (APPLICANT_STATUS_OPTIONS as readonly string[]).includes(lead.status);
+
   return (
     <div data-pad style={s('max-width: 100%; margin: 0 auto; padding: 56px clamp(20px, 4.6vw, 160px) 80px')}>
       <div style={s(`${SANS}; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-accent-700); margin-bottom: 16px`)}>
         {t('dashboard.kicker')}
       </div>
+      {teamStatus && (
+        <p
+          data-team-status
+          role="status"
+          style={s(`${SANS}; font-size: 14.5px; line-height: 1.55; color: ${mix(80)}; border: 1px solid var(--color-accent); padding: 10px 16px; margin: 0 0 22px; max-width: 620px`)}
+        >
+          {t.rich('dashboard.teamStatus', { status: t(`status.${lead.status}`), b: (chunks) => <strong style={s('font-weight: 600')}>{chunks}</strong> })}
+        </p>
+      )}
       <h1 data-hero-h1 style={s('font-size: 48px; letter-spacing: -0.022em; margin: 0 0 14px; max-width: 22ch')}>{t(`dashboard.headline.${headline}`)}</h1>
       <p style={s(`font-size: 17px; color: ${mix(68)}; margin: 0 0 26px; max-width: 60ch`)}>{t(`dashboard.sub.${started ? 'continue' : 'start'}`)}</p>
       <div style={s('display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 44px; max-width: 620px')}>

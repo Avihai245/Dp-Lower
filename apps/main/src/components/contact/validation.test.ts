@@ -164,6 +164,16 @@ describe('toPayload', () => {
     expect(contactSubmissionSchema.safeParse(body).success).toBe(true);
   });
 
+  it('carries the campaign parameters and the source of the visit when it has them', () => {
+    const plain = toPayload(valid, { locale: 'en', page: '/contact' });
+    expect(plain).not.toHaveProperty('utm');
+    expect(plain).not.toHaveProperty('source');
+    const body = toPayload(valid, { locale: 'en', page: '/contact', utm: { utm_source: 'news', utm_campaign: 'spring' }, source: 'news' });
+    expect(body.utm).toEqual({ utm_source: 'news', utm_campaign: 'spring' });
+    expect(body.source).toBe('news');
+    expect(contactSubmissionSchema.safeParse(body).success).toBe(true);
+  });
+
   it('omits an empty note and keeps the honeypot empty', () => {
     const body = toPayload(valid, { locale: 'en', page: '/contact' });
     expect(body.note).toBeUndefined();

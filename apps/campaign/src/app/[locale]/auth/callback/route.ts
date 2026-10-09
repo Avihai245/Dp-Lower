@@ -1,7 +1,7 @@
 import { createAdminSupabase } from '@dpl/db/admin';
 import { safeNext } from '@dpl/db/links';
 import { getCookieLead, setLeadCookie } from '@dpl/db/lead-session';
-import { ensureLeadForUser, markEmailVerified, openPortalSession } from '@dpl/db/portal-session';
+import { ensureLeadForUser, markAccountCreated, markEmailVerified, openPortalSession } from '@dpl/db/portal-session';
 import { createServerSupabase } from '@dpl/db/server';
 import type { Locale } from '@dpl/core';
 import type { User } from '@supabase/supabase-js';
@@ -23,7 +23,8 @@ type Credential = { code: string } | { tokenHash: string };
 
 /**
  * Establishes a Supabase session from a credential, then for applicants finds or creates the lead for that user and
- * marks the mailbox verified (Google and the reset link both prove control of it). When that happens in a browser
+ * marks the mailbox verified (Google and the reset link both prove control of it) and the lead as having an account (a lead
+ * that existed before this sign-in reaches "Account created" here, not on its first application save). When that happens in a browser
  * that did not create the lead, markEmailVerified revokes whatever was set up before, including the session that was
  * just created, so a fresh one is opened afterwards. Staff go to /admin unless a `next` says otherwise.
  */
@@ -58,8 +59,10 @@ async function finish(req: NextRequest, locale: Locale, credential: Credential, 
     const lead = await ensureLeadForUser(db, user, locale);
     const sameBrowser = !existed || cookieLead?.id === lead.id || (!!before && before.id === lead.user_id);
     const verified = await markEmailVerified(db, lead, { sameBrowser });
-    if (verified.session_epoch !== lead.session_epoch) await openPortalSession(db, verified);
-    else await setLeadCookie(verified);
+    // this sign-in is the applicant's account: the lead reaches "Account created" however they got here
+    const account = await markAccountCreated(db, verified);
+    if (account.session_epoch !== lead.session_epoch) await openPortalSession(db, account);
+    else await setLeadCookie(account);
     return redirectTo(req, localizePath(safeNext(nextGiven, '/portal'), locale));
   } catch (e) {
     console.error('[auth/callback] could not finish the sign-in', e);

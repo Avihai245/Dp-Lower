@@ -78,7 +78,8 @@
       "start": "Start my application",
       "continue": "Continue my application",
       "documents": "Go to documents"
-    }
+    },
+    "teamStatus": "Update from our team: <b>{status}</b>"
   },
   "submitted": {
     "kicker": "{route} · Submitted {date}",

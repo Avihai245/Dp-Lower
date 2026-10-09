@@ -11,7 +11,7 @@ interface LegalSection {
   title: string;
   paras: string[];
   bullets: string[];
-  /** closing paragraph that follows the bullets (the prototype printed it before them, which breaks the sentence that introduces the list) */
+  /** last paragraph of the section; the prototype prints it with the other paragraphs, before the bullets (kept: the firm's draft order) */
   tail?: string;
 }
 
@@ -78,6 +78,7 @@ export async function LegalPage({ doc, locale }: { doc: LegalDoc; locale: Locale
                   {p}
                 </p>
               ))}
+              {section.tail && <p style={s(PARA)}>{section.tail}</p>}
               {section.bullets.length > 0 && (
                 <ul role="list" style={s('list-style: none; margin: 0; padding: 0')}>
                   {section.bullets.map((b, j) => (
@@ -95,7 +96,6 @@ export async function LegalPage({ doc, locale }: { doc: LegalDoc; locale: Locale
                   ))}
                 </ul>
               )}
-              {section.tail && <p style={s(PARA)}>{section.tail}</p>}
             </section>
           ))}
 

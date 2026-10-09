@@ -74,7 +74,13 @@ export type ContactPayload = Extract<ContactSubmissionInput, { kind: 'contact' }
  */
 export function toPayload(
   values: ContactValues,
-  context: { locale: 'en' | 'he'; page: string; website?: string },
+  context: {
+    locale: 'en' | 'he';
+    page: string;
+    website?: string;
+    utm?: Record<string, string>;
+    source?: string;
+  },
 ): ContactPayload {
   const note = values.note.trim();
   return {
@@ -87,6 +93,8 @@ export function toPayload(
     consent: true,
     locale: context.locale,
     page: context.page.slice(0, 300),
+    ...(context.utm && Object.keys(context.utm).length ? { utm: context.utm } : {}),
+    ...(context.source ? { source: context.source.slice(0, 80) } : {}),
     website: context.website ?? '',
   };
 }

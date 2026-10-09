@@ -16,6 +16,7 @@ export const TRANSACTIONAL_TEMPLATES = [
   'document-requested',
   'document-rejected',
   'application-received',
+  'details-changed',
   'password-reset',
   'contact-received',
   // Supabase auth emails other than password recovery (magic link, signup / email-change confirmation, one-time code)
@@ -66,6 +67,8 @@ export interface EmailData {
   'status-update'?: { status: LeadStatus };
   'document-requested'?: { docTypes: DocType[] };
   'document-rejected'?: { docType: DocType; note?: string | null };
+  /** `previous`: the mail to the address the file had until now (no link into the file); `current`: to the address it has now */
+  'details-changed'?: { variant: 'current' | 'previous'; changed: Array<'name' | 'email' | 'phone'> };
   'password-reset'?: { resetUrl: string };
   'contact-received'?: { name: string };
   /** `url` is the confirmation / sign-in link; `code` the one-time code (shown when present) */

@@ -47,7 +47,7 @@
     "under_review": "בבדיקה",
     "info_required": "נדרש מידע נוסף",
     "review_completed": "הבדיקה הושלמה",
-    "contacting": "יצירת קשר איתכם"
+    "contacting": "יוצרים איתכם קשר"
   },
   "dashboard": {
     "kicker": "הבקשה שלכם",
@@ -78,12 +78,13 @@
       "start": "התחלת הבקשה",
       "continue": "המשך הבקשה",
       "documents": "למסמכים"
-    }
+    },
+    "teamStatus": "עדכון מהצוות שלנו: <b>{status}</b>"
   },
   "submitted": {
     "kicker": "{route} · הוגשה ב-{date}",
     "route": {
-      "germany": "מסלול גרמניה · סעיף 116(2)",
+      "germany": "מסלול גרמניה · סעיף \u2066116(2)\u2069",
       "austria": "מסלול אוסטריה · סעיף 58c",
       "both": "מסלולי גרמניה ואוסטריה",
       "unsure": "המסלול ייקבע בהמשך"
@@ -146,7 +147,7 @@
       "documents": "מסמכים",
       "documentsValue": "{done} מתוך {total} התקבלו",
       "routeValue": {
-        "germany": "גרמניה · סעיף 116(2)",
+        "germany": "גרמניה · סעיף \u2066116(2)\u2069",
         "austria": "אוסטריה · סעיף 58c",
         "both": "גרמניה ואוסטריה",
         "unsure": "ייקבע בהמשך"

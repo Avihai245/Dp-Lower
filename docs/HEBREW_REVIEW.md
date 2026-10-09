@@ -34,6 +34,7 @@ Change these in one search-and-replace if the firm prefers other words.
 | Case manager / handler | מנהל תיק / הגורם המטפל בתיק | |
 | Register | Plural, gender-neutral (אתם / שלכם / נסו) | Used everywhere, including the quiz and the emails. |
 | Quotation marks | „ ” | As in the design's Lead Flow HE. |
+| Applicant statuses | פנייה חדשה, נוצר חשבון, בקשה חלקית, הבקשה הוגשה, בבדיקה, נדרש מידע נוסף (the six of Lead Flow HE); הבדיקה הושלמה, יוצרים איתכם קשר (the two the design's English adds) | The same words in the portal, the CRM and the emails (one table per place: `portal.json`, `admin.json`, `packages/emails/src/labels.ts`). |
 
 ## Phrases the authors flagged
 
@@ -60,7 +61,7 @@ Change these in one search-and-replace if the firm prefers other words.
 
 ### Client portal
 
-- "סיור היכרות" (tour button), "איתור רשומות" (records research), "הגשה לרשות" (filed with authority), "תור להנפקת דרכון" (passport appointment), "יצירת קשר איתכם" (status Contacting Applicant).
+- "סיור היכרות" (tour button), "איתור רשומות" (records research), "הגשה לרשות" (filed with authority), "תור להנפקת דרכון" (passport appointment), "יוצרים איתכם קשר" (status Contacting Applicant).
 - "האב הקדמון" (ancestor), "פרק" for a section of the form (versus "חלק"), "שושלת המשפחה", "מנהל תיק", "הגורם המטפל בתיק", "הושלם" as the generic completion label.
 - Route labels "סעיף 116(2)" and "סעיף 58c" (English uses §).
 - The legal wording of the persecution-proof slot ("הוכחת רדיפה או מועד העזיבה… אחרי 1933") and of the submitting screen ("מצפינים את המסמכים ומשייכים את התיק לעורך דין").

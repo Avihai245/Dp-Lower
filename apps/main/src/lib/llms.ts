@@ -31,6 +31,8 @@ export interface LlmsStrings {
   q: string;
   a: string;
   team: string;
+  /** heading of the campaign's questions, between the articles and the team */
+  faqTitle: string;
 }
 
 export interface LlmsOptions {
@@ -40,6 +42,8 @@ export interface LlmsOptions {
   /** campaign app origin, for the eligibility check */
   campaignUrl: string;
   strings: LlmsStrings;
+  /** the questions people ask first on the campaign page (German and Austrian citizenship), in this language */
+  faq: ReadonlyArray<{ q: string; a: string }>;
 }
 
 const GROUP_ORDER: ServiceGroup[] = ['passports', 'israel', 'other'];
@@ -149,7 +153,10 @@ export function buildLlmsFullTxt(options: LlmsOptions): string {
       ...a.body,
     ].join('\n'),
   );
+  const faq = [`# ${t.faqTitle}`, options.faq.map((f) => `${t.q}: ${f.q}\n${t.a}: ${f.a}`).join('\n\n')].join(
+    '\n',
+  );
   const team = [`# ${t.team}`, ...c.team.map((m) => `- ${m.name}, ${m.role} (${m.dept})`)].join('\n');
 
-  return `${[indexLines(options).join('\n'), ...services, ...articles, team].join(SEPARATOR)}\n`;
+  return `${[indexLines(options).join('\n'), ...services, ...articles, faq, team].join(SEPARATOR)}\n`;
 }

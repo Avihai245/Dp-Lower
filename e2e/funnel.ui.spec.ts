@@ -233,6 +233,38 @@ test('the quiz resumes at the first unanswered question (shared with the landing
   await context.close();
 });
 
+test('no answers are left in the browser once the details are saved or the applicant signs out; the quiz resumes from the file', async ({ browser }) => {
+  const { context, page, problems } = await visitor(browser, { answers: COMPLETE });
+  await page.goto('/details');
+  const email = newEmail('draft');
+  await page.getByLabel('Full name').fill('anna reinhardt');
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Phone').fill('+1 555 000 0000');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/booking$/);
+  // the answers are on the file; the next person at this computer finds nothing about this one
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dpl-quiz-v1') ?? '{}'))).toEqual({});
+  expect(await page.evaluate(() => localStorage.getItem('dpl-lead-draft-v1'))).toBeNull();
+  expect((await leadByEmail(email))?.answers).toMatchObject({ country: 'germany', residence: 'ca' });
+
+  // back at the questions the lead's own answers are there (read from the file), and a change is saved to it
+  await page.goto('/eligibility');
+  await expect(heading(page)).toHaveText('Where do you live today?');
+  await expect(options(page).nth(1)).toHaveAttribute('aria-pressed', 'true'); // Canada, from the file
+  await options(page).nth(0).click();
+  await expect.poll(async () => (await leadByEmail(email))?.answers['residence'], { timeout: 15_000 }).not.toBe('ca');
+
+  // signing out of the portal takes the rest with it
+  expect((await page.request.post('/api/portal/enter')).status()).toBe(200);
+  await page.goto('/portal');
+  await page.evaluate((a) => localStorage.setItem('dpl-quiz-v1', JSON.stringify(a)), COMPLETE);
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.waitForURL((url) => url.pathname === '/');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dpl-quiz-v1') ?? '{}'))).toEqual({});
+  expect(problems).toEqual([]);
+  await context.close();
+});
+
 test('sign-in: wrong password, forgot-password flow, Google unavailable locally, expired-link page', async ({ browser }) => {
   const { context, page, problems } = await visitor(browser);
   await page.goto('/sign-in');
@@ -458,6 +490,20 @@ test('no screen scrolls sideways at phone width, in either language', async ({ b
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow, `${locale} ${path}`).toBeLessThanOrEqual(0);
     }
+    await context.close();
+  }
+});
+
+test('the quiz footer keeps its reassurance on a row of its own at phone width, in English and Hebrew', async ({ browser }) => {
+  for (const locale of ['en', 'he'] as const) {
+    const context = await browser.newContext({ baseURL: BASE_URL, viewport: { width: 390, height: 844 }, locale: locale === 'he' ? 'he-IL' : 'en-US', extraHTTPHeaders: { 'x-forwarded-for': newIp() } });
+    const page = await context.newPage();
+    await page.goto(`${locale === 'he' ? '/he' : ''}/eligibility`);
+    await page.waitForTimeout(700);
+    const box = await page.locator('[data-q-foot] > span').boundingBox();
+    // the whole row (390 px minus the 18 px padding on each side), not the 58 px sliver that a short hidden button used to leave
+    expect(box?.width, locale).toBeGreaterThan(340);
+    expect(box?.height, locale).toBeLessThan(70);
     await context.close();
   }
 });

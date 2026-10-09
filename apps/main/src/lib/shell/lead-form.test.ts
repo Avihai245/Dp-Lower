@@ -132,6 +132,14 @@ describe('payloads match POST /api/contact', () => {
     // a filled honeypot is rejected by the schema (the route answers it with a silent success)
     expect(contactSubmissionSchema.safeParse(p).success).toBe(false);
   });
+
+  it('carries the source label and stays valid for the API schema', () => {
+    expect(buildLeadBandPayload(lead, ctx)).not.toHaveProperty('source');
+    const p = buildLeadBandPayload(lead, { ...ctx, utm: { utm_source: 'google' }, source: 'google' });
+    expect(p.source).toBe('google');
+    expect(contactSubmissionSchema.safeParse(p).success).toBe(true);
+    expect(buildLeadBandPayload(lead, { ...ctx, source: 'x'.repeat(200) }).source).toHaveLength(80);
+  });
 });
 
 describe('subject and topic lists', () => {

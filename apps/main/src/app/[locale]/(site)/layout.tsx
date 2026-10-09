@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { preload } from 'react-dom';
 import { A11yInit } from '@/components/shell/A11yInit';
+import { AttributionCapture } from '@/components/shell/AttributionCapture';
 import type { A11yLabels } from '@/components/shell/A11yWidget';
 import { CloseBand } from '@/components/shell/CloseBand';
 import { FloatingWidgets } from '@/components/shell/FloatingWidgets';
@@ -14,6 +15,8 @@ import { LeadBand } from '@/components/shell/LeadBand';
 import { LeadOrClose } from '@/components/shell/LeadOrClose';
 import { SkipLink } from '@/components/shell/SkipLink';
 import { UtilityBar } from '@/components/shell/UtilityBar';
+import { firmJsonLd } from '@/lib/home/jsonld';
+import { JsonLd, SITE_URL } from '@/lib/seo';
 import { campaignUrl } from '@/lib/shell/campaign';
 import { buildMenus, NAV, serviceGroups } from '@/lib/nav';
 import '@/styles/shell.css';
@@ -30,8 +33,10 @@ export default async function SiteLayout({ children, params }: { children: React
   const locale = requested as Locale; // already validated by the [locale] layout
   const t = await getTranslations('site');
   const ta = await getTranslations('a11y');
+  const th = await getTranslations('home');
   const content = getContent(locale);
-  preload('/images/DPL_logo.webp', { as: 'image', fetchPriority: 'high' });
+  // the header logo is a 240 px copy (11 KB) of the 800 px original (47 KB), which it is shown at a fifth of
+  preload('/images/DPL_logo-sm.webp', { as: 'image', fetchPriority: 'high' });
 
   const portalHref = campaignUrl(locale, 'sign-in');
   const items: HeaderItem[] = NAV.map((n) => ({ key: n.key, label: t(`nav.${n.key}`), href: n.href, menu: n.menu }));
@@ -69,6 +74,11 @@ export default async function SiteLayout({ children, params }: { children: React
   return (
     <>
       <A11yInit />
+      <AttributionCapture />
+      {/* the firm and the site, on every page as in the prototype's <head>: the pages that name `#firm` find it here */}
+      <JsonLd
+        data={firmJsonLd({ locale, siteUrl: SITE_URL, name: t('brand.full'), catalogName: th('meta.catalog'), content })}
+      />
       <div style={s("background: #f8f5f0; color: #23292f; font-family: 'Manrope', system-ui, sans-serif; -webkit-font-smoothing: antialiased")}>
         <SkipLink />
         <div id="dpl-page">

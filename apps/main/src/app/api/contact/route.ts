@@ -49,7 +49,7 @@ export const POST = handle(async (req) => {
 
   await enqueueEvent(db, {
     type: 'contact.created',
-    payload: { submission: { id: data.id, kind: input.kind, name: input.name, email: input.email ?? null, phone: input.phone, matter: input.matter ?? null, note: input.note ?? null, locale: input.locale, page: input.page ?? null } },
+    payload: { submission: { id: data.id, kind: input.kind, name: input.name, email: input.email ?? null, phone: input.phone, matter: input.matter ?? null, note: input.note ?? null, locale: input.locale, page: input.page ?? null, source: input.source ?? null, utm: input.utm ?? {} } },
     dedupeKey: `contact.created:${data.id}`,
   });
   await queueContactAck({ submissionId: data.id, name: input.name, email: input.email ?? null, locale: input.locale });

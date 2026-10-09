@@ -7,15 +7,16 @@ import { type ChangeEvent, type FormEvent, type ReactNode, useEffect, useId, use
 import { TURNSTILE_SITE_KEY, Turnstile } from '@/components/contact/Turnstile';
 import { Link } from '@/i18n/navigation';
 import { FIRM } from '@/lib/shell/firm';
+import { currentAttribution } from '@/lib/shell/attribution';
 import {
   autoCapitalize,
   buildLeadBandPayload,
   firstNameOf,
   leadErrors,
-  parseUtm,
   postContact,
   type LeadField,
 } from '@/lib/shell/lead-form';
+import { Ltr } from './Ltr';
 
 const FONT = "font-family: 'Manrope', system-ui, sans-serif";
 const LABEL = 'display: block; font-size: 12.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #736d64; margin-bottom: 8px';
@@ -91,7 +92,7 @@ export function LeadBand() {
     }
     setSending(true);
     setFailure(null);
-    const payload = buildLeadBandPayload(values, { locale, page: window.location.pathname, utm: parseUtm(window.location.search) });
+    const payload = buildLeadBandPayload(values, { locale, page: window.location.pathname, ...currentAttribution() });
     const result = await postContact(captcha ? { ...payload, turnstileToken: token ?? undefined } : payload);
     // a Turnstile token is good for one submission
     setToken(null);
@@ -177,10 +178,10 @@ export function LeadBand() {
             </div>
             <div style={s('display: flex; flex-direction: column; gap: 10px; font-size: 15.5px')}>
               <a href={FIRM.telAvivHref} style={s('text-decoration: none')}>
-                {t('util.telAviv')} <bdi>{t('phones.telAviv')}</bdi>
+                {t('util.telAviv')} <Ltr>{t('phones.telAviv')}</Ltr>
               </a>
               <a href={FIRM.jerusalemHref} style={s('text-decoration: none')}>
-                {t('util.jerusalem')} <bdi>{t('phones.jerusalem')}</bdi>
+                {t('util.jerusalem')} <Ltr>{t('phones.jerusalem')}</Ltr>
               </a>
               <a href={FIRM.mailto} style={s('text-decoration: none')}>
                 {FIRM.email}
@@ -203,7 +204,7 @@ export function LeadBand() {
                   {t.rich('leadBand.sentLine', {
                     phone: sent.phone,
                     email: sent.email,
-                    n: (chunks) => <bdi dir="ltr">{chunks}</bdi>,
+                    n: (chunks) => <Ltr>{chunks}</Ltr>,
                   })}
                 </p>
                 <button
@@ -352,7 +353,7 @@ export function LeadBand() {
                   >
                     {t.rich(failure === 'rate' ? 'leadBand.errors.rate' : failure === 'captcha' ? 'leadBand.errors.captcha' : 'leadBand.errors.failed', {
                       phone: phoneTel,
-                      n: (chunks) => <bdi dir="ltr">{chunks}</bdi>,
+                      n: (chunks) => <Ltr>{chunks}</Ltr>,
                     })}
                   </p>
                 )}
@@ -362,7 +363,7 @@ export function LeadBand() {
                   aria-disabled={!ready || sending}
                   aria-busy={sending}
                   style={s(
-                    `border-radius: 999px; width: 100%; background: #14202b; color: #f8f5f0; border: 1px solid #14202b; ${FONT}; font-weight: 700; font-size: 15.5px; letter-spacing: 0.05em; padding: 18px; cursor: pointer; opacity: ${sending ? 0.7 : ready ? 1 : 0.35}; pointer-events: ${ready && !sending ? 'auto' : 'none'}`,
+                    `border-radius: 999px; width: 100%; background: #14202b; color: #f8f5f0; border: 1px solid #14202b; ${FONT}; font-weight: 700; font-size: 15.5px; letter-spacing: 0.05em; padding: 18px; cursor: pointer; opacity: ${sending ? 0.7 : ready ? 1 : 0.35}; pointer-events: ${sending ? 'none' : 'auto'}`,
                   )}
                 >
                   {sending ? t('leadBand.sending') : t('leadBand.submit')}

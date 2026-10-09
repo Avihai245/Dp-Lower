@@ -1,10 +1,11 @@
 'use client';
-import { QUIZ, QUIZ_ORDER, type QuizId } from '@dpl/core';
+import { QUIZ, QUIZ_ORDER, type QuizAnswers, type QuizId } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { getQuizAnswers, setQuizAnswer, useQuizAnswers } from '@/lib/quiz-store';
+import { api } from '@/lib/api';
+import { getQuizAnswers, seedQuizAnswers, setQuizAnswer, useQuizAnswers } from '@/lib/quiz-store';
 import { ADVANCE_MS, LAST_INDEX, QUESTION_COUNT, canSeeResult, nudgeFor, progressPercent, questionsLeft, startIndex } from './logic/quiz-flow';
 import { SANS, Logo, Page } from './ui';
 import { useLeaveToSite } from './use-leave-to-site';
@@ -14,9 +15,11 @@ const setAnswer = setQuizAnswer as (id: QuizId, value: string) => void;
 /**
  * The six eligibility questions, one to a screen (docs: prototype stage "eligibility"). A pick is shown for a beat and
  * the next question slides in on its own; only the last question has a button ("See my result"). Answers live in
- * the quiz store (localStorage), which the landing-page chat shares, so the quiz resumes where the chat stopped.
+ * the quiz store (localStorage), which the landing-page chat shares, so the quiz resumes where the chat stopped. For a
+ * visitor who already has a lead (`savedAnswers`: the answers on the file, null for nobody) it resumes from the file, and
+ * every answer is also saved to it.
  */
-export function EligibilityQuiz() {
+export function EligibilityQuiz({ savedAnswers = null }: { savedAnswers?: QuizAnswers | null }) {
   const t = useTranslations('funnel');
   const router = useRouter();
   const leaveToSite = useLeaveToSite();
@@ -29,11 +32,14 @@ export function EligibilityQuiz() {
   const moved = useRef(false);
 
   useEffect(() => {
+    if (savedAnswers) seedQuizAnswers(savedAnswers);
     const at = startIndex(getQuizAnswers());
     qiRef.current = at;
     setQi(at);
     setReady(true);
     return () => clearTimeout(timer.current);
+    // seeded once, when the page opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -49,6 +55,8 @@ export function EligibilityQuiz() {
 
   function pick(value: string) {
     setAnswer(id, value);
+    // a lead exists: the file follows the answers (the details form would send them too, but not if the visitor stops here)
+    if (savedAnswers) void api('/api/lead/answers', { method: 'PUT', body: { answers: { [id]: value } } });
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       moved.current = true;

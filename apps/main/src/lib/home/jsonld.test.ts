@@ -1,10 +1,10 @@
 import { getContent } from '@dpl/i18n';
 import { describe, expect, it } from 'vitest';
-import { homeJsonLd } from './jsonld';
+import { firmJsonLd } from './jsonld';
 
 const SITE = 'https://www.lawoffice.org.il';
 const build = (locale: 'en' | 'he') =>
-  homeJsonLd({ locale, siteUrl: SITE, name: locale === 'en' ? 'Decker Pex Levi Law Offices' : 'דקר פקס לוי', catalogName: locale === 'en' ? 'Practice areas' : 'תחומי עיסוק', content: getContent(locale) });
+  firmJsonLd({ locale, siteUrl: SITE, name: locale === 'en' ? 'Decker Pex Levi Law Offices' : 'דקר פקס לוי', catalogName: locale === 'en' ? 'Practice areas' : 'תחומי עיסוק', content: getContent(locale) });
 
 describe('home page structured data', () => {
   const en = build('en');
@@ -67,7 +67,7 @@ describe('home page structured data', () => {
   });
 
   it('normalises a trailing slash on the origin', () => {
-    const g = homeJsonLd({ locale: 'en', siteUrl: `${SITE}/`, name: 'x', catalogName: 'y', content: getContent('en') });
+    const g = firmJsonLd({ locale: 'en', siteUrl: `${SITE}/`, name: 'x', catalogName: 'y', content: getContent('en') });
     expect((g['@graph'][0] as { url: string }).url).toBe(`${SITE}/`);
   });
 });

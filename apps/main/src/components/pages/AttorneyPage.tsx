@@ -4,6 +4,7 @@ import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
+import { Ltr } from '@/components/shell/Ltr';
 import { FIRM } from './firm';
 import { initialsOf } from './team';
 import { SANS, SERIF } from './tokens';
@@ -87,7 +88,7 @@ export async function AttorneyPage({ locale, member }: { locale: Locale; member:
                 {t('attorney.cta')}
               </Link>
               <a href={FIRM.mobile.href} style={s('font-size: 15.5px; text-decoration: none')}>
-                <bdi>{FIRM.mobile.display}</bdi>
+                <Ltr>{FIRM.mobile.display}</Ltr>
               </a>
               {member.linkedin && (
                 <a href={member.linkedin} target="_blank" rel="noopener" style={s('font-size: 15.5px')}>

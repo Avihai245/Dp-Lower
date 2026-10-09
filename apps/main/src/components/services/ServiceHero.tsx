@@ -4,6 +4,7 @@ import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
+import { Ltr } from '@/components/shell/Ltr';
 import { campaignHref } from './campaign-links';
 import { avatarInitials, stripAttorneyTitle } from './format';
 import { KICKER, SANS, SERIF } from './parts';
@@ -121,7 +122,7 @@ export async function ServiceHero({ service, locale }: { service: Service; local
                   {t('detail.requestConsultation')}
                 </Link>
                 <a href="tel:+97233724722" {...x(BTN_OUTLINE, { hover: 'border-color: #f8f5f0' })}>
-                  {t.rich('detail.call', { num: (chunks) => <bdi>{chunks}</bdi> })}
+                  {t.rich('detail.call', { num: (chunks) => <Ltr>{chunks}</Ltr> })}
                 </a>
               </>
             )}

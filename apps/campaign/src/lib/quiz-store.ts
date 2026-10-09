@@ -4,8 +4,9 @@ import { useSyncExternalStore } from 'react';
 
 /**
  * The eligibility answers live in the browser (localStorage) until the visitor submits their details; from then on
- * the server copy (leads.answers) is the record. The quiz page and the landing-page chat share this store, so a
- * visitor who answers three questions in the chat continues at question four in the form.
+ * the server copy (leads.answers) is the record, and the draft is cleared (`resetQuiz`: after the details are saved and
+ * on sign-out, so the next person at a shared computer starts from nothing). The quiz page and the landing-page chat
+ * share this store, so a visitor who answers three questions in the chat continues at question four in the form.
  */
 const KEY = 'dpl-quiz-v1';
 const EMPTY: QuizAnswers = {};
@@ -53,9 +54,20 @@ export function resetQuiz(): void {
   write(EMPTY);
 }
 
-/** Replaces the local answers, e.g. with the server copy after sign-in. */
+/** Replaces the local answers. */
 export function replaceQuizAnswers(a: QuizAnswers): void {
   write(a);
+}
+
+/**
+ * The lead this browser holds has answers on the server: continue from them. What was answered in this browser since
+ * (the chat, a changed choice) is newer and wins per question. Does nothing when the server has none.
+ */
+export function seedQuizAnswers(server: QuizAnswers): void {
+  if (Object.keys(server).length === 0) return;
+  const local = read();
+  const merged: QuizAnswers = { ...server, ...local };
+  if (JSON.stringify(merged) !== JSON.stringify(local)) write(merged);
 }
 
 function subscribe(cb: () => void) {

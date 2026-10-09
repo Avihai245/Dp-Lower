@@ -28,7 +28,7 @@ import { StatStrip } from '@/components/landing/StatStrip';
 import { LandingUiProvider } from '@/components/landing/ui-context';
 import { WhyApplies } from '@/components/landing/WhyApplies';
 import { landingJsonLd } from '@/lib/landing-seo';
-import { JsonLd, SITE_URL, pageMetadata } from '@/lib/seo';
+import { JsonLd, LANDING_SHARE_IMAGE, SITE_URL, pageMetadata } from '@/lib/seo';
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     path: '/',
     title: t('title'),
     description: t('description'),
-    image: '/images/pic1.webp',
+    image: LANDING_SHARE_IMAGE,
   });
 }
 
@@ -59,7 +59,7 @@ export default async function Landing({ params }: Props) {
 
   const t = await getTranslations({ locale, namespace: 'landing.meta' });
   const tc = await getTranslations({ locale, namespace: 'common' });
-  preload('/images/DPL_logo.webp', { as: 'image' });
+  preload('/images/DPL_logo-sm.webp', { as: 'image' });
 
   return (
     <LandingUiProvider>

@@ -4,6 +4,7 @@ import type { Locale } from './locale';
 export const CRM_EVENT_TYPES = [
   'lead.created',
   'lead.returned',
+  'lead.updated',
   'booking.created',
   'booking.cancelled',
   'callback.requested',
@@ -12,6 +13,7 @@ export const CRM_EVENT_TYPES = [
   'application.started',
   'application.submitted',
   'document.uploaded',
+  'document.removed',
   'document.reviewed',
   'status.changed',
   'stage.changed',

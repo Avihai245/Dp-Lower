@@ -26,6 +26,18 @@ describe('buildTimeline', () => {
     expect(t.nodes[5]!.meta).toEqual({ kind: 'afterSubmit' });
   });
 
+  it('shows a status the team set before the application was submitted, but does not call the review finished', () => {
+    for (const status of ['under_review', 'info_required', 'review_completed', 'contacting'] as const) {
+      const t = buildTimeline({ ...base, status });
+      expect(t.nodes.at(-1)).toEqual({ id: 'review', state: 'next', meta: { kind: 'status', status } });
+      expect(t.current).toEqual({ kind: 'node', id: 'application' });
+    }
+    // the applicant's own statuses say nothing yet
+    for (const status of ['enquiry', 'account_created', 'application_incomplete'] as const) {
+      expect(buildTimeline({ ...base, status }).nodes.at(-1)!.meta).toEqual({ kind: 'afterSubmit' });
+    }
+  });
+
   it('adds the consultation call as a done stage when one is booked', () => {
     const t = buildTimeline({ ...base, booking: { startsAt: '2026-10-12T09:00:00Z', timezone: 'America/New_York' } });
     expect(ids(t)).toEqual(['eligibility', 'consultation', 'portal', 'application', 'documents', 'submitted', 'review']);

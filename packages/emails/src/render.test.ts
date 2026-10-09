@@ -472,3 +472,38 @@ describe('contact acknowledgement', () => {
     expect(r.html).toContain('Law Offices');
   });
 });
+
+describe('details-changed (CRM "Edit details")', () => {
+  const render = (locale: Locale, data: Record<string, unknown>) =>
+    renderEmail('details-changed', { ...sampleContext('details-changed', locale), data });
+
+  it('tells the applicant which details changed, with a way back into the portal', () => {
+    const en = render('en', { variant: 'current', changed: ['email', 'phone'] });
+    expect(en.subject).toBe('Your details were updated');
+    expect(en.text).toContain('email address, phone number');
+    expect(urls(en.html)).toContain(sampleContext('details-changed', 'en').links.portal);
+    const he = render('he', { variant: 'current', changed: ['name'] });
+    expect(he.subject).toBe('הפרטים שלכם עודכנו');
+    expect(he.text).toContain('השם');
+    expect(he.html).toContain('dir="rtl"');
+  });
+
+  it('the mail to the OLD address has no link into the file and does not name the new address', () => {
+    for (const locale of LOCALES) {
+      const ctx = sampleContext('details-changed', locale);
+      const r = renderEmail('details-changed', { ...ctx, data: { variant: 'previous', changed: ['email'] } });
+      expect(urls(r.html), locale).not.toContain(ctx.links.portal);
+      expect(r.html + r.text, locale).not.toMatch(/\/go\//);
+      expect(r.html + r.text, locale).not.toContain('@example.com');
+      // it does say who to call
+      // (the Hebrew text writes the number as 03-3724722 inside a left-to-right isolate: compare the digits)
+      expect(r.text.replace(/\D/g, ''), locale).toContain('033724722');
+    }
+  });
+
+  it('falls back to a safe default for malformed data', () => {
+    const r = render('en', { variant: 42, changed: ['bogus', 'phone', 'phone'] });
+    expect(r.text).toContain('phone number');
+    expect(r.text).not.toContain('bogus');
+  });
+});

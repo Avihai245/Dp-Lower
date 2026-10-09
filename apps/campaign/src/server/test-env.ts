@@ -34,6 +34,7 @@ export async function makeLead(
     unsubscribedAt?: Date | null;
     submittedAt?: Date | null;
     source?: string;
+    answers?: Record<string, string>;
   },
 ) {
   counter++;
@@ -45,6 +46,7 @@ export async function makeLead(
       phone: '+1 212 555 0142',
       locale: o.locale ?? 'en',
       route: o.route === undefined ? 'germany' : o.route,
+      answers: o.answers ?? {},
       stage: o.stage ?? 'lead',
       source: o.source ?? 'campaign-ger-aus',
       created_at: o.createdAt.toISOString(),

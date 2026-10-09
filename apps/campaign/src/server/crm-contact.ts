@@ -7,6 +7,7 @@ import type { Db } from '@dpl/db/types';
 import { randomUUID } from 'node:crypto';
 import type { ActionResult } from '@/components/admin/types';
 import { queueEmail } from './email';
+import { announceUpdate } from './lead-events';
 import { done, fail, getLead } from './crm-util';
 import { buildResetUrl } from './crm-links';
 import type { StaffSession } from './staff';
@@ -20,7 +21,8 @@ const isEmailTaken = (e: { code?: string; message?: string }): boolean =>
  * "Edit details & password" -> Save. Updates the lead AND the Supabase user, so the applicant signs in with the new
  * address. A changed email address is treated as a change of mailbox owner: the new address is unproven again
  * (email_verified_at cleared), every emailed link and lead cookie issued before dies (session_epoch + 1) and the
- * user's sessions are ended. The old address is never contacted (there is no email template for that yet).
+ * user's sessions are ended. The applicant gets the `details-changed` email, as the prototype promises ("{first} gets an
+ * email confirming the change"); after an email change the OLD address gets a short notice too, with no link into the file.
  */
 export async function updateContact(
   db: Db,
@@ -68,6 +70,16 @@ export async function updateContact(
   }
   if (lead.user_id && emailChanged) await db.rpc('revoke_user_sessions', { p_user: lead.user_id });
 
+  // the firm's external CRM keeps the same address, name and phone number as the application (the old address is named)
+  const updated = { ...lead, full_name: fullName, email: a.email, phone, ...(emailChanged ? { session_epoch: lead.session_epoch + 1 } : {}) };
+  await announceUpdate(db, updated, changed, emailChanged ? { email: lead.email } : undefined);
+  const fields = changed as Array<'name' | 'email' | 'phone'>;
+  const key = randomUUID();
+  await queueEmail({ template: 'details-changed', lead: updated, data: { variant: 'current', changed: fields }, dedupeKey: `staff:details-changed:${lead.id}:${key}:current` });
+  // the address the file had until now: told, with nothing in the mail that opens the file
+  if (emailChanged) {
+    await queueEmail({ template: 'details-changed', lead: { ...updated, email: lead.email }, data: { variant: 'previous', changed: fields }, dedupeKey: `staff:details-changed:${lead.id}:${key}:previous` });
+  }
   await logActivity(db, {
     leadId: a.leadId,
     kind: 'staff',

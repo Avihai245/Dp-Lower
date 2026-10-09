@@ -4,6 +4,7 @@ import { s, x } from '@dpl/ui';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { Link } from '@/i18n/navigation';
+import { currentAttribution } from '@/lib/shell/attribution';
 import { SANS, SERIF } from '../pages/tokens';
 import { Eyebrow } from '../pages/ui';
 import { postContact, type SubmitFailure } from './submit';
@@ -127,7 +128,12 @@ export function ContactForm({ locale, matters, urgentTel }: ContactFormProps) {
     }
     setPhase('sending');
     announce(t('sending'));
-    const payload = toPayload(values, { locale, page: window.location.pathname, website });
+    const payload = toPayload(values, {
+      locale,
+      page: window.location.pathname,
+      website,
+      ...currentAttribution(),
+    });
     const result = await postContact(captcha ? { ...payload, turnstileToken: token ?? undefined } : payload);
     if (captcha) {
       // a token is good for one submission only

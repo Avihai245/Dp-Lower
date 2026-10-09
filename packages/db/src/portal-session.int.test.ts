@@ -5,7 +5,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Database } from './database.types';
-import { ensureAuthUser, markEmailVerified } from './portal-session';
+import { ensureAuthUser, markAccountCreated, markEmailVerified } from './portal-session';
 import type { LeadRow } from './types';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -93,6 +93,27 @@ describe.skipIf(!live)('lead -> account bridge (real GoTrue)', () => {
     expect(retry.error).not.toBeNull();
     const refreshed = await attacker.auth.refreshSession();
     expect(refreshed.error).not.toBeNull();
+  });
+
+  it('markAccountCreated moves the lead to "Account created" once, whoever asks first', async () => {
+    const lead = await newLead('acct');
+    expect(lead).toMatchObject({ stage: 'lead', status: 'enquiry', account_created_at: null });
+    const [a, b] = await Promise.all([markAccountCreated(db, lead), markAccountCreated(db, lead)]);
+    for (const l of [a, b]) {
+      expect(l.account_created_at).not.toBeNull();
+      expect(l).toMatchObject({ stage: 'account', status: 'account_created' });
+    }
+    expect(a.account_created_at).toBe(b.account_created_at);
+    // the CRM hears about it once, and the log has one line
+    const events = await db.from('events').select('id').eq('lead_id', lead.id).eq('type', 'account.created');
+    expect(events.data).toHaveLength(1);
+    const log = await db.from('activity_log').select('id').eq('lead_id', lead.id).eq('code', 'account_created');
+    expect(log.data).toHaveLength(1);
+    // idempotent: a lead that already has an account is returned as it is, and later stages are never pulled back
+    await db.from('leads').update({ stage: 'application', status: 'application_incomplete' }).eq('id', lead.id);
+    const later = (await db.from('leads').select('*').eq('id', lead.id).single()).data!;
+    expect(await markAccountCreated(db, later)).toMatchObject({ stage: 'application', status: 'application_incomplete' });
+    expect((await db.from('events').select('id').eq('lead_id', lead.id).eq('type', 'account.created')).data).toHaveLength(1);
   });
 
   it('verifying from the creator\'s own browser keeps their password, session and cookie epoch', async () => {

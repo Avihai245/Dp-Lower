@@ -129,7 +129,12 @@ test.describe('main site', () => {
       if (/^\/team\/[^/]+$/.test(bare) && !types.includes('Person')) fail(`team page lacks Person (${types.join(',')})`);
       if (/^\/insights\/[^/]+$/.test(bare) && !types.includes('Article')) fail(`article lacks Article (${types.join(',')})`);
       if (bare !== '/' && !types.includes('BreadcrumbList')) fail('no BreadcrumbList');
-      if (bare === '/' && !types.some((t) => /LegalService|Organization/.test(t))) fail('home lacks LegalService');
+      // the firm and the site are on every page (the pages that name #firm must carry it: Google does not follow ids across pages)
+      if (!types.some((t) => /LegalService|Organization/.test(t))) fail('no firm structured data (LegalService)');
+      if (!types.includes('WebSite')) fail('no WebSite structured data');
+      // the link preview image is the prepared 1200x630 one, with its size (a person's page shows their own portrait)
+      if (!/^\/team\/[^/]+$/.test(bare) && !/property="og:image:width" content="1200"/.test(p.html)) fail('og:image has no size');
+      if (!/property="og:image:alt"/.test(p.html)) fail('og:image has no alt text');
 
       for (const l of p.links) if (!internal.has(l)) internal.set(l, path);
       for (const i of p.images) if (!internal.has(i)) internal.set(i, path);
@@ -152,6 +157,13 @@ test.describe('main site', () => {
     for (const bot of ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended']) expect(robots).toContain(`User-Agent: ${bot}`);
     expect(robots).not.toMatch(/Disallow:\s*\/\s*$/m);
 
+    // the full text carries the campaign's common questions, as the design handoff file does
+    const full = await (await request.get(`${MAIN}/llms-full.txt`)).text();
+    expect(full).toContain('\n# German & Austrian citizenship — common questions\n');
+    expect(full).toContain('Q: Do I need to speak German?');
+    const fullHe = await (await request.get(`${MAIN}/he/llms-full.txt`)).text();
+    expect(fullHe).toContain('\n# אזרחות גרמנית ואוסטרית: שאלות נפוצות\n');
+
     for (const file of ['/llms.txt', '/llms-full.txt', '/he/llms.txt', '/he/llms-full.txt']) {
       const res = await request.get(MAIN + file);
       expect(res.status(), file).toBe(200);
@@ -171,13 +183,35 @@ test.describe('main site', () => {
     const p = await request.get(`${MAIN}/?p=services`, { maxRedirects: 0 });
     expect([301, 308]).toContain(p.status());
     expect(p.headers()['location']).toContain('/services');
+    // campaign tracking on an old link must survive the redirect
+    const tracked = await request.get(`${MAIN}/?p=service/german-citizenship&lang=he&utm_source=google&utm_campaign=spring`, { maxRedirects: 0 });
+    expect(tracked.status()).toBe(301);
+    const target = new URL(tracked.headers()['location']!, MAIN);
+    expect(target.pathname).toBe('/he/services/german-citizenship');
+    expect(Object.fromEntries(target.searchParams)).toEqual({ utm_source: 'google', utm_campaign: 'spring' });
   });
 
-  test('unknown URLs answer 404, with a noindex page', async ({ request }) => {
-    for (const path of ['/no-such-page', '/he/no-such-page', '/services/no-such-service', '/he/team/nobody', '/insights/nothing-here']) {
-      const res = await request.get(MAIN + path);
-      expect(res.status(), path).toBe(404);
-      expect(await res.text(), path).toContain('noindex');
+  test('unknown URLs answer 404 with a complete, server-rendered page: title, heading, language and noindex without scripts', async ({ request }) => {
+    for (const [path, lang, dir, title, heading] of [
+      ['/no-such-page', 'en', 'ltr', 'Page not found | Decker Pex Levi Law Offices', 'Page not found'],
+      ['/services/no-such-service', 'en', 'ltr', 'Page not found | Decker Pex Levi Law Offices', 'Page not found'],
+      ['/insights/nothing-here', 'en', 'ltr', 'Page not found | Decker Pex Levi Law Offices', 'Page not found'],
+      ['/he/no-such-page', 'he', 'rtl', 'הדף לא נמצא | דקר פקס לוי, משרדי עורכי דין', 'הדף לא נמצא'],
+      ['/he/team/nobody', 'he', 'rtl', 'הדף לא נמצא | דקר פקס לוי, משרדי עורכי דין', 'הדף לא נמצא'],
+      ['/page-not-found', 'en', 'ltr', 'Page not found | Decker Pex Levi Law Offices', 'Page not found'],
+      ['/about/team', 'en', 'ltr', 'Page not found | Decker Pex Levi Law Offices', 'Page not found'],
+    ] as const) {
+      const p = await read(request, MAIN + path);
+      expect(p.status, path).toBe(404);
+      expect(p.html, `${path}: an empty client-side shell`).not.toContain('__next_error__');
+      expect(p.lang, path).toBe(lang);
+      expect(p.dir, path).toBe(dir);
+      expect(p.title, path).toBe(title);
+      expect(p.h1, path).toBe(1);
+      expect(textOf(p.html), `${path}: the explanation is in the HTML`).toContain(heading);
+      expect(p.robots ?? '', path).toContain('noindex');
+      expect(p.canonical, `${path}: a 404 has no canonical`).toBeNull();
+      expect(Object.keys(p.alternates), `${path}: nor alternates`).toEqual([]);
     }
   });
 

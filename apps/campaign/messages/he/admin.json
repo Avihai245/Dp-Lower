@@ -86,14 +86,14 @@
     "shortUnsure": "?"
   },
   "status": {
-    "enquiry": "פנייה",
-    "account_created": "נפתח חשבון",
-    "application_incomplete": "הבקשה לא הושלמה",
+    "enquiry": "פנייה חדשה",
+    "account_created": "נוצר חשבון",
+    "application_incomplete": "בקשה חלקית",
     "application_submitted": "הבקשה הוגשה",
     "under_review": "בבדיקה",
     "info_required": "נדרש מידע נוסף",
     "review_completed": "הבדיקה הושלמה",
-    "contacting": "יוצרים קשר עם המבקש/ת"
+    "contacting": "יוצרים איתכם קשר"
   },
   "waiting": {
     "nothing": "אין",
@@ -317,8 +317,8 @@
     "save": "שמירת שינויים",
     "saving": "שומר…",
     "saved": "נשמר",
-    "savedLine": "נשמר. השינוי נרשם ביומן הפעילות.",
-    "savedEmailLine": "נשמר. קישורים והתחברויות קודמים עם הכתובת הישנה חדלו לעבוד, ולכן יש לשלוח למבקש/ת קישור חדש.",
+    "savedLine": "נשמר. {first} מקבל/ת מייל המאשר את השינוי.",
+    "savedEmailLine": "נשמר. {first} מקבל/ת מייל המאשר את השינוי, והכתובת הישנה מקבלת הודעה. קישורים והתחברויות קודמים חדלו לעבוד, ולכן יש לשלוח קישור חדש.",
     "password": "סיסמה",
     "resetHelp": "שלחו למבקש/ת קישור מאובטח להגדרת סיסמה חדשה.",
     "resetButton": "שליחת קישור לאיפוס סיסמה",

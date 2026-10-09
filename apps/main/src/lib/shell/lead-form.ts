@@ -94,6 +94,8 @@ export interface ContactPayload {
   locale: Locale;
   page: string;
   utm?: Record<string, string>;
+  /** utm_source, else the referring site, else "direct" (see attribution.ts) */
+  source?: string;
   /** honeypot, filled only by bots */
   website?: string;
   /** Cloudflare Turnstile token; required by the API once TURNSTILE_SECRET is set on the server */
@@ -105,6 +107,7 @@ export interface SubmitContext {
   /** path of the page the form was on, with the locale prefix, e.g. /he/about */
   page: string;
   utm: Record<string, string>;
+  source?: string;
 }
 
 function payload(kind: ContactPayload['kind'], v: LeadValues & { website: string }, matter: string, ctx: SubmitContext): ContactPayload {
@@ -119,6 +122,7 @@ function payload(kind: ContactPayload['kind'], v: LeadValues & { website: string
     locale: ctx.locale,
     page: ctx.page.slice(0, 300),
     ...(Object.keys(ctx.utm).length ? { utm: ctx.utm } : {}),
+    ...(ctx.source ? { source: ctx.source.slice(0, 80) } : {}),
     ...(v.website ? { website: v.website } : {}),
   };
 }

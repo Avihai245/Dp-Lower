@@ -38,6 +38,7 @@ export function sampleContext(
         ? 'התמונה מטושטשת. נא להעלות סריקה ברורה של העמוד המלא.'
         : 'The photo is blurred. Please upload a clear scan of the full page.',
     },
+    'details-changed': { variant: 'current', changed: ['email', 'phone'] },
     'password-reset': {
       resetUrl: `${base}/auth/callback?token_hash=3f9c1b7e&type=recovery&next=%2Fcreate-password%3Fmode%3Dreset`,
     },

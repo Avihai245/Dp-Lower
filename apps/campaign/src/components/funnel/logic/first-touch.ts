@@ -5,6 +5,8 @@
  */
 export const SRC_COOKIE = 'dpl_src';
 export const UTM_COOKIE = 'dpl_utm';
+/** Where the current visit came from (the latest deep link), for "Back to the site"; see lib/attribution.ts. */
+export const FROM_COOKIE = 'dpl_from';
 
 export interface FirstTouch {
   source?: string;

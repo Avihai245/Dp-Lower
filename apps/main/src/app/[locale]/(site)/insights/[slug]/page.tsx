@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { ArticleView } from '@/components/insights/ArticleView';
 import { routing } from '@/i18n/routing';
 import { articleDescription, articleJsonLd } from '@/lib/jsonld';
-import { JsonLd, pageMetadata, SITE_URL } from '@/lib/seo';
+import { DEFAULT_SHARE_IMAGE, JsonLd, pageMetadata, SITE_URL } from '@/lib/seo';
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
@@ -14,7 +14,7 @@ export function generateStaticParams() {
   return routing.locales.flatMap((locale) => ARTICLE_SLUGS.map((slug) => ({ locale, slug })));
 }
 
-const SHARE_IMAGE = '/images/Decker-Pex-Levi-Team-scaled.jpg.webp';
+const SHARE_IMAGE = DEFAULT_SHARE_IMAGE.path;
 
 export async function generateMetadata({ params }: Props) {
   const { locale, slug } = await params;

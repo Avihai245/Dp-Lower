@@ -79,6 +79,19 @@ export function Header({ logoAlt, navLabel, menuLabel, items, menus, portal, con
     return () => document.removeEventListener('pointerdown', onDown);
   }, [menu, mobileOpen]);
 
+  // a menu opened by hovering leaves the keyboard focus where it was (outside the header): Escape must still dismiss
+  // it without moving the pointer (WCAG 1.4.13). Inside the header, onRootKeyDown handles Escape and returns focus.
+  useEffect(() => {
+    if (!menu && !mobileOpen) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape' || rootRef.current?.contains(e.target as Node)) return;
+      setMenu(null);
+      setMobileOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [menu, mobileOpen]);
+
   // widening the window past the burger breakpoint closes the burger list
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 721px)');
@@ -162,10 +175,10 @@ export function Header({ logoAlt, navLabel, menuLabel, items, menus, portal, con
       <div data-nav data-pad style={s('margin: 0 auto; padding: 16px clamp(20px, 4.6vw, 120px); display: flex; align-items: center; gap: 32px')}>
         <Link href="/" data-linkbtn style={s('background: none; border: 0; padding: 0; cursor: pointer; display: block; flex: none')}>
           <img
-            src="/images/DPL_logo.webp"
+            src="/images/DPL_logo-sm.webp"
             alt={logoAlt}
-            width={800}
-            height={286}
+            width={240}
+            height={86}
             decoding="async"
             fetchPriority="high"
             style={s('height: 38px; width: auto; max-width: none; display: block')}

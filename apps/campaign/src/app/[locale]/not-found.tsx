@@ -1,6 +1,13 @@
 import { s } from '@dpl/ui';
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+
+/** Every page has a title (WCAG 2.4.2); a 404 is not indexed. */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('common.notFound');
+  return { title: t('metaTitle'), robots: { index: false, follow: true } };
+}
 
 export default async function NotFound() {
   const t = await getTranslations('common.notFound');

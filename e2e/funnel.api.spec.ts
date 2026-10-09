@@ -161,6 +161,18 @@ test.describe('POST /api/leads', () => {
     await client.dispose();
   });
 
+  test('a deep link from the firm\'s website sets where "Back to the site" goes, even after an earlier first visit', async ({ request }) => {
+    // an earlier visit from an advertisement left the first-touch cookie behind
+    const res = await request.get('/?entry=eligibility&source=main-site', { headers: { cookie: 'dpl_src=campaign-ger-aus' }, maxRedirects: 0 });
+    expect([302, 303, 307, 308]).toContain(res.status());
+    const cookies = setCookies(res);
+    expect(cookies.some((c) => /^dpl_from=main-site;/.test(c)), 'the way back is the website').toBe(true);
+    expect(cookies.some((c) => /^dpl_src=/.test(c)), 'the first touch is never overwritten').toBe(false);
+    // the next deep link from somewhere else replaces the way back
+    const other = await request.get('/?entry=eligibility&source=newsletter', { headers: { cookie: 'dpl_src=main-site; dpl_from=main-site' }, maxRedirects: 0 });
+    expect(setCookies(other).some((c) => /^dpl_from=newsletter;/.test(c))).toBe(true);
+  });
+
   test('the same browser updates name, phone and merges answers', async ({ playwright }) => {
     const client = await newClient(playwright);
     const first = await createLead(client, 'update');
@@ -252,6 +264,115 @@ test.describe('POST /api/leads', () => {
     // another address is unaffected
     const other = await request.post('/api/leads', { data: {}, headers: { 'x-forwarded-for': newIp() } });
     expect(other.status()).toBe(400);
+  });
+});
+
+test.describe('correcting the email on the details page', () => {
+  test('the same lead moves to the corrected address: no second lead, old links die, the new address gets welcome 1', async ({ playwright }) => {
+    const owner = await newClient(playwright);
+    const lead = await createLead(owner, 'typo');
+    const before = await leadByEmail(lead.email);
+    const welcomeBefore = (await eventsOf(lead.leadId)).filter((e) => e.type === 'email.send' && e.payload.template === 'welcome-1');
+    expect(welcomeBefore).toHaveLength(1);
+    // a link emailed to the mistyped address, with the epoch it had
+    const oldLink = `/go/${signAppToken({ lid: lead.leadId, ep: before!.session_epoch, p: 'portal', n: '/portal' }, 3600)}`;
+
+    // the visitor pressed Back from the booking, fixed the address and sent the form again (same name)
+    const fixed = newEmail('typo-fixed');
+    const res = await owner.post('/api/leads', { data: leadBody(fixed) });
+    expect(res.status()).toBe(200);
+    expect(await res.json()).toMatchObject({ status: 'updated', leadId: lead.leadId, caseRef: lead.caseRef });
+
+    // one lead, now at the new address, unproven, with every earlier link and cookie dead
+    expect(await leadByEmail(lead.email)).toBeNull();
+    const after = await leadByEmail(fixed);
+    expect(after).toMatchObject({ id: lead.leadId, case_ref: lead.caseRef, email_verified_at: null });
+    expect(after?.session_epoch).toBe((before?.session_epoch ?? 0) + 1);
+    expect((await owner.get('/api/lead')).status(), 'the browser got a fresh cookie and still acts as the lead').toBe(200);
+    expect(((await (await owner.get('/api/lead')).json()) as { email: string }).email).toBe(fixed);
+    const old = await (await newClient(playwright)).get(oldLink, { maxRedirects: 0 });
+    expect(new URL(old.headers().location!).pathname, 'a link sent to the mistyped address no longer opens the file').toBe('/link-expired');
+
+    // emails: what waited for the old address is cancelled, welcome 1 goes to the new one, exactly once
+    const events = await eventsOf(lead.leadId);
+    const welcome = events.filter((e) => e.type === 'email.send' && e.payload.template === 'welcome-1');
+    expect(welcome.filter((e) => e.payload.to?.email === fixed)).toHaveLength(1);
+    expect(welcome.filter((e) => e.payload.to?.email === lead.email && e.status === 'pending'), 'nothing is left for the old address').toHaveLength(0);
+    // the firm's CRM is told what changed
+    const updated = events.filter((e) => e.type === 'lead.updated');
+    expect(updated).toHaveLength(1);
+    expect(updated[0]?.payload).toMatchObject({ changed: ['email'], previous: { email: lead.email }, lead: { id: lead.leadId, email: fixed } });
+    expect(await rest('activity_log', `lead_id=eq.${lead.leadId}&code=eq.email_changed`)).toHaveLength(1);
+
+    // sending the same form again changes nothing and tells nobody
+    const again = await owner.post('/api/leads', { data: leadBody(fixed) });
+    expect((await again.json()).status).toBe('updated');
+    expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'lead.updated')).toHaveLength(1);
+    await owner.dispose();
+  });
+
+  test('the corrected address also receives the confirmation of the call the lead already holds', async ({ playwright }) => {
+    const owner = await newClient(playwright);
+    const lead = await createLead(owner, 'typo-booked');
+    const slot = await freeSlot(owner, 9);
+    expect((await owner.post('/api/bookings', { data: { startsAt: slot.startsAt, timezone: 'Asia/Jerusalem' } })).status()).toBe(201);
+    const fixed = newEmail('typo-booked-fixed');
+    expect((await owner.post('/api/leads', { data: leadBody(fixed) })).status()).toBe(200);
+    const confirmations = (await eventsOf(lead.leadId)).filter((e) => e.type === 'email.send' && e.payload.template === 'booking-confirmation');
+    expect(confirmations.map((e) => e.payload.to?.email).sort()).toEqual([fixed, lead.email].sort());
+    // still one lead, one booking
+    expect(await rest('bookings', `lead_id=eq.${lead.leadId}&status=eq.confirmed&select=id`)).toHaveLength(1);
+    await owner.dispose();
+  });
+
+  test('another name is another person: a second lead of their own, and the first one is untouched', async ({ playwright }) => {
+    const shared = await newClient(playwright);
+    const a = await createLead(shared, 'spouseA');
+    const b = await createLead(shared, 'spouseB', { fullName: 'berta reinhardt' });
+    expect(b.leadId).not.toBe(a.leadId);
+    expect(await leadByEmail(a.email)).toMatchObject({ id: a.leadId, full_name: 'Anna Reinhardt', email_verified_at: null });
+    expect(await leadByEmail(b.email)).toMatchObject({ id: b.leadId, full_name: 'Berta Reinhardt' });
+    await shared.dispose();
+  });
+
+  test('an address that already has a file is never taken over: the owner is emailed, this lead keeps its own address', async ({ playwright }) => {
+    const other = await newClient(playwright);
+    const victim = await createLead(other, 'victim');
+    const owner = await newClient(playwright);
+    const mine = await createLead(owner, 'mine');
+    const res = await owner.post('/api/leads', { data: leadBody(victim.email) });
+    expect(res.status()).toBe(200);
+    expect(await res.json()).toEqual({ status: 'existing' });
+    expect(await leadByEmail(mine.email)).toMatchObject({ id: mine.leadId });
+    expect(await leadByEmail(victim.email)).toMatchObject({ id: victim.leadId });
+    expect(await emailEvent(victim.leadId, 'file-open')).toBeTruthy();
+    await other.dispose();
+    await owner.dispose();
+  });
+
+  test('a lead with a password, or a browser signed in as it, keeps its address (409 email_locked)', async ({ playwright }) => {
+    const owner = await newClient(playwright);
+    const lead = await createLead(owner, 'locked');
+    await owner.post('/api/portal/enter');
+    // signed in, no password yet
+    const viaSession = await owner.post('/api/leads', { data: leadBody(newEmail('locked-new')) });
+    expect(viaSession.status()).toBe(409);
+    expect(await viaSession.json()).toMatchObject({ error: 'email_locked' });
+    // with a password, even a browser that only holds the lead cookie (no session) cannot move it
+    expect((await owner.post('/api/auth/set-password', { data: { password: 'locked-password-1' } })).status()).toBe(200);
+    const state = await owner.storageState();
+    const cookieOnly = await playwright.request.newContext({
+      baseURL: BASE_URL,
+      extraHTTPHeaders: { 'x-forwarded-for': newIp() },
+      storageState: { cookies: state.cookies.filter((c) => c.name === 'dpl_lead'), origins: [] },
+    });
+    expect((await cookieOnly.get('/api/lead')).status(), 'the cookie alone still identifies the lead').toBe(200);
+    const again = await cookieOnly.post('/api/leads', { data: leadBody(newEmail('locked-new2')) });
+    expect(again.status()).toBe(409);
+    expect(await again.json()).toMatchObject({ error: 'email_locked' });
+    expect(await leadByEmail(lead.email)).toMatchObject({ id: lead.leadId });
+    await cookieOnly.dispose();
+    await owner.dispose();
   });
 });
 
@@ -580,6 +701,37 @@ test.describe('portal entry, passwords and emailed links', () => {
     await owner.dispose();
   });
 
+  test('a reset link is an account too: a lead that never pressed "Go to my portal" reaches Account created when it uses one', async ({ playwright }) => {
+    const owner = await newClient(playwright);
+    const lead = await createLead(owner, 'acct-reset');
+    expect(await leadByEmail(lead.email)).toMatchObject({ account_created_at: null, stage: 'lead', status: 'enquiry' });
+
+    // "Forgot it?" gives the lead its sign-in user but is not yet an account: nothing is claimed until the link is used
+    expect((await owner.post('/api/auth/forgot', { data: { email: lead.email } })).status()).toBe(200);
+    await emailEvent(lead.leadId, 'password-reset');
+    expect(await leadByEmail(lead.email)).toMatchObject({ account_created_at: null, status: 'enquiry' });
+
+    const tokenHash = await recoveryTokenHash(lead.email);
+    const res = await owner.post('/auth/callback', { form: { token_hash: tokenHash, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
+    expect(res.status()).toBe(303);
+
+    const after = await leadByEmail(lead.email);
+    expect(after).toMatchObject({ stage: 'account', status: 'account_created' });
+    expect(after?.account_created_at).toBeTruthy();
+    expect(after?.email_verified_at).toBeTruthy();
+    const created = (await eventsOf(lead.leadId)).filter((e) => e.type === 'account.created');
+    expect(created, 'the firm CRM hears about the account once').toHaveLength(1);
+    expect(created[0]?.payload).toMatchObject({ lead: { id: lead.leadId } });
+    const log = await rest('activity_log', `lead_id=eq.${lead.leadId}&code=eq.account_created`);
+    expect(log).toHaveLength(1);
+
+    // using a second reset link changes nothing about it
+    const again = await recoveryTokenHash(lead.email);
+    await owner.post('/auth/callback', { form: { token_hash: again, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
+    expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'account.created')).toHaveLength(1);
+    await owner.dispose();
+  });
+
   test('an emailed /go link opens the portal; a link used on another browser revokes what was set before', async ({ playwright }) => {
     // attacker pre-registers somebody else's email in browser X and sets a password
     const attacker = await newClient(playwright);
@@ -680,7 +832,8 @@ test.describe('portal entry, passwords and emailed links', () => {
     await client.post('/api/portal/enter');
     expect((await (await client.get('/api/lead')).json()).leadId).toBe(a.leadId);
 
-    const b = await createLead(client, 'sharedB');
+    // a second person on the same computer: another name (the same name with another address would be a correction)
+    const b = await createLead(client, 'sharedB', { fullName: 'berta schmidt' });
     const me = await (await client.get('/api/lead')).json();
     expect(me.leadId, 'the browser now acts as the new lead, not the old session').toBe(b.leadId);
     const slot = await freeSlot(client, 6);

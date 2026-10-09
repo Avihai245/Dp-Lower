@@ -155,6 +155,32 @@ for (const L of [
       await context.close();
     });
 
+    test('a click on the dimmed send button explains what is missing instead of doing nothing', async ({ browser }) => {
+      const { context, page, problems } = await visitor(browser);
+      await page.goto(`${L.prefix}/services/german-citizenship`);
+      const band = page.locator('#leadform');
+      await band.scrollIntoViewIfNeeded();
+      // a real mouse click on the dimmed button (no field has been touched yet)
+      await band.locator('button[type=submit]').click();
+      await expect(band.locator('input[name=name]')).toHaveAttribute('aria-invalid', 'true');
+      await expect(band.locator('input[name=email]')).toHaveAttribute('aria-invalid', 'true');
+      await expect(band.locator('input[name=name]')).toBeFocused();
+      // the consent checkbox is the last thing missing: the click names it too
+      await fill(page, '#leadform', { name: L.name, phone: '03-372-4722', email: mail(`dim-${L.locale}`) });
+      await band.locator('button[type=submit]').click();
+      await expect(band.locator('input[name=consent]')).toBeFocused();
+      await expect(band.locator('p[id*="consent"], [role=alert]').first()).toBeVisible();
+
+      // the same in the chat
+      await page.getByRole('button', { name: L.site.chat.launcher }).click();
+      const chat = page.getByRole('dialog', { name: L.site.chat.dialog });
+      await chat.getByRole('button', { name: L.site.chat.topics[0]! }).click();
+      await chat.locator('button[type=submit]').click();
+      await expect(chat.getByPlaceholder(L.site.chat.placeholders.name)).toHaveAttribute('aria-invalid', 'true');
+      expect(problems).toEqual([]);
+      await context.close();
+    });
+
     test('chat: topic, details, a call back is requested', async ({ browser }) => {
       const { context, page, problems } = await visitor(browser);
       await page.goto(`${L.prefix}/about`);
@@ -274,6 +300,63 @@ test.describe('navigation', () => {
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
     await panel.getByRole('link').first().waitFor({ state: 'hidden' }).catch(() => undefined);
     expect(problems).toEqual([]);
+    await context.close();
+  });
+
+  test('a menu opened by hovering closes with Escape although the focus never moved into it', async ({ browser }) => {
+    const { context, page } = await visitor(browser);
+    await page.goto('/');
+    const trigger = page.getByRole('button', { name: enSite.nav.passports });
+    await trigger.hover();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await context.close();
+  });
+
+  test('old #/ links lead to the clean page in the right language, and keep the query string', async ({ browser }) => {
+    const { context, page } = await visitor(browser);
+    await page.goto('/#/service/german-citizenship');
+    await expect(page).toHaveURL(/\/services\/german-citizenship$/);
+    await expect(page.locator('h1').first()).toContainText(/German/i);
+    await page.goto('/he?utm_source=x#/attorney/michael-decker');
+    await expect(page).toHaveURL(/\/he\/team\/michael-decker\?utm_source=x$/);
+    // a hash that is not one of the old addresses (or names nothing) leaves the visitor where they are
+    await page.goto('/#/nonsense');
+    await page.waitForTimeout(500);
+    expect(new URL(page.url()).pathname).toBe('/');
+    await page.goto('/#leadform');
+    await page.waitForTimeout(300);
+    expect(new URL(page.url()).pathname).toBe('/');
+    await context.close();
+  });
+
+  test('the campaign parameters of the first page travel with an enquiry sent from another page', async ({ browser }) => {
+    const { context, page } = await visitor(browser);
+    const bodies: Array<Record<string, unknown>> = [];
+    await page.route('**/api/contact', async (route) => {
+      bodies.push(JSON.parse(route.request().postData() ?? '{}') as Record<string, unknown>);
+      await route.fulfill({ status: 201, contentType: 'application/json', body: '{"ok":true}' });
+    });
+    await page.goto('/?utm_source=google&utm_campaign=spring');
+    await page.goto('/about');
+    const band = page.locator('#leadform');
+    await band.scrollIntoViewIfNeeded();
+    await fill(page, '#leadform', { name: 'Anna Stub', phone: '03-372-4722', email: mail('utm') });
+    await band.locator('input[name=consent]').check();
+    await band.locator('button[type=submit]').click();
+    await expect(band.getByRole('status')).toBeVisible();
+    expect(bodies[0]).toMatchObject({ kind: 'lead_band', source: 'google', utm: { utm_source: 'google', utm_campaign: 'spring' } });
+
+    // and from the contact page
+    await page.goto('/contact');
+    const form = page.locator('main form');
+    await fill(page, 'main form', { name: 'Anna Stub', phone: '03-372-4722', email: mail('utm2') });
+    await form.locator('select[name=matter]').selectOption({ index: 1 });
+    await form.locator('input[name=consent]').check();
+    await form.locator('button[type=submit]').click();
+    await expect.poll(() => bodies.length).toBe(2);
+    expect(bodies[1]).toMatchObject({ kind: 'contact', source: 'google', utm: { utm_source: 'google', utm_campaign: 'spring' } });
     await context.close();
   });
 

@@ -513,7 +513,7 @@ test.describe('lead page', () => {
     await dialog.getByLabel('Phone').fill('+49 30 5550 0199');
     await dialog.getByRole('button', { name: 'Save changes' }).click();
     await expect(dialog.getByRole('button', { name: 'Saved' })).toBeVisible();
-    await expect(dialog.getByText(/Earlier links and sign-ins for the old address stop working/)).toBeVisible();
+    await expect(dialog.getByText(/gets an email confirming the change, and the old address is told\. Earlier links and sign-ins stop working/)).toBeVisible();
 
     const after = await getLead(world.gamma.id);
     expect(after).toMatchObject({ full_name: newName, email: newEmail, phone: '+49 30 5550 0199', email_verified_at: null });
@@ -524,6 +524,19 @@ test.describe('lead page', () => {
     const log = (await activity(world.gamma.id, 'contact_updated'))[0]!;
     expect(log).toMatchObject({ kind: 'staff', actor_id: world.admin.id, text: 'Contact details updated' });
     expect(log.meta).toMatchObject({ fields: ['name', 'email', 'phone'], emailFrom: world.gamma.email, emailTo: newEmail });
+
+    // the applicant is told, as the prototype promises: the new address gets the confirmation with a link into the portal,
+    // the old one a notice that opens nothing and does not name the new address
+    await expect.poll(async () => (await emails(world.gamma.id, 'details-changed')).length).toBe(2);
+    const changedMails = (await emails(world.gamma.id, 'details-changed')) as Array<{ payload: { to: { email: string }; html: string; text: string } }>;
+    const toNew = changedMails.find((m) => m.payload.to.email === newEmail)!;
+    const toOld = changedMails.find((m) => m.payload.to.email === world.gamma.email)!;
+    expect(toNew.payload.html).toContain('/go/');
+    expect(toOld.payload.html + toOld.payload.text).not.toContain('/go/');
+    expect(toOld.payload.html + toOld.payload.text).not.toContain(newEmail);
+    // and the firm's own CRM hears about it, with the address the file had
+    const update = (await eventsAfter(world.gamma.id, 'lead.updated'))[0]!;
+    expect(update.payload).toMatchObject({ changed: ['name', 'email', 'phone'], previous: { email: world.gamma.email }, lead: { email: newEmail } });
 
     // an address another lead already uses is refused
     await dialog.getByLabel('Email').fill(world.alpha.email);
@@ -570,7 +583,7 @@ test.describe('lead page', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'he');
     await expect(page.locator('[data-stats]')).toContainText('דורשים טיפול');
     await expect(page.getByRole('button', { name: /^כל הפתוחים/ })).toBeVisible();
-    await expect(page.locator(`[data-lead-row="${world.alpha.id}"]`)).toContainText('הבקשה לא הושלמה');
+    await expect(page.locator(`[data-lead-row="${world.alpha.id}"]`)).toContainText('בקשה חלקית');
     await page.goto(`/he/admin/leads/${world.alpha.id}`);
     await expect(page.locator('h1')).toHaveText(world.alpha.name);
     await expect(page.getByText('הפעולה הבאה')).toBeVisible();

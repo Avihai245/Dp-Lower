@@ -3,7 +3,9 @@ import { s } from '@dpl/ui';
 import { createBrowserSupabase } from '@dpl/db/browser';
 import { useLocale } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { clearDraft } from '@/components/funnel/logic/lead-form';
 import { api } from '@/lib/api';
+import { resetQuiz } from '@/lib/quiz-store';
 import { DashboardHeader } from './DashboardHeader';
 import { MailLine } from './MailLine';
 import { MyDetailsModal, type DetailsValues } from './MyDetailsModal';
@@ -57,6 +59,9 @@ export function Dashboard({ initial }: { initial: PortalState }) {
     }
     // also clears the httpOnly lead cookie, which could otherwise open the portal again without a password
     await api('/api/portal/sign-out', { method: 'POST' });
+    // and whatever of this person is left in the browser, for the next one at a shared computer
+    resetQuiz();
+    clearDraft();
     window.location.assign(locale === 'he' ? '/he' : '/');
   };
 

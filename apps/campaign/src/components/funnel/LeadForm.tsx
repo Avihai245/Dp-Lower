@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
-import { getQuizAnswers } from '@/lib/quiz-store';
+import { getQuizAnswers, resetQuiz } from '@/lib/quiz-store';
 import type { LeadSubmitResponse } from './logic/api-types';
 import { EMPTY_DRAFT, capitalizeAsTyped, clearDraft, readDraft, validateLead, writeDraft, type LeadDraft } from './logic/lead-form';
 import { Turnstile } from './Turnstile';
@@ -23,7 +23,7 @@ type Phase = 'form' | 'submitting' | 'existing';
  * continues to the booking, an email that already has a file gets "we have emailed you a link".
  * `initialLead` is the lead this browser already holds (read from the lead cookie by the page), if any.
  */
-export function LeadForm({ initialLead }: { initialLead: LeadDraft | null }) {
+export function LeadForm({ initialLead, emailLocked = false }: { initialLead: LeadDraft | null; emailLocked?: boolean }) {
   const t = useTranslations('funnel');
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -44,7 +44,8 @@ export function LeadForm({ initialLead }: { initialLead: LeadDraft | null }) {
     const stored = readDraft();
     if (stored.fullName || stored.email || stored.phone) {
       touched.current = true;
-      setDraft(stored);
+      // the address of a locked file is the file's, whatever an old draft says
+      setDraft(emailLocked && initialLead ? { ...stored, email: initialLead.email } : stored);
     } else if (initialLead) {
       setDraft(initialLead);
     }
@@ -54,11 +55,12 @@ export function LeadForm({ initialLead }: { initialLead: LeadDraft | null }) {
       return;
     }
     setReady(true);
-  }, [initialLead, router]);
+  }, [initialLead, emailLocked, router]);
 
   const validity = validateLead(draft);
 
   function update(field: keyof LeadDraft, raw: string) {
+    if (field === 'email' && emailLocked) return;
     touched.current = true;
     const value = field === 'fullName' ? capitalizeAsTyped(raw) : raw;
     const next = { ...draft, [field]: value };
@@ -105,7 +107,9 @@ export function LeadForm({ initialLead }: { initialLead: LeadDraft | null }) {
       setPhase('existing');
       return;
     }
+    // the answers are on the file now; nothing about this person stays in the browser for the next one to find
     clearDraft();
+    resetQuiz();
     router.push('/booking');
   }
 
@@ -180,10 +184,13 @@ export function LeadForm({ initialLead }: { initialLead: LeadDraft | null }) {
                   placeholder={t('lead.email.placeholder')}
                   value={draft.email}
                   onChange={(e) => update('email', e.target.value)}
+                  readOnly={emailLocked}
+                  aria-readonly={emailLocked || undefined}
                   aria-invalid={tried && !validity.email}
-                  aria-describedby={tried && !validity.email ? 'lead-email-error' : undefined}
+                  aria-describedby={emailLocked ? 'lead-email-locked' : tried && !validity.email ? 'lead-email-error' : undefined}
                   {...x(INPUT, { focus: 'border-color: #14202b; outline: none' })}
                 />
+                {emailLocked && <span id="lead-email-locked" style={s('display: block; font-size: 13.5px; color: #736d64; margin-top: 7px')}>{t('lead.email.locked')}</span>}
                 {tried && !validity.email && <span id="lead-email-error" role="alert" style={s(ERROR)}>{t('lead.email.error')}</span>}
               </div>
               <div>

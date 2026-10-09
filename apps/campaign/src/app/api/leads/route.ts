@@ -1,7 +1,7 @@
 import { leadInputSchema } from '@dpl/core';
 import { createAdminSupabase } from '@dpl/db/admin';
 import { ApiError, assertSameOrigin, clientIp, handle, json, limitOrThrow, parseJson, verifyTurnstile } from '@dpl/db/http';
-import { setLeadCookie } from '@dpl/db/lead-session';
+import { resolveLead, setLeadCookie } from '@dpl/db/lead-session';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { endForeignSession, readFirstTouch, submitLead } from '@/server/leads';
@@ -20,6 +20,8 @@ const body = leadInputSchema.extend({
  *  200 updated  - the lead of this browser (cookie / session): name, phone and answers are updated
  *  200 existing - the email has a file that this browser did not create: NOTHING changes, the address owner gets a
  *                 link by email. The body carries nothing else, so it reveals no detail of the file.
+ * A browser that already holds a lead and sends another address with the same name is correcting a typo: its
+ * lead moves to the new address (200 updated). 409 email_locked when that lead has a password or the browser is signed in.
  */
 export const POST = handle(async (req) => {
   assertSameOrigin(req);
@@ -30,7 +32,7 @@ export const POST = handle(async (req) => {
   if (!(await verifyTurnstile(input.turnstileToken, clientIp(req)))) throw new ApiError(400, 'captcha_failed');
 
   const db = createAdminSupabase();
-  const outcome = await submitLead(db, input, await readFirstTouch());
+  const outcome = await submitLead(db, input, await readFirstTouch(), await resolveLead(db));
   if (outcome.status === 'existing') return json({ status: 'existing' });
 
   await setLeadCookie(outcome.lead);

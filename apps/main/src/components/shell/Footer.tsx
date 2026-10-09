@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { campaignUrl } from '@/lib/shell/campaign';
 import { FIRM } from '@/lib/shell/firm';
 import { FOOTER_PAGES } from '@/lib/nav';
+import { Ltr } from '@/components/shell/Ltr';
 
 const HEAD = 'font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #c9a45c; margin-bottom: 18px';
 const ADDRESS = 'font-style: normal; font-size: 14.5px; line-height: 1.75; color: #9aa3ad; margin: 0 0 10px';
@@ -28,10 +29,10 @@ export async function Footer({ locale }: { locale: Locale }) {
           >
             <div>
               <img
-                src="/images/DPL_logo.webp"
+                src="/images/DPL_logo-sm.webp"
                 alt={t('brand.logoAlt')}
-                width={800}
-                height={286}
+                width={240}
+                height={86}
                 decoding="async"
                 loading="lazy"
                 style={s('height: 36px; width: auto; display: block; margin-bottom: 20px; filter: brightness(0) invert(1); opacity: 0.92')}
@@ -60,7 +61,7 @@ export async function Footer({ locale }: { locale: Locale }) {
                 ))}
               </address>
               <a href={FIRM.telAvivHref} style={s('font-size: 15px; color: #f8f5f0; text-decoration: none; display: block')}>
-                <bdi>{t('phones.telAviv')}</bdi>
+                <Ltr>{t('phones.telAviv')}</Ltr>
               </a>
               <a href={FIRM.mailto} style={s('font-size: 15px; color: #9aa3ad; text-decoration: none; display: block; margin-top: 6px')}>
                 {FIRM.email}
@@ -77,7 +78,7 @@ export async function Footer({ locale }: { locale: Locale }) {
                 ))}
               </address>
               <a href={FIRM.jerusalemHref} style={s('font-size: 15px; color: #f8f5f0; text-decoration: none')}>
-                <bdi>{t('phones.jerusalem')}</bdi>
+                <Ltr>{t('phones.jerusalem')}</Ltr>
               </a>
             </div>
             <nav aria-label={t('footer.pagesTitle')}>

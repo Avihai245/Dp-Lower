@@ -53,6 +53,43 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
   const run = (l: LeadRow[], now: Date) =>
     drip.scheduleDueEmails(db, now, { onlyLeadIds: l.map((x) => x.id) });
 
+  describe('restartForNewAddress', () => {
+    it('cancels what waits for the old address and sends welcome-1 to the new one, keeping what was already delivered', async () => {
+      const now = new Date();
+      const l = await lead({ createdAt: new Date(now.getTime() - 4 * DAY), name: 'anna reinhardt' });
+      await drip.startWelcomeSequence(l); // welcome-1, queued for the old address
+      await run([l], now); // whatever is due after four days is queued too
+      await sent(l, 15, new Date(now.getTime() - 2 * DAY)); // a row for an email that really went out stays
+
+      // the applicant corrects the address: the lead row carries it, with the new epoch
+      const fixed = `fixed-${l.email}`;
+      const { data: moved } = await db.from('leads').update({ email: fixed, session_epoch: l.session_epoch + 1 }).eq('id', l.id).select('*').single();
+      await drip.restartForNewAddress(moved!);
+
+      const { data: events } = await db.from('events').select('status, dedupe_key, payload').like('dedupe_key', `welcome:${l.id}:%`);
+      const pending = (events ?? []).filter((e) => e.status === 'pending');
+      expect(pending, 'only the new welcome-1 is left to send').toHaveLength(1);
+      expect(pending[0]?.dedupe_key).toBe(`welcome:${l.id}:1:e${l.session_epoch + 1}`);
+      expect((pending[0]?.payload as { to: { email: string } }).to.email).toBe(fixed);
+      expect((events ?? []).filter((e) => e.status === 'cancelled').length).toBeGreaterThan(0);
+
+      const state = await stateOf(l);
+      expect(state.find((r) => r.number === 1)).toMatchObject({ status: 'queued' });
+      expect(state.find((r) => r.number === 15), 'a delivered email stays recorded').toMatchObject({ status: 'sent' });
+      // doing it twice does not queue a second welcome-1
+      await drip.restartForNewAddress(moved!);
+      const again = await db.from('events').select('id').eq('dedupe_key', `welcome:${l.id}:1:e${l.session_epoch + 1}`);
+      expect(again.data).toHaveLength(1);
+    });
+
+    it('sends nothing to an unsubscribed applicant', async () => {
+      const now = new Date();
+      const l = await lead({ createdAt: new Date(now.getTime() - HOUR), unsubscribedAt: new Date(now.getTime() - 60_000) });
+      await drip.restartForNewAddress(l);
+      expect(await eventsOf(l)).toHaveLength(0);
+    });
+  });
+
   describe('startWelcomeSequence', () => {
     it('queues welcome-1 immediately and records it, once', async () => {
       const l = await lead({ createdAt: new Date(), name: 'david cohen' });
@@ -237,13 +274,24 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       }
     });
 
-    it('ignores leads older than 47 days and leads created by Google sign-in', async () => {
+    it('ignores leads older than 47 days and leads created by Google sign-in that never answered the questions', async () => {
       const now = new Date();
       const ancient = await lead({ createdAt: new Date(now.getTime() - 48 * DAY) });
       const oauth = await lead({ createdAt: new Date(now.getTime() - 3 * DAY), source: 'oauth' });
       expect(await run([ancient, oauth], now)).toMatchObject({ leads: 0, scheduled: 0 });
       expect(await eventsOf(ancient)).toHaveLength(0);
       expect(await eventsOf(oauth)).toHaveLength(0);
+    });
+
+    it('a Google sign-in lead that has answered the eligibility questions is a lead like any other', async () => {
+      const now = new Date();
+      const oauth = await lead({
+        createdAt: new Date(now.getTime() - 10 * 60_000),
+        source: 'oauth',
+        answers: { country: 'germany', relative: 'grandparent' },
+      });
+      expect(await run([oauth], now)).toMatchObject({ leads: 1, scheduled: 1 });
+      expect((await eventsOf(oauth)).map((e) => e.dedupe_key)).toEqual([`welcome:${oauth.id}:1`]);
     });
 
     it('sends email 1 to a lead that was never started (the lead creation could not queue it)', async () => {
