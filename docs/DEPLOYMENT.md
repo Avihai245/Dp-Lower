@@ -98,6 +98,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co SUPABASE_SERVICE_ROLE
   pnpm bootstrap:admin you@lawoffice.org.il "Your Name" "<a strong password>"
 ```
 
+Without the password argument the tool generates one and prints it once. The sign-up endpoint is public, so an address that somebody registered before it became staff gets a new password (and its sessions are ended) rather than keeping the one its registrant chose; an account that is already staff keeps its password when the tool is run again.
+
 Sign in at `https://euro-passports.com/sign-in`; staff land on `/admin`. Admins can add more staff (role `lawyer` or `case_manager`) and edit the call-availability calendars (the unassigned template, each lawyer's hours) and blocked days; a lawyer edits their own hours and days off.
 
 ## 7. Google sign-in (optional)

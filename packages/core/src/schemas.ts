@@ -14,12 +14,13 @@ export const emailSchema = z
   .max(254)
   .regex(EMAIL_RE, 'invalid_email');
 /** Free text from a form is cleaned before it is checked: no control or invisible characters (see oneLine). */
-const line = (max: number, min = 0, message?: string) => z.string().transform(oneLine).pipe(z.string().min(min, message).max(max, message));
-const lines = (max: number) => z.string().transform(multiLine).pipe(z.string().max(max));
+const line = (max: number, min = 0, message?: string) => z.string().max(max * 4 + 64).transform(oneLine).pipe(z.string().min(min, message).max(max, message));
+const lines = (max: number) => z.string().max(max * 4 + 64).transform(multiLine).pipe(z.string().max(max));
 
-export const nameSchema = z.string().transform(nameText).pipe(z.string().min(2, 'invalid_name').max(120, 'invalid_name'));
+export const nameSchema = z.string().max(600).transform(nameText).pipe(z.string().min(2, 'invalid_name').max(120, 'invalid_name'));
 export const phoneSchema = z
   .string()
+  .max(200)
   .transform(phoneText)
   .pipe(z.string().max(40).refine((v) => digitsOf(v).length >= 7, 'invalid_phone'));
 export const passwordSchema = z.string().min(8, 'password_too_short').max(72, 'password_too_long');

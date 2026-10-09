@@ -5,8 +5,10 @@
  *
  * What it does, with the Supabase service role (never run it from the browser, never commit the key):
  *   1. finds the Supabase user with that email, or creates it (email already confirmed);
- *   2. sets the password when one is given (an existing account keeps its password otherwise); a NEW account without
- *      a password argument gets a random one, which is printed once;
+ *   2. sets the password when one is given; an account without a password argument gets a random one, printed once,
+ *      unless it is already a member of staff (running the tool again only promotes / re-activates). That includes an
+ *      existing sign-up that is not staff yet: anyone can register an address publicly, so whoever knows it must not
+ *      keep access to what becomes a staff account; its password is replaced and its sessions are ended;
  *   3. writes the `staff` row with role `admin` and `active = true` (an existing row is updated, so running it again
  *      promotes / re-activates the person).
  * Sign in at /sign-in with that email and password, then open /admin.
@@ -40,7 +42,7 @@ export interface BootstrapResult {
   userId: string;
   /** false when the Supabase user already existed */
   created: boolean;
-  /** the password that was generated (new account without a password argument), otherwise null */
+  /** the password that was generated (account that was not staff, no password argument), otherwise null */
   generatedPassword: string | null;
 }
 
@@ -123,8 +125,14 @@ export async function bootstrapStaff(opts: BootstrapOptions): Promise<BootstrapR
     });
     userId = user.id;
     created = true;
-  } else if (opts.password) {
-    await call(env, `/auth/v1/admin/users/${userId}`, { method: 'PUT', body: { password: opts.password, email_confirm: true } });
+  } else {
+    const alreadyStaff = (await call<unknown[]>(env, `/rest/v1/staff?user_id=eq.${userId}&select=user_id`)).length > 0;
+    const password = opts.password ?? (alreadyStaff ? undefined : (generatedPassword = randomBytes(18).toString('base64url')));
+    if (password) {
+      await call(env, `/auth/v1/admin/users/${userId}`, { method: 'PUT', body: { password, email_confirm: true } });
+      // a refresh token the previous holder of the account may still have
+      if (!alreadyStaff) await call(env, '/rest/v1/rpc/revoke_user_sessions', { body: { p_user: userId } });
+    }
   }
 
   await call(env, '/rest/v1/staff?on_conflict=user_id', {
