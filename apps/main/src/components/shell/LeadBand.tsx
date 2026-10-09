@@ -5,7 +5,7 @@ import { s, x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { type ChangeEvent, type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { Link } from '@/i18n/navigation';
-import { FIRM } from '@/lib/firm';
+import { FIRM } from '@/lib/shell/firm';
 import {
   autoCapitalize,
   buildLeadBandPayload,
@@ -14,7 +14,7 @@ import {
   parseUtm,
   postContact,
   type LeadField,
-} from '@/lib/lead-form';
+} from '@/lib/shell/lead-form';
 
 const FONT = "font-family: 'Manrope', system-ui, sans-serif";
 const LABEL = 'display: block; font-size: 12.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #736d64; margin-bottom: 8px';

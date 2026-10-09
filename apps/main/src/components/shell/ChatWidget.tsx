@@ -13,7 +13,7 @@ import {
   parseUtm,
   postContact,
   type LeadField,
-} from '@/lib/lead-form';
+} from '@/lib/shell/lead-form';
 import { useDialog } from './useDialog';
 
 const FONT = "font-family: 'Manrope', system-ui, sans-serif";

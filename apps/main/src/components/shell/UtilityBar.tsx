@@ -1,6 +1,6 @@
 import { s } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
-import { FIRM } from '@/lib/firm';
+import { FIRM } from '@/lib/shell/firm';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 const LINK = 'color: #c5cbd2; text-decoration: none';

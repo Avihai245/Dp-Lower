@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import { preconnect } from 'react-dom';
 import { Link } from '@/i18n/navigation';
-import { campaignUrl } from '@/lib/campaign';
+import { campaignUrl } from '@/lib/shell/campaign';
 import { HeroVideo } from './HeroVideo';
 
 /** The film's thumbnail is the poster: the page is complete without the video, which only starts later on desktop. */

@@ -2,8 +2,8 @@ import type { Locale } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { campaignUrl } from '@/lib/campaign';
-import { FIRM } from '@/lib/firm';
+import { campaignUrl } from '@/lib/shell/campaign';
+import { FIRM } from '@/lib/shell/firm';
 import { FOOTER_PAGES } from '@/lib/nav';
 
 const HEAD = 'font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #c9a45c; margin-bottom: 18px';

@@ -14,7 +14,7 @@ import { LeadBand } from '@/components/shell/LeadBand';
 import { LeadOrClose } from '@/components/shell/LeadOrClose';
 import { SkipLink } from '@/components/shell/SkipLink';
 import { UtilityBar } from '@/components/shell/UtilityBar';
-import { campaignUrl } from '@/lib/campaign';
+import { campaignUrl } from '@/lib/shell/campaign';
 import { buildMenus, NAV, serviceGroups } from '@/lib/nav';
 import '@/styles/shell.css';
 

@@ -3,7 +3,7 @@ import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
-import { campaignUrl } from '@/lib/campaign';
+import { campaignUrl } from '@/lib/shell/campaign';
 import { serviceHref } from '@/lib/nav';
 
 const TEXT_LINK =

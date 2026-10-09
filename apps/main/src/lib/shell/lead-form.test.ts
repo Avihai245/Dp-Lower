@@ -1,7 +1,7 @@
 import { capitalizeName, contactSubmissionSchema, digitsOf as coreDigits, isEmail as coreIsEmail, isName as coreIsName, isPhone as corePhone } from '@dpl/core';
 import { describe, expect, it, vi } from 'vitest';
-import enSite from '../../messages/en/site.json';
-import heSite from '../../messages/he/site.json';
+import enSite from '../../../messages/en/site.json';
+import heSite from '../../../messages/he/site.json';
 import {
   autoCapitalize,
   buildChatPayload,

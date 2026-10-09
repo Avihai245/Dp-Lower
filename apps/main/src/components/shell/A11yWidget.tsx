@@ -11,7 +11,7 @@ import {
   saveA11y,
   type A11yAction,
   type A11yState,
-} from '@/lib/a11y';
+} from '@/lib/shell/a11y';
 import { useDialog } from './useDialog';
 
 // layout effects run before paint on the client; on the server this is a plain (inert) effect

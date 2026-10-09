@@ -13,7 +13,7 @@ import { Offices } from '@/components/home/Offices';
 import { Reviews } from '@/components/home/Reviews';
 import { Stages } from '@/components/home/Stages';
 import { TeamBand } from '@/components/home/TeamBand';
-import { homeJsonLd } from '@/lib/jsonld';
+import { homeJsonLd } from '@/lib/home/jsonld';
 import { JsonLd, pageMetadata, SITE_URL } from '@/lib/seo';
 
 type Params = { params: Promise<{ locale: string }> };

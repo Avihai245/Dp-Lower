@@ -4,7 +4,7 @@ import { s } from '@dpl/ui';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { stickyVisible } from '@/lib/sticky';
+import { stickyVisible } from '@/lib/shell/sticky';
 
 /**
  * "Talk to a lawyer, free": a floating button that appears once the visitor has scrolled past the hero, steps aside

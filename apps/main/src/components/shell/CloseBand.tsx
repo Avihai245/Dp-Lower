@@ -1,7 +1,7 @@
 import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { FIRM } from '@/lib/firm';
+import { FIRM } from '@/lib/shell/firm';
 
 /** "One more step" band that closes the contact page, which has its own form and therefore no lead band. */
 export async function CloseBand() {

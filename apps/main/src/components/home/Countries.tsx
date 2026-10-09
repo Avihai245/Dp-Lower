@@ -3,7 +3,7 @@ import { getContent } from '@dpl/i18n';
 import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { COUNTRY_SLUGS, flagStyle } from '@/lib/flags';
+import { COUNTRY_SLUGS, flagStyle } from '@/lib/home/flags';
 import { serviceHref } from '@/lib/nav';
 import { Arrow } from './Arrow';
 

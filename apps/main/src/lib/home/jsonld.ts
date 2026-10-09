@@ -1,6 +1,6 @@
 import type { Locale } from '@dpl/core';
 import { absoluteUrl, type ContentBundle } from '@dpl/i18n';
-import { FIRM } from './firm';
+import { FIRM } from '../shell/firm';
 
 /**
  * Structured data of the home page: the firm (LegalService + Organization with both offices, phones, founders, practice

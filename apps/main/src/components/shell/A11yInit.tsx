@@ -1,4 +1,4 @@
-import { A11Y_INIT_SCRIPT } from '@/lib/a11y';
+import { A11Y_INIT_SCRIPT } from '@/lib/shell/a11y';
 
 /**
  * Applies the stored accessibility preferences (zoom, filters, ...) to <html> while the document is still being parsed,
