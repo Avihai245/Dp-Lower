@@ -1,0 +1,25 @@
+{
+  "name": "dp-lower",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @dpl/campaign --filter @dpl/main dev",
+    "dev:campaign": "pnpm --filter @dpl/campaign dev",
+    "dev:main": "pnpm --filter @dpl/main dev",
+    "build": "pnpm -r --filter \"./apps/*\" build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "db:start": "SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io supabase start -x studio,imgproxy,edge-runtime,vector,logflare,postgres-meta",
+    "db:stop": "supabase stop",
+    "db:reset": "SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io supabase db reset",
+    "db:types": "supabase gen types typescript --local > packages/db/src/database.types.ts",
+    "db:test": "bash supabase/tests/run.sh",
+    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts"
+  }
+}
