@@ -22,7 +22,7 @@ interface Section {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'landingMore.privacy' });
+  const t = await getTranslations({ locale, namespace: 'privacy' });
   return pageMetadata({ locale: locale as Locale, path: '/privacy', title: t('metaTitle'), description: t('metaDescription') });
 }
 
@@ -35,7 +35,7 @@ const BODY = 'font-size:16.5px;line-height:1.8;color:#55606b;margin:0 0 14px';
 export default async function PrivacyPage({ params }: Params) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations('landingMore.privacy');
+  const t = await getTranslations('privacy');
   const sections = t.raw('sections') as Section[];
 
   return (
