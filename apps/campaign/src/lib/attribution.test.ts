@@ -3,11 +3,10 @@ import {
   COOKIE_MAX_AGE_SECONDS,
   DEFAULT_SOURCE,
   SOURCE_MAX_LENGTH,
-  attributionCookies,
-  cookiesToWrite,
+  attributionCookieList,
   decodeAttribution,
+  firstTouchCookies,
   parseAttribution,
-  readCookie,
 } from './attribution';
 
 describe('parseAttribution', () => {
@@ -61,36 +60,28 @@ describe('parseAttribution', () => {
   });
 });
 
-describe('readCookie', () => {
-  it('finds a cookie by exact name', () => {
-    expect(readCookie('a=1; dpl_src=main-site; b=2', 'dpl_src')).toBe('main-site');
-    expect(readCookie('a=1; xdpl_src=nope', 'dpl_src')).toBeNull();
-    expect(readCookie('', 'dpl_src')).toBeNull();
-  });
-});
-
-describe('attributionCookies', () => {
-  it('writes 30-day, path=/, SameSite=Lax cookies with encoded values', () => {
-    const [src, utm] = attributionCookies({ source: 'a b;c', utm: { utm_source: 'g&h' } }, false);
-    expect(src).toBe(`dpl_src=a%20b%3Bc; Max-Age=${COOKIE_MAX_AGE_SECONDS}; Path=/; SameSite=Lax`);
+describe('attributionCookieList', () => {
+  it('lists the source cookie and, when present, the utm cookie as JSON', () => {
+    expect(attributionCookieList({ source: 'a b;c', utm: { utm_source: 'g&h' } })).toEqual([
+      { name: 'dpl_src', value: 'a b;c' },
+      { name: 'dpl_utm', value: '{"utm_source":"g&h"}' },
+    ]);
     expect(COOKIE_MAX_AGE_SECONDS).toBe(2_592_000);
-    expect(utm).toContain('dpl_utm=');
-    const value = /^dpl_utm=([^;]*)/.exec(utm!)![1]!;
-    expect(JSON.parse(decodeURIComponent(value))).toEqual({ utm_source: 'g&h' });
   });
 
-  it('adds Secure on https and omits the utm cookie when there are no utm parameters', () => {
-    const list = attributionCookies({ source: 'x', utm: null }, true);
-    expect(list).toHaveLength(1);
-    expect(list[0]).toMatch(/; Secure$/);
+  it('omits the utm cookie when there are no utm parameters', () => {
+    expect(attributionCookieList({ source: 'x', utm: null })).toEqual([{ name: 'dpl_src', value: 'x' }]);
   });
 });
 
 describe('decodeAttribution (server side)', () => {
-  it('round-trips what the browser wrote', () => {
+  it('round-trips what the middleware wrote', () => {
     const attribution = { source: 'läwoffice ü', utm: { utm_source: 'g&h', utm_medium: 'cpc' } };
-    const [src, utm] = attributionCookies(attribution, false).map((c) => /^[^=]+=([^;]*)/.exec(c)![1]!);
+    // the platform URL-encodes the header value; both raw and encoded values must read back the same
+    const [src, utm] = attributionCookieList(attribution).map((c) => encodeURIComponent(c.value));
     expect(decodeAttribution(src, utm)).toEqual(attribution);
+    const [rawSrc, rawUtm] = attributionCookieList(attribution).map((c) => c.value);
+    expect(decodeAttribution(rawSrc, rawUtm)).toEqual(attribution);
   });
 
   it('falls back to the default source and no utm for missing or empty cookies', () => {
@@ -123,18 +114,20 @@ describe('decodeAttribution (server side)', () => {
   });
 });
 
-describe('cookiesToWrite (first touch)', () => {
-  it('writes both cookies for a first visit that carries attribution', () => {
-    const list = cookiesToWrite('?source=news&utm_medium=email', 'unrelated=1', false);
-    expect(list.map((c) => c.split('=')[0])).toEqual(['dpl_src', 'dpl_utm']);
+describe('firstTouchCookies', () => {
+  const none = () => false;
+
+  it('sets both cookies for a first visit that carries attribution', () => {
+    const list = firstTouchCookies('?source=news&utm_medium=email', none);
+    expect(list.map((c) => c.name)).toEqual(['dpl_src', 'dpl_utm']);
   });
 
-  it('writes nothing for a plain visit', () => {
-    expect(cookiesToWrite('', '', false)).toEqual([]);
+  it('sets nothing for a plain visit', () => {
+    expect(firstTouchCookies('', none)).toEqual([]);
   });
 
   it('never overwrites an earlier touch', () => {
-    expect(cookiesToWrite('?source=later', 'dpl_src=first', false)).toEqual([]);
-    expect(cookiesToWrite('?utm_source=later', 'dpl_utm=%7B%7D', false)).toEqual([]);
+    expect(firstTouchCookies('?source=later', (n) => n === 'dpl_src')).toEqual([]);
+    expect(firstTouchCookies('?utm_source=later', (n) => n === 'dpl_utm')).toEqual([]);
   });
 });

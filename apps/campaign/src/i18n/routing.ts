@@ -6,4 +6,6 @@ export const routing = defineRouting({
   defaultLocale: 'en',
   localePrefix: 'as-needed',
   localeDetection: false,
+  // no NEXT_LOCALE cookie: the locale is always in the URL, and a Set-Cookie on every response would defeat CDN caching
+  localeCookie: false,
 });

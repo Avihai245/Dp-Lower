@@ -1,6 +1,7 @@
 /**
  * Platform deep links into the campaign system. Other sites (the firm's corporate site, future campaigns) send
- * visitors to `/?entry=eligibility|signin|portal&source=<origin>` so they never see this landing page.
+ * visitors to `/?entry=eligibility|signin|portal&source=<origin>` so they never see this landing page. The middleware
+ * performs the redirect (so the landing page itself stays static) and records the origin of the visit.
  * (From the prototype's `ENTRY` map: signin and portal both go to the portal when the visitor is already known.)
  */
 export type EntryTarget = '/eligibility' | '/sign-in' | '/portal';
@@ -24,19 +25,4 @@ export function entryTarget(entry: string | null | undefined, hasSession: boolea
     default:
       return null;
   }
-}
-
-/** Next hands over `string | string[] | undefined` for a query parameter; the first value wins. */
-export function firstParam(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-/** The query string of the incoming request as URLSearchParams (repeated parameters keep every value). */
-export function toSearchParams(sp: Record<string, string | string[] | undefined>): URLSearchParams {
-  const out = new URLSearchParams();
-  for (const [k, v] of Object.entries(sp)) {
-    if (Array.isArray(v)) v.forEach((item) => out.append(k, item));
-    else if (v !== undefined) out.append(k, v);
-  }
-  return out;
 }

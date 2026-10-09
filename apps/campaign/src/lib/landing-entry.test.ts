@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entryNeedsSession, entryTarget, firstParam, toSearchParams } from './landing-entry';
+import { entryNeedsSession, entryTarget } from './landing-entry';
 
 describe('entryTarget', () => {
   it('sends eligibility to the quiz regardless of the session', () => {
@@ -28,20 +28,5 @@ describe('entryNeedsSession', () => {
     expect(entryNeedsSession('portal')).toBe(true);
     expect(entryNeedsSession('eligibility')).toBe(false);
     expect(entryNeedsSession(undefined)).toBe(false);
-  });
-});
-
-describe('query helpers', () => {
-  it('firstParam takes the first of repeated values', () => {
-    expect(firstParam('a')).toBe('a');
-    expect(firstParam(['a', 'b'])).toBe('a');
-    expect(firstParam(undefined)).toBeUndefined();
-  });
-
-  it('toSearchParams keeps every value', () => {
-    const q = toSearchParams({ source: 'x', utm_term: ['a', 'b'], missing: undefined });
-    expect(q.get('source')).toBe('x');
-    expect(q.getAll('utm_term')).toEqual(['a', 'b']);
-    expect(q.has('missing')).toBe(false);
   });
 });

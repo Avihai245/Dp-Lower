@@ -2,6 +2,8 @@ import { refreshSession } from '@dpl/db/middleware';
 import createMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
+import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies } from './lib/attribution';
+import { entryNeedsSession, entryTarget } from './lib/landing-entry';
 
 const intl = createMiddleware(routing);
 
@@ -13,17 +15,46 @@ const SESSION_AWARE = [...PROTECTED, '/sign-in', '/create-password', '/auth'];
 const stripLocale = (p: string) => p.replace(/^\/he(?=\/|$)/, '') || '/';
 const matches = (path: string, roots: string[]) => roots.some((r) => path === r || path.startsWith(`${r}/`));
 
+/** First-touch attribution (source + utm_*) for the lead API; see lib/attribution.ts. Never overwrites an earlier touch. */
+function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
+  for (const c of firstTouchCookies(req.nextUrl.searchParams, (name) => req.cookies.has(name))) {
+    res.cookies.set(c.name, c.value, {
+      maxAge: COOKIE_MAX_AGE_SECONDS,
+      path: '/',
+      sameSite: 'lax',
+      secure: req.nextUrl.protocol === 'https:',
+    });
+  }
+  return res;
+}
+
 export default async function middleware(req: NextRequest) {
-  const response = intl(req);
-  const path = stripLocale(req.nextUrl.pathname);
+  const { pathname } = req.nextUrl;
+  const path = stripLocale(pathname);
+  const prefix = pathname === '/he' || pathname.startsWith('/he/') ? '/he' : '';
+
+  // Platform deep links: /?entry=eligibility|signin|portal&source=<origin> (other sites send visitors straight into
+  // the system). Handled here so the landing page itself stays a static page.
+  const entry = req.nextUrl.searchParams.get('entry');
+  if (path === '/' && entryTarget(entry, false) !== null) {
+    const probe = NextResponse.next();
+    const hasSession = entryNeedsSession(entry) ? Boolean((await refreshSession(req, probe)).user) : false;
+    const url = req.nextUrl.clone();
+    url.pathname = `${prefix}${entryTarget(entry, hasSession)}`;
+    url.search = '';
+    const redirect = NextResponse.redirect(url);
+    for (const c of probe.cookies.getAll()) redirect.cookies.set(c);
+    return withAttribution(req, redirect);
+  }
+
+  const response = withAttribution(req, intl(req));
   if (!matches(path, SESSION_AWARE)) return response;
 
   const { user } = await refreshSession(req, response);
   if (!user && matches(path, PROTECTED)) {
-    const prefix = req.nextUrl.pathname.startsWith('/he') ? '/he' : '';
     const url = new URL(`${prefix}/sign-in`, req.url);
-    url.searchParams.set('next', `${req.nextUrl.pathname}${req.nextUrl.search}`);
-    return NextResponse.redirect(url);
+    url.searchParams.set('next', `${pathname}${req.nextUrl.search}`);
+    return withAttribution(req, NextResponse.redirect(url));
   }
   return response;
 }

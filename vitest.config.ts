@@ -8,5 +8,7 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['tools/vitest/setup.ts'],
     testTimeout: 30_000,
+    // next-intl's ESM build imports 'next/server' without an extension: let Vite resolve it
+    server: { deps: { inline: [/next-intl/] } },
   },
 });

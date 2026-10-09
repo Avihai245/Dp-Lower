@@ -1,15 +1,14 @@
 /**
- * First-touch lead attribution. The landing page records where a visitor came from in two cookies that the lead API
+ * First-touch lead attribution. The middleware records where a visitor came from in two cookies that the lead API
  * (`POST /api/leads`) reads when the lead is created:
  *
  *   dpl_src  the `source` query parameter (max 80 chars). Defaults to "campaign-ger-aus"; "direct" when the visit
  *            arrived through a platform deep link (`?entry=...`) without a `source`.
  *   dpl_utm  URL-encoded JSON object of the `utm_*` query parameters.
  *
- * Both values are written with encodeURIComponent; the server reads them back with `decodeAttribution` below (which also
- * validates them, as cookies are client-controlled). Cookies last 30 days, path=/, SameSite=Lax. Only the first touch is
- * recorded: once either cookie exists nothing is overwritten.
- * Pure functions so the rules are unit-testable; `SourceCapture` does the actual `document.cookie` writes.
+ * The server reads them back with `decodeAttribution` below (which also validates them, as cookies are
+ * client-controlled). Cookies last 30 days, path=/, SameSite=Lax. Only the first touch is recorded: once either cookie
+ * exists nothing is overwritten. Pure functions so the rules are unit-testable; src/middleware.ts sets the cookies.
  */
 
 export const SRC_COOKIE = 'dpl_src';
@@ -64,24 +63,15 @@ export function parseAttribution(search: string | URLSearchParams): Attribution 
   };
 }
 
-/** Value of one cookie in a `document.cookie` string, or null. */
-export function readCookie(cookieHeader: string, name: string): string | null {
-  for (const part of cookieHeader.split(';')) {
-    const i = part.indexOf('=');
-    if (i < 0) continue;
-    if (part.slice(0, i).trim() === name) return part.slice(i + 1).trim();
-  }
-  return null;
+export interface AttributionCookie {
+  name: string;
+  value: string;
 }
 
-function cookie(name: string, value: string, secure: boolean): string {
-  return `${name}=${encodeURIComponent(value)}; Max-Age=${COOKIE_MAX_AGE_SECONDS}; Path=/; SameSite=Lax${secure ? '; Secure' : ''}`;
-}
-
-/** The `Set-Cookie`-style strings to assign to `document.cookie` for this attribution. */
-export function attributionCookies(attribution: Attribution, secure: boolean): string[] {
-  const out = [cookie(SRC_COOKIE, attribution.source, secure)];
-  if (attribution.utm) out.push(cookie(UTM_COOKIE, JSON.stringify(attribution.utm), secure));
+/** The cookies to set for this attribution (the platform URL-encodes the values when it writes the header). */
+export function attributionCookieList(attribution: Attribution): AttributionCookie[] {
+  const out: AttributionCookie[] = [{ name: SRC_COOKIE, value: attribution.source }];
+  if (attribution.utm) out.push({ name: UTM_COOKIE, value: JSON.stringify(attribution.utm) });
   return out;
 }
 
@@ -127,12 +117,14 @@ export function decodeAttribution(
 }
 
 /**
- * Everything `SourceCapture` needs in one call: the cookies to write for a visit to `search`, given the cookies the
+ * Middleware entry point: the cookies to set for a visit to a URL with these query parameters, given which cookies the
  * browser already holds. Empty when the URL carries no attribution or a first touch was already recorded.
  */
-export function cookiesToWrite(search: string, existingCookies: string, secure: boolean): string[] {
-  if (readCookie(existingCookies, SRC_COOKIE) !== null || readCookie(existingCookies, UTM_COOKIE) !== null)
-    return [];
+export function firstTouchCookies(
+  search: string | URLSearchParams,
+  has: (cookieName: string) => boolean,
+): AttributionCookie[] {
+  if (has(SRC_COOKIE) || has(UTM_COOKIE)) return [];
   const attribution = parseAttribution(search);
-  return attribution ? attributionCookies(attribution, secure) : [];
+  return attribution ? attributionCookieList(attribution) : [];
 }
