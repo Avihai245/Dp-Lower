@@ -1117,7 +1117,8 @@ test.describe('free text in the forms', () => {
     const res = await client.post('/api/leads', { data: leadBody(email, { fullName: 'Anna\r\nBcc: someone-else@example.com\r\nX-Injected: yes Reinhardt', phone: '+49 30\r\n5550 0100' }) });
     expect(res.status()).toBe(201);
     const lead = (await leadByEmail(email))!;
-    expect(lead.full_name).toBe('Anna Bcc: someone-else@example.com X-Injected: yes Reinhardt');
+    // (names are capitalised word by word on the way in)
+    expect(lead.full_name).toBe('Anna Bcc: Someone-Else@example.com X-Injected: Yes Reinhardt');
     expect(lead.full_name).not.toMatch(/[\r\n]/);
     expect(lead.phone).toBe('+49 30 5550 0100');
     const mail = await emailEvent(lead.id, 'welcome-1');

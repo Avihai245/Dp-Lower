@@ -77,6 +77,40 @@ change plus a test; `Accepted` is a decision recorded in section 6; `Open` needs
 | A-10 | Firm structured data only on the home page; no share image size | Fixed: on every page; a 1200x630 share image with size and alt text |
 | A-11 | Colour contrast of the palette | Open: a design decision, proposal in 7 |
 
+### 1.1b Second round (after the per-lawyer calendars were added)
+
+Four more agents that had not written the code: the plan against the code, the campaign and the CRM used the way people use them, the
+firm website, and the security of everything that changed since the first audit. They found one blocker, three major findings
+and about twenty smaller ones. Each was reproduced before it was fixed; a fix has a test. IDs: S = security, P = plan, F = campaign
+and CRM in use, W = firm website.
+
+| | Finding | Outcome |
+|---|---|---|
+| S-1 blocker | A lead made with the address of an existing sign-in account (a member of staff, an account somebody registered by hand) became a way into that account: "Go to my portal" signed the browser in as it, with no password and no email | Fixed: a lead links only an account the server made for it (`app_metadata.lead_id`); an emailed link, which proves the mailbox, may adopt one that no other lead holds and replaces its password and sessions; a staff account is never adopted and `openPortalSession` never signs anyone in as staff; the CRM edit and the applicant's address correction refuse such an address. Integration, e2e and unit tests (`portal-session.int.test.ts`, `funnel.api.spec.ts`) |
+| S-2 | Line breaks and other control characters in a name, phone number, source or message reached the stored lead and the recipient name of every email (a header-injection primitive for whatever builds the header) | Fixed: the form schemas clean them, names also lose `< > " \`, phone numbers keep digits and separators, the recipient name in the outbox is plain text; the email expression is the ASCII one a mail provider takes |
+| P-1 major, W-1 | `/favicon.ico`, `/wp-login.php`, `/.env`, `/index.html` and every other single path segment with a dot answered 500 on both apps | Fixed: they pass through the middleware: the files that exist (new `favicon.ico`, `apple-touch-icon.png`, `robots.txt`, `sitemap.xml`, `llms*.txt`) are served, anything else is a server-rendered 404; a test compares the list with `public/` and the app directory |
+| P-2 major | The `List-Unsubscribe` header pointed at the confirmation page, so a mail provider's one-click POST (RFC 8058) unsubscribed nobody | Fixed: `/api/unsubscribe/one-click` takes the POST (the signed token is the authority); a browser's GET gets the page that asks |
+| F-1 major | After the typo correction (Back from the booking), the booking confirmation queued for the mistyped address stayed pending and carried the name, the phone number and the time of the call | Fixed: everything queued for the old address is withdrawn by the correction and by the team's edit; the dispatcher refuses at delivery any email whose recipient is no longer the lead's address |
+| W-2 major | English header: from 1025 to about 1250 px the nav ran under the two buttons (the prototype does the same) | Fixed for English between 1025 and 1270 px (the nav takes its own row, as below 1025 px); Hebrew fits and is left as designed. A design change in the strict sense: the firm should look at it |
+| F-2, F-7 | The confirmation of a call that was moved or cancelled still went out; three status clicks in three seconds sent three emails | Fixed: an undelivered confirmation is withdrawn; the applicant gets the last status email only |
+| F-3 | A name of 120 letters without a space pushed the CRM table and lead page off the screen | Fixed (the table cuts it with an ellipsis, the panels wrap it) with a test |
+| F-4 | The "Free call" panel vanished after "Mark call held" while the slot was still running | Fixed |
+| F-6 | The English campaign pages downloaded the Hebrew fonts (the language switch was prefetched) | Fixed (`prefetch={false}`) with a test |
+| F-10 | Without scripts the landing figures read "0+ / 0%" | Fixed (`noscript` style shows the real figures) with a test |
+| W-3, W-4 | A lead band submitted before the script ran put name, phone and email into the address bar; the contact button dropped keyboard focus while sending | Fixed (POST, a "needs JavaScript" note, `aria-disabled`) |
+| W-5, W-6, W-9, W-11 | A page's own `utm_*` were mixed with the first touch's; the contact page's eligibility link took a redirect; structured data and `llms.txt` carried invisible direction marks; `/en/...` redirected with 307 | Fixed |
+| P-4, P-5 | No limit on three public GET routes, no `Retry-After`; the nurture sequence ignored statuses the team set before the stage moved | Fixed (300 a minute per address, `Retry-After` on 429; a team-set status stops the sequence, also at delivery) |
+| P-6, P-9 | The email-fidelity tests skipped silently away from the author's machine; images were served with `max-age=0` | Fixed (the sixteen design emails are in `packages/emails/fixtures/design`; a day of cache plus a week of stale-while-revalidate) |
+| P-3, P-7, P-8, P-12 | No Lighthouse evidence; stale paths and test counts in the documents; differences from the plan not written down | Fixed (section 1.3, sections 2 and 3) |
+| F-5 | `<script>1234567</script>` accepted as a phone number, quoted and non-ASCII addresses accepted | Fixed with S-2 |
+| F-9 | Funnel screens without a `<main>`; some touch targets under 24 px (Sign out, "Set a password", "← Portal", the camera buttons) | `<main>` added; the target sizes are the design's own and stay (WCAG 2.2 level AA, which Israeli standard 5568 does not require) |
+| F-8 | Applicants cannot remove an uploaded file | Decision recorded: the design has no remove control, an upload can be replaced; the API route and the `document.removed` event exist for a later step |
+| F-12 | Browser Back inside the six questions leaves the quiz (they share one URL) | Accepted: the quiz is one screen with its own "Previous"; progress is kept |
+| F-11 | "No confirmation after saving in the CRM modal" | Not a defect: the button reads "Saved" and the line below says the applicant is emailed (an e2e test asserts both) |
+| W-7, W-8 | 71 of 156 titles are over 65 characters (the prototype's "name, role \| brand" formula); `lastmod` is the date of the content snapshot on most URLs | Open for the firm (titles); the date is deliberate and documented in `crawl.ts` |
+| P-10, P-11, P-13 | HMAC signing and Turnstile are off until their secrets are set; the campaign `llms.txt` lists `/eligibility`, which `robots.txt` disallows; "Mark received" on an empty slot counts as a document for the drip rule | Accepted: documented as recommended in `DEPLOYMENT.md`; the funnel's first step stays listed for answer engines; the firm holds a document it marked received |
+| other nits | 22 px "Open in maps" targets, the chat teaser over the hero on 390 px phones, day chips wrapping 4+1, any ZIP accepted as `.docx`, an eight-character password minimum, repeated wrong sign-ins throttled only by Supabase Auth's own limits (hosted default 30 per 5 minutes per address) | Accepted or recorded; none changes the design |
+
 ### 1.2 Per-lawyer availability and the booking lifecycle (B-05, B-08)
 
 See the section "Booking" of `ARCHITECTURE.md`. Summary of the behaviour: each lawyer has their own weekly hours and blocked
@@ -154,11 +188,16 @@ are in `ARCHITECTURE.md` section 10.
    portal dashboard when the team sets a status before submission, the locked email note on /details for applicants who are
    signed in, the "Delete applicant" panel and the lawyer calendar controls of the CRM, the cancel/change panel of the booking
    step. Their Hebrew and English are new text (`HEBREW_REVIEW.md`).
-4. **French** was removed from the language switch (as planned); the burger menu of the firm website gained the
+4. **Icons.** The design names the logo file as the page icon; `favicon.ico` and `apple-touch-icon.png` (browsers and crawlers ask
+   for them by name) are made from the logo's monogram, the "D·P" with the gold ball, the part that stays readable at 16 px.
+5. **French** was removed from the language switch (as planned); the burger menu of the firm website gained the
    English/Hebrew switch because the utility bar is hidden on phones.
-5. **Prototype bugs fixed** (as planned): the office map links, the video on phones, the Hebrew date error in the
-   structured data, the duplicate `offices` definition.
-6. **Placeholders kept exactly as designed** and marked in the pages: the 30% reduction, the figures, 4.9 / 380+ reviews, the
+6. **Prototype bugs fixed** (as planned): the office map links, the video on phones, the Hebrew date error in the
+   structured data, the duplicate `offices` definition, and, found by the second audit, the English header whose nav ran under
+   its two buttons from 1025 to about 1250 px (in that range the nav now takes its own row, as it does below 1025 px).
+   *The firm should look at this one: it is the only place where the layout differs from the prototype at a width the
+   prototype can be shown at.*
+7. **Placeholders kept exactly as designed** and marked in the pages: the 30% reduction, the figures, 4.9 / 380+ reviews, the
    case study, "Draft for review" on the legal pages.
 
 ## 5. Known limitations
