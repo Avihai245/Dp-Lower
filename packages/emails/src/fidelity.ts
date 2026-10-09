@@ -61,6 +61,8 @@ export function sourceFixture(
       logo: 'uploads/DPL_logo.webp',
       teamPhoto: 'uploads/Decker-Pex-Levi-Team-scaled.jpg.webp',
       booking: lead ? 'https://euro-passports.com/ger-aus/' : 'https://euro-passports.com/portal',
+      // the Lead Email's footer link to the campaign site
+      ...(lead ? { landing: 'https://euro-passports.com/ger-aus/' } : {}),
     },
     data: { applicationState: 'not_started', docsReceived: 0, docsTotal: 8 },
   };

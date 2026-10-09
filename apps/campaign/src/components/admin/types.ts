@@ -91,7 +91,26 @@ export interface LeadDetailData {
   answers: AnswerView[];
   notes: NoteView[];
   activity: ActivityView[];
-  call: { startsAt: string; endsAt: string } | null;
+  /** the upcoming call, or else the last one whose time has come (held, no-show, or waiting to be marked); null: none */
+  call: CallView | null;
+}
+
+/** A booked call as the lead page shows it. Cancelled calls are not shown (the activity keeps them). */
+export type CallStatus = 'confirmed' | 'completed' | 'no_show';
+
+export interface CallView {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  status: CallStatus;
+  /** confirmed and not over yet (the header chip, "Cancel call") */
+  upcoming: boolean;
+  /** the call has started: it can be marked held or a no-show */
+  started: boolean;
+  /** the applicant's own time zone, when they booked it */
+  timezone: string | null;
+  /** the lawyer the call is assigned to; null: the unassigned template (any lawyer) */
+  lawyer: { id: string; name: string } | null;
 }
 
 /** Result every CRM Server Action returns (never throws to the browser). */
@@ -166,6 +185,8 @@ export interface RuleView {
   startTime: string;
   capacity: number;
   active: boolean;
+  /** the lawyer whose hours these are; null = the unassigned template */
+  staffId: string | null;
 }
 
 export interface ExceptionView {
@@ -175,6 +196,8 @@ export interface ExceptionView {
   /** null = the whole day */
   startTime: string | null;
   reason: string | null;
+  /** the lawyer who is away; null = closed for everyone */
+  staffId: string | null;
 }
 
 export interface BookingView {
@@ -182,12 +205,21 @@ export interface BookingView {
   startsAt: string;
   endsAt: string;
   lead: (LeadLink & { phone: string | null }) | null;
+  /** null = a seat of the unassigned template */
+  lawyer: { id: string; name: string } | null;
+}
+
+/** A lawyer who takes calls (active, role lawyer): one calendar of their own on the availability page. */
+export interface LawyerView {
+  id: string;
+  name: string;
 }
 
 export interface AvailabilityData {
   rules: RuleView[];
   exceptions: ExceptionView[];
   bookings: BookingView[];
+  lawyers: LawyerView[];
   timezone: string;
   callMinutes: number;
 }

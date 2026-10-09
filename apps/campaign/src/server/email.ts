@@ -41,8 +41,9 @@ function sharedLinks(locale: Locale): Omit<EmailLinks, 'portal' | 'unsubscribe'>
     privacy: campaignUrl('/privacy', locale),
     logo: `${root}/email/dpl-logo.png`,
     teamPhoto: `${root}/email/dpl-team.jpg`,
-    // the landing page: "Book my free call" and the footer link
+    // the landing page: the footer link, and "Book my free call" for someone who is not a lead (leadContext signs it)
     booking: campaignUrl('/', locale),
+    landing: campaignUrl('/', locale),
   };
 }
 
@@ -61,6 +62,8 @@ async function leadContext(db: Db, a: QueueEmailArgs): Promise<EmailContext> {
   const nurture = isNurtureTemplate(a.template);
   const locale = a.lead.locale as Locale;
   const portalToken = await createPortalLinkToken(a.lead, a.next ?? '/portal');
+  // "Book my free call", "Change or cancel": the lead's own booking step, signed like the portal link
+  const bookingToken = await createPortalLinkToken(a.lead, '/booking');
   const unsubToken = nurture ? await createUnsubscribeToken(a.lead.id) : null;
   return {
     locale,
@@ -76,6 +79,7 @@ async function leadContext(db: Db, a: QueueEmailArgs): Promise<EmailContext> {
     links: {
       ...sharedLinks(locale),
       portal: portalUrl(portalToken, locale),
+      booking: portalUrl(bookingToken, locale),
       unsubscribe: unsubToken ? unsubscribeUrl(unsubToken, locale) : null,
     },
     data: a.data ?? (a.template === 'file-open' ? await fileOpenData(db, a.lead.id) : undefined),

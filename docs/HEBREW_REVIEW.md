@@ -60,6 +60,7 @@ Change these in one search-and-replace if the firm prefers other words.
 - The advisor window was rewritten to say what really happens (a person calls back); its Hebrew needs the firm's approval together with the legal text.
 - Funnel: the note under a locked email field, "את כתובת האימייל של התיק אפשר לשנות רק בפנייה אלינו" (shown to applicants who are signed in or have a password); "זכאות" for "claim"; "שיחת ייעוץ חינם"; "לתוצאה שלי" (the button to the result); the placeholder disclaimer; the Hebrew plural form `two` in the "questions left" text (Hebrew has a dual).
 - Screens the design did not have (expired link, unsubscribe, "we emailed you a link", reset copy, loading and error states): all Hebrew is new text.
+- Managing the booked call on the booking step (`funnel.booking.manage.*`, new text in both languages): "השיחה שלכם: {date}, {time} לפי השעון שלכם", "להשאיר את המועד הזה", "ביטול השיחה", "לבטל את השיחה שלכם ({date}, {time})?", "כן, לבטל" / "לא, להשאיר", "השיחה שלכם ({date}, {time}) בוטלה. אפשר לבחור מועד חדש למטה, או לדלג לעכשיו.", "לא הצלחנו לבטל את השיחה כרגע. נסו שוב." The date and time are put in brackets so that the Hebrew date ("יום א׳, 11 באוק׳") does not need a preposition.
 
 ### Client portal
 
@@ -73,6 +74,8 @@ Change these in one search-and-replace if the firm prefers other words.
 
 - The line after "Edit details" is saved: "נשמר. {first} מקבל/ת מייל המאשר את השינוי" (the design's "{first} gets an email confirming the change") and the longer one after an email change.
 - "חשבון" (Portal, as a stage label in the "waiting on" column), "ליד" (Lead), "בהמתנה" (Waiting on, a table column), "אושר" (Granted), "הוגש לרשות" (Filed with authority), "צוות התיק" (Case team), "דרכון המבקש/ת" (Your passport, in the staff context), "עב" as the label of the language switch.
+- Calendars per lawyer (`availability.scopes.*`, `help.calendars`): "יומן" (Calendar), "ללא שיוך (כל עורך/ת דין)" (Unassigned, any lawyer), "שעות שבועיות: {name}", "אפשר לשנות רק את השעות שלכם.", "סגור לכולם" (Closed for everyone), "חל על" (Applies to), "{name} בלבד", "עורך/ת דין: {name}", "כל עורך/ת דין"; the help text says "ימי היעדרות" for a lawyer's days off.
+- The call on the lead page (`callPanel.*`, `help.call`, activity codes `booking_completed`, `booking_held`, `booking_no_show`): "שיחת ייעוץ חינם", "נקבעה" / "ממתינה לסימון" / "התקיימה" / "לא נענתה" for booked, waiting to be marked, held and no-show (the no-show is phrased as "the call was not answered", which keeps it gender-neutral), "סימון כהתקיימה", "סימון כלא נענתה", "ביטול השיחה", "לבטל את השיחה? יישלח למבקש/ת מייל שהשיחה לא תתקיים.", "ללא שיוך לעורך/ת דין", "מועד השיחה עבר; היא סומנה כהתקיימה".
 
 ### Emails
 
@@ -81,4 +84,5 @@ Change these in one search-and-replace if the firm prefers other words.
 - **Welcome 15, single-route versions** (Germany only, Austria only) were derived by the author from the combined source text in both languages: subject, preheader, kicker, headline and the paragraphs are not verbatim.
 - **details-changed** (the confirmation after staff edit the contact details, and the shorter notice to the old address after an email change, which has no link and does not name the new address): English and Hebrew are the author's.
 - The English of the nine transactional emails (booking confirmed and cancelled, status update, document requested and rejected, application received, password reset, contact received, sign-in link) is also the author's: the design had no originals.
+- Booking confirmation: the button "שינוי או ביטול" (Change or cancel) with "אם משהו משתנה, אפשר להזיז או לבטל את השיחה כאן."; and, when the call is assigned, "השיחה שלכם תהיה עם {lawyer}." before the line about the call (gender-neutral: the lawyer's gender is not known).
 - The Hebrew has had one polish pass by the author and no native review.

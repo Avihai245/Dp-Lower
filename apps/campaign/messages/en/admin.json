@@ -270,7 +270,10 @@
       "doc_reminder_sent": "Document reminder sent to {email}",
       "status_update_sent": "Status update sent to {email}",
       "closing_email_sent": "Closing email sent to {email}",
-      "callback_status": "Callback request marked {status}"
+      "callback_status": "Callback request marked {status}",
+      "booking_completed": "Call date passed; marked as held",
+      "booking_held": "Call marked as held",
+      "booking_no_show": "Call marked as a no-show"
     },
     "inbox": {
       "new": "new",
@@ -405,6 +408,14 @@
     "team": {
       "title": "Team",
       "text": "Everyone with access to this area. Admins can change availability and manage the team; lawyers and case managers work on leads."
+    },
+    "calendars": {
+      "title": "Calendars",
+      "text": "Each lawyer has a calendar of their own: their weekly hours (one call at a time) and their days off. 'Unassigned (any lawyer)' is the template for calls that are not tied to a lawyer, with a number of calls per slot; a day blocked there is closed for everyone. A new booking goes to a free lawyer first (the one with the fewest calls that week), then to the unassigned template. Admins edit every calendar, lawyers their own."
+    },
+    "call": {
+      "title": "Free call",
+      "text": "The applicant's free call and the lawyer it is assigned to. Once its time has come, mark it held or a no-show; a call nobody marks is recorded as held a day later. Cancelling it emails the applicant."
     }
   },
   "inbox": {
@@ -471,6 +482,17 @@
       "invalid": "Check the time (HH:MM) and the other values.",
       "forbidden": "Only admins can change availability.",
       "generic": "Could not save. Please try again."
+    },
+    "scopes": {
+      "label": "Calendar",
+      "unassigned": "Unassigned (any lawyer)",
+      "weeklyOf": "Weekly hours: {name}",
+      "ownOnly": "You can change your own hours only.",
+      "everyone": "Closed for everyone",
+      "appliesTo": "Applies to",
+      "only": "{name} only",
+      "lawyer": "Lawyer: {name}",
+      "anyLawyer": "Any lawyer"
     }
   },
   "team": {
@@ -515,5 +537,22 @@
     "confirm": "Delete permanently",
     "cancel": "Cancel",
     "done": "Applicant {caseRef} was deleted."
+  },
+  "callPanel": {
+    "title": "Free call",
+    "with": "With {name}",
+    "anyLawyer": "Any lawyer (unassigned)",
+    "phase": {
+      "booked": "Booked",
+      "awaiting": "Waiting to be marked",
+      "held": "Held",
+      "no_show": "No-show"
+    },
+    "held": "Mark call held",
+    "noShow": "Mark no-show",
+    "cancel": "Cancel call",
+    "cancelConfirm": "Cancel this call? The applicant is emailed that it will not take place.",
+    "cancelYes": "Yes, cancel the call",
+    "cancelNo": "No, keep it"
   }
 }

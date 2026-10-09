@@ -74,7 +74,9 @@ export const ruleFields = {
   capacity: z.number().int().min(0).max(50),
   active: z.boolean(),
 };
-export const addRuleInput = z.object(ruleFields);
+/** whose calendar: a lawyer's staff id, or null / absent for the unassigned template (a blocked day: closed for everyone) */
+const scopeField = uuid.nullable().optional();
+export const addRuleInput = z.object({ ...ruleFields, staffId: scopeField });
 export const updateRuleInput = z.object({ id: uuid, ...ruleFields });
 export const deleteByIdInput = z.object({ id: uuid });
 export const addExceptionInput = z.object({
@@ -82,7 +84,13 @@ export const addExceptionInput = z.object({
   /** null blocks the whole day */
   startTime: timeHHMM.nullable(),
   reason: z.string().trim().max(200).optional(),
+  staffId: scopeField,
 });
+
+// -- booked calls ------------------------------------------------------------------------------------------------
+
+/** "Mark call held", "Mark no-show", "Cancel call" on the lead page */
+export const callActionInput = z.object({ leadId: uuid, bookingId: uuid, action: z.enum(['held', 'no_show', 'cancel']) });
 
 // -- team ---------------------------------------------------------------------------------------------------------
 

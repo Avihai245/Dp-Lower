@@ -6,7 +6,11 @@ import { ltr } from '../text';
 import { common, top } from './common';
 import { actionBand, callCard, txFooter } from './tx';
 
-/** booking-confirmation: sent right after a free call is booked (wording from the prototype's "Your call is booked" screen). */
+/**
+ * booking-confirmation: sent right after a free call is booked (wording from the prototype's "Your call is booked" screen).
+ * "Change or cancel" (and, in booking-cancelled, "Book my free call") is `links.booking`: for a lead, a signed link that
+ * opens their own booking step, where the call is shown with "Change the time" and "Cancel this call".
+ */
 const confirmEn = {
   subject: 'Your free call is booked',
   preheader:
@@ -20,6 +24,10 @@ const confirmEn = {
   cardEyebrow: 'Your free call',
   callPhone: 'We will call {phone} and ask for {first}. {minutes} minutes, free.',
   callNoPhone: 'We will call your number and ask for {first}. {minutes} minutes, free.',
+  callPhoneLawyer:
+    'Your call is with {lawyer}. We will call {phone} and ask for {first}. {minutes} minutes, free.',
+  callNoPhoneLawyer:
+    'Your call is with {lawyer}. We will call your number and ask for {first}. {minutes} minutes, free.',
   coversEyebrow: 'What the call covers',
   covers: [
     'Which route looks likely for your family',
@@ -27,7 +35,8 @@ const confirmEn = {
     'What we can search for on your behalf',
     'Any question you have before deciding anything',
   ],
-  change: 'If something changes, you can move or cancel the call from your portal.',
+  change: 'If something changes, you can move or cancel the call here.',
+  manage: 'Change or cancel',
   zone: 'Times are shown in your own time zone.',
   reason: 'You received this because you booked a free call with us.',
   at: '{date} at {time}',
@@ -45,6 +54,10 @@ const confirmHe: typeof confirmEn = {
   cardEyebrow: 'השיחה החינמית שלכם',
   callPhone: 'אנחנו נתקשר אל {phone} ונבקש את {first}. {minutes} דקות, ללא תשלום.',
   callNoPhone: 'אנחנו נתקשר למספר שלכם ונבקש את {first}. {minutes} דקות, ללא תשלום.',
+  callPhoneLawyer:
+    'השיחה שלכם תהיה עם {lawyer}. אנחנו נתקשר אל {phone} ונבקש את {first}. {minutes} דקות, ללא תשלום.',
+  callNoPhoneLawyer:
+    'השיחה שלכם תהיה עם {lawyer}. אנחנו נתקשר למספר שלכם ונבקש את {first}. {minutes} דקות, ללא תשלום.',
   coversEyebrow: 'מה כוללת השיחה',
   covers: [
     'איזה מסלול נראה סביר עבור המשפחה שלכם',
@@ -52,19 +65,31 @@ const confirmHe: typeof confirmEn = {
     'מה אנחנו יכולים לחפש בשמכם',
     'כל שאלה שיש לכם לפני שמחליטים משהו',
   ],
-  change: 'אם משהו משתנה, אפשר להזיז או לבטל את השיחה מהפורטל שלכם.',
+  change: 'אם משהו משתנה, אפשר להזיז או לבטל את השיחה כאן.',
+  manage: 'שינוי או ביטול',
   zone: 'השעות מוצגות לפי אזור הזמן שלכם.',
   reason: 'קיבלתם הודעה זו מפני שקבעתם אצלנו שיחה חינם.',
   at: '{date} בשעה {time}',
 };
 
 export const bookingConfirmation = define('welcome', { en: confirmEn, he: confirmHe }, (k, c) => {
-  const cm = common(k);
   const b = bookingData(k.ctx);
   const when = formatWhen(b.startsAt, b.timezone, k.locale);
   const time = `${when.time}${when.zone ? ` ${when.zone}` : ''}`;
   const whenText = k.t(c.at, { date: when.date, time });
-  const vars = { ...k.vars, minutes: String(b.minutes), phone: ltr(k.ctx.lead.phone ?? '') };
+  const vars = {
+    ...k.vars,
+    minutes: String(b.minutes),
+    phone: ltr(k.ctx.lead.phone ?? ''),
+    lawyer: b.lawyer,
+  };
+  const callLine = b.lawyer
+    ? k.ctx.lead.phone
+      ? c.callPhoneLawyer
+      : c.callNoPhoneLawyer
+    : k.ctx.lead.phone
+      ? c.callPhone
+      : c.callNoPhone;
   return {
     subject: c.subject,
     preheader: k.t(c.preheader, { when: whenText }),
@@ -77,7 +102,7 @@ export const bookingConfirmation = define('welcome', { en: confirmEn, he: confir
         callCard(k, {
           eyebrow: c.cardEyebrow,
           when,
-          lines: [k.r(k.ctx.lead.phone ? c.callPhone : c.callNoPhone, vars)],
+          lines: [k.r(callLine, vars)],
         }),
       ),
       section(
@@ -91,8 +116,8 @@ export const bookingConfirmation = define('welcome', { en: confirmEn, he: confir
         ),
       ),
       actionBand(k, {
-        href: k.ctx.links.portal,
-        label: cm.openPortal,
+        href: k.ctx.links.booking,
+        label: c.manage,
         note: c.zone,
         lead: para(k, k.r(c.change), { mb: 22 }),
       }),

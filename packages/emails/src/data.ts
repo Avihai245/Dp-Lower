@@ -28,12 +28,18 @@ export function fileOpenData(ctx: EmailContext): FileOpenData {
   };
 }
 
-export function bookingData(ctx: EmailContext): { startsAt: string; timezone: string; minutes: number } {
+export function bookingData(ctx: EmailContext): {
+  startsAt: string;
+  timezone: string;
+  minutes: number;
+  lawyer: string;
+} {
   const d = rec(ctx.data);
   return {
     startsAt: str(d.startsAt),
     timezone: str(d.timezone),
     minutes: Math.max(1, Math.floor(num(d.minutes, 20))),
+    lawyer: str(d.lawyer).trim(),
   };
 }
 

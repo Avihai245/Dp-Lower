@@ -7,6 +7,8 @@ export const CRM_EVENT_TYPES = [
   'lead.updated',
   'booking.created',
   'booking.cancelled',
+  /** the applicant did not take the call (marked by staff): for the firm's follow-up, no email goes to the applicant */
+  'booking.no_show',
   'callback.requested',
   'contact.created',
   'account.created',

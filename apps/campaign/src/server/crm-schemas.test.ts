@@ -4,6 +4,7 @@ import {
   addNoteInput,
   addRuleInput,
   assignOwnerInput,
+  callActionInput,
   docActionInput,
   inboxStatusInput,
   moveStageInput,
@@ -107,6 +108,37 @@ describe('availability', () => {
     expect(addExceptionInput.safeParse({ onDate: '05/01/2031', startTime: null }).success).toBe(false);
     expect(addExceptionInput.safeParse({ onDate: '2031-01-05', startTime: '25:00' }).success).toBe(false);
     expect(addExceptionInput.safeParse({ onDate: '2031-01-05', startTime: null, reason: 'x'.repeat(201) }).success).toBe(false);
+  });
+});
+
+describe('calendars per lawyer', () => {
+  const rule = { weekday: 0, startTime: '04:10', capacity: 1, active: true };
+  it('a rule or a blocked day names a lawyer by staff id, or nobody (the template, closed for everyone)', () => {
+    expect(addRuleInput.parse({ ...rule, staffId: ID }).staffId).toBe(ID);
+    expect(addRuleInput.parse({ ...rule, staffId: null }).staffId).toBeNull();
+    expect(addRuleInput.parse(rule).staffId).toBeUndefined();
+    expect(addRuleInput.safeParse({ ...rule, staffId: 'me' }).success).toBe(false);
+    expect(addRuleInput.safeParse({ ...rule, staffId: 42 }).success).toBe(false);
+    expect(addExceptionInput.parse({ onDate: '2031-01-05', startTime: null, staffId: ID }).staffId).toBe(ID);
+    expect(addExceptionInput.parse({ onDate: '2031-01-05', startTime: null, staffId: null }).staffId).toBeNull();
+    expect(addExceptionInput.safeParse({ onDate: '2031-01-05', startTime: null, staffId: 'everyone' }).success).toBe(false);
+  });
+  it('an edit cannot move a rule to another calendar', () => {
+    const parsed = updateRuleInput.parse({ id: ID, ...rule, staffId: ID }) as Record<string, unknown>;
+    expect(parsed.staffId).toBeUndefined();
+  });
+});
+
+describe('booked calls', () => {
+  it('held, no-show or cancel, for a booking of a lead', () => {
+    for (const action of ['held', 'no_show', 'cancel']) {
+      expect(callActionInput.safeParse({ leadId: ID, bookingId: ID, action }).success, action).toBe(true);
+    }
+    expect(callActionInput.safeParse({ leadId: ID, bookingId: ID, action: 'completed' }).success).toBe(false);
+    expect(callActionInput.safeParse({ leadId: ID, bookingId: ID, action: 'delete' }).success).toBe(false);
+    expect(callActionInput.safeParse({ leadId: ID, action: 'cancel' }).success).toBe(false);
+    expect(callActionInput.safeParse({ leadId: ID, bookingId: 'b1', action: 'cancel' }).success).toBe(false);
+    expect(callActionInput.safeParse({ leadId: 'x', bookingId: ID, action: 'held' }).success).toBe(false);
   });
 });
 

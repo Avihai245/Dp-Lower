@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import type { AvailabilityResponse, BookingSummary, LeadSummary } from './logic/api-types';
-import { dayLabel, showSeatsLine, slotLabel, visitorTimeZone, whenLabel } from './logic/booking-format';
+import { dayLabel, showSeatsLine, slotLabel, visitorTimeZone, whenLabel, type WhenLabel } from './logic/booking-format';
 import { confettiStyles } from './logic/confetti';
 import { H1_STYLE, LEDE_STYLE, LINK_BUTTON, Page, PRIMARY_BUTTON, SANS, StepHeader } from './ui';
 
@@ -17,6 +17,9 @@ const CONFETTI = confettiStyles();
 /**
  * "Choose a time for your free call": five bookable days from the firm's real calendar, the free slots of the chosen
  * day in the visitor's own time zone, then a confirmation with confetti. Skipping goes straight to the result.
+ * A visitor who already holds an upcoming call (a reload, or the link in the confirmation email) sees that call and can
+ * change it (booking again replaces it) or cancel it (DELETE /api/bookings, after a second click to confirm), which
+ * brings back the free times with a line saying the call was cancelled.
  */
 export function BookingPicker() {
   const t = useTranslations('funnel');
@@ -35,6 +38,11 @@ export function BookingPicker() {
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const [tz, setTz] = useState(FIRM_TIMEZONE);
+  // cancelling the call: the question is open, the request is on its way, it failed, and the call that was cancelled
+  const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelFailed, setCancelFailed] = useState(false);
+  const [cancelled, setCancelled] = useState<BookingSummary | null>(null);
 
   const loadAvailability = useCallback(async () => {
     const res = await api<AvailabilityResponse>('/api/availability');
@@ -85,6 +93,7 @@ export function BookingPicker() {
     setSubmitting(false);
     if (res.ok && res.data) {
       setBooking(res.data.booking);
+      setCancelled(null);
       setView('done');
       setCelebrate(true);
       window.scrollTo({ top: 0 });
@@ -105,16 +114,64 @@ export function BookingPicker() {
     setSlot(null);
     setNotice(null);
     setCelebrate(false);
+    setConfirming(false);
+    setCancelFailed(false);
     void loadAvailability();
+  }
+
+  /** Back from the time picker to the call the visitor holds. */
+  function keepTime() {
+    setView('done');
+    setConfirming(false);
+    setCancelFailed(false);
+    setNotice(null);
+  }
+
+  function askCancel() {
+    setConfirming(true);
+    setCancelFailed(false);
+  }
+
+  async function cancelCall() {
+    if (!booking || cancelling) return;
+    setCancelling(true);
+    setCancelFailed(false);
+    const res = await api<{ ok: true }>('/api/bookings', { method: 'DELETE' });
+    setCancelling(false);
+    // 404: the call is no longer booked (cancelled in another tab, or by the firm); either way it is gone
+    if (res.ok || res.status === 404) {
+      setCancelled(booking);
+      setBooking(null);
+      setConfirming(false);
+      setView('pick');
+      setSlot(null);
+      setNotice(null);
+      setCelebrate(false);
+      window.scrollTo({ top: 0 });
+      void loadAvailability();
+    } else if (res.status === 401) {
+      router.replace('/details');
+    } else {
+      setCancelFailed(true);
+    }
   }
 
   const labels = { answers: t('steps.answers'), details: t('steps.details'), call: t('steps.call'), result: t('steps.result') };
   const seatsLine = avail && showSeatsLine(avail.seatsLeft) ? t('booking.seatsLeft', { count: avail.seatsLeft }) : null;
-  const bookedWhen = useMemo(() => {
-    if (!booking) return null;
-    const zone = booking.timezone && isValidTimeZone(booking.timezone) ? booking.timezone : tz;
-    return whenLabel(booking.startsAt, zone, locale);
-  }, [booking, tz, locale]);
+  const bookedWhen = useMemo(() => (booking ? callWhen(booking, tz, locale) : null), [booking, tz, locale]);
+  const cancelledWhen = useMemo(() => (cancelled ? callWhen(cancelled, tz, locale) : null), [cancelled, tz, locale]);
+  const cancelQuestion = (when: WhenLabel, center = false) => (
+    <CancelConfirm
+      center={center}
+      question={t('booking.manage.confirm', { date: when.date, time: when.time })}
+      yes={t('booking.manage.confirmYes')}
+      no={t('booking.manage.confirmNo')}
+      failed={cancelFailed ? t('booking.manage.cancelFailed') : null}
+      busy={cancelling}
+      onYes={() => void cancelCall()}
+      onNo={() => setConfirming(false)}
+    />
+  );
 
   return (
     <Page>
@@ -138,6 +195,30 @@ export function BookingPicker() {
                 <p role="alert" style={s('font-size: 14.5px; line-height: 1.55; color: #a03a2c; margin: 0 0 22px')}>
                   {t(`booking.notice.${notice}`)}
                 </p>
+              )}
+              {cancelledWhen && (
+                <p role="status" data-call-cancelled style={s('font-size: 14.5px; line-height: 1.55; color: #7a5c2c; margin: 0 0 22px')}>
+                  {t('booking.manage.cancelled', { date: cancelledWhen.date, time: cancelledWhen.time })}
+                </p>
+              )}
+              {booking && bookedWhen && (
+                <div data-current-call style={s('border: 1px solid #ece6dc; background: #fff; border-radius: 12px; padding: 14px 20px; margin-bottom: 28px')}>
+                  <p style={s('margin: 0; font-size: 14.5px; line-height: 1.55; color: #14202b; font-weight: 600')}>
+                    <bdi>{t('booking.manage.yourCall', { date: bookedWhen.date, time: bookedWhen.time })}</bdi>
+                  </p>
+                  {confirming ? (
+                    cancelQuestion(bookedWhen)
+                  ) : (
+                    <div style={s('display: flex; gap: 0 22px; flex-wrap: wrap')}>
+                      <button type="button" data-keep-call onClick={keepTime} {...x(LINK_BUTTON, { hover: 'color: #14202b' })}>
+                        {t('booking.manage.keep')}
+                      </button>
+                      <button type="button" data-cancel-call onClick={askCancel} {...x(LINK_BUTTON, { hover: 'color: #14202b' })}>
+                        {t('booking.manage.cancel')}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
 
               {loadFailed && !avail ? (
@@ -257,15 +338,66 @@ export function BookingPicker() {
               <button type="button" onClick={() => router.push('/offer')} {...x(PRIMARY_BUTTON, { hover: 'background: #1e2f3f', className: 'btn' })}>
                 {t('booking.seeResult')}
               </button>
-              <div style={s('display: flex; justify-content: center; margin-top: 14px')}>
-                <button type="button" onClick={changeTime} {...x(LINK_BUTTON, { hover: 'color: #14202b' })}>
-                  {t('booking.done.change')}
-                </button>
-              </div>
+              {confirming ? (
+                <div style={s('display: flex; justify-content: center; margin-top: 14px; text-align: center')}>{cancelQuestion(bookedWhen, true)}</div>
+              ) : (
+                <div style={s('display: flex; justify-content: center; gap: 0 22px; flex-wrap: wrap; margin-top: 14px')}>
+                  <button type="button" onClick={changeTime} {...x(LINK_BUTTON, { hover: 'color: #14202b' })}>
+                    {t('booking.done.change')}
+                  </button>
+                  <button type="button" data-cancel-call onClick={askCancel} {...x(LINK_BUTTON, { hover: 'color: #14202b' })}>
+                    {t('booking.manage.cancel')}
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
     </Page>
+  );
+}
+
+/** A booked call in the time zone it was booked in (the visitor's own), or the visitor's current one. */
+function callWhen(b: BookingSummary, tz: string, locale: Locale): WhenLabel {
+  const zone = b.timezone && isValidTimeZone(b.timezone) ? b.timezone : tz;
+  return whenLabel(b.startsAt, zone, locale);
+}
+
+/** "Cancel your call on …?" with the two answers; the call is only cancelled on the second click. */
+function CancelConfirm(p: {
+  center: boolean;
+  question: string;
+  yes: string;
+  no: string;
+  failed: string | null;
+  busy: boolean;
+  onYes: () => void;
+  onNo: () => void;
+}) {
+  return (
+    <div role="group" aria-label={p.question} data-cancel-confirm>
+      <p style={s('margin: 6px 0 0; font-size: 14.5px; line-height: 1.55; color: #5f5a52')}>{p.question}</p>
+      <div style={s(`display: flex; justify-content: ${p.center ? 'center' : 'flex-start'}; gap: 0 22px; flex-wrap: wrap`)}>
+        <button
+          type="button"
+          data-cancel-yes
+          disabled={p.busy}
+          aria-busy={p.busy}
+          onClick={p.onYes}
+          {...x(`${LINK_BUTTON}; color: #a03a2c; text-decoration-color: #e3bdb4`, { hover: 'color: #8a3b2c' })}
+        >
+          {p.yes}
+        </button>
+        <button type="button" onClick={p.onNo} {...x(LINK_BUTTON, { hover: 'color: #14202b' })}>
+          {p.no}
+        </button>
+      </div>
+      {p.failed && (
+        <p role="alert" style={s('margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: #a03a2c')}>
+          {p.failed}
+        </p>
+      )}
+    </div>
   );
 }

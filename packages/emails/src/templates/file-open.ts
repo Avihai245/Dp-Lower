@@ -199,11 +199,12 @@ export const fileOpen = define('lead', { en, he }, (k, c) => {
   const data = fileOpenData(k.ctx);
   const ref = k.ctx.lead.caseRef;
   const address = getContent(k.locale).offices[0]?.address.replace(/\.$/, '') ?? '';
+  const landing = links.landing ?? links.booking;
   const host = (() => {
     try {
-      return new URL(links.booking).host;
+      return new URL(landing).host;
     } catch {
-      return links.booking;
+      return landing;
     }
   })();
 
@@ -389,7 +390,7 @@ export const fileOpen = define('lead', { en, he }, (k, c) => {
     <td align="center"${k.dirAttr} class="px" style="padding:30px 46px 36px 46px; border-top:1px solid #ece6dc; background-color:#efe9e0;">
       <p style="margin:0 0 14px 0; font-family:${k.SERIF}; font-size:16px; line-height:22px; ${k.track('0.1em')}color:#14202b; text-align:center;">${k.rtl ? 'דקר פקס לוי' : 'DECKER PEX LEVI'}</p>
       <p style="margin:0 0 12px 0; font-family:${k.SANS}; font-size:12px; line-height:19px; color:#6b6459; text-align:center;">${k.r(c.footerPractice).html}</p>
-      <p style="margin:0 0 12px 0; font-family:${k.SANS}; font-size:12px; line-height:19px; color:#6b6459; text-align:center;">${esc(address)} &middot; <a href="${ea(links.booking)}" style="${LINK} white-space:nowrap;">${esc(host)}</a></p>
+      <p style="margin:0 0 12px 0; font-family:${k.SANS}; font-size:12px; line-height:19px; color:#6b6459; text-align:center;">${esc(address)} &middot; <a href="${ea(landing)}" style="${LINK} white-space:nowrap;">${esc(host)}</a></p>
       <p style="margin:0 0 14px 0; font-family:${k.SANS}; font-size:12px; line-height:19px; color:#6b6459; text-align:center;">${k.r(c.footerReason).html}<br>${unsub}<a href="${ea(links.privacy)}" style="${LINK}">${esc(c.privacy)}</a></p>
       <p style="margin:0; font-family:${k.SANS}; font-size:11px; line-height:18px; color:#6b6459; text-align:center;">${credit.html.replace('SABATIER', sabatier)}</p>
     </td>

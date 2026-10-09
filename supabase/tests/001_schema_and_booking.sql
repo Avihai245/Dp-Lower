@@ -10,7 +10,8 @@ declare
   v_ref1 text; v_ref2 text;
 begin
   -- defaults -----------------------------------------------------------------
-  assert (select count(*) from public.availability_rules) = 30, 'expected 5 days x 6 slots seeded';
+  -- the seeded template (lawyers' own hours, staff_id set, are not part of it)
+  assert (select count(*) from public.availability_rules where staff_id is null) = 30, 'expected 5 days x 6 slots seeded';
   assert public.setting_text('firm_timezone', 'x') = 'Asia/Jerusalem', 'firm timezone setting';
   assert public.setting_text('call_minutes', 'x') = '20', 'call minutes setting';
 

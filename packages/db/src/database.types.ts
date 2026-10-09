@@ -97,31 +97,43 @@ isOneToOne: true
                   ]
                 },"availability_exceptions": {
                   Row: {
-                    "created_at": string,"id": string,"on_date": string,"reason": string | null,"start_time": string | null
+                    "created_at": string,"id": string,"on_date": string,"reason": string | null,"staff_id": string | null,"start_time": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"on_date": string,"reason"?: string | null,"start_time"?: string | null
+                    "created_at"?: string,"id"?: string,"on_date": string,"reason"?: string | null,"staff_id"?: string | null,"start_time"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"on_date"?: string,"reason"?: string | null,"start_time"?: string | null
+                    "created_at"?: string,"id"?: string,"on_date"?: string,"reason"?: string | null,"staff_id"?: string | null,"start_time"?: string | null
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "availability_exceptions_staff_id_fkey"
+      columns: ["staff_id"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["user_id"]
+    }
                   ]
                 },"availability_rules": {
                   Row: {
-                    "active": boolean,"capacity": number,"id": string,"start_time": string,"weekday": number
+                    "active": boolean,"capacity": number,"id": string,"staff_id": string | null,"start_time": string,"weekday": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"capacity"?: number,"id"?: string,"start_time": string,"weekday": number
+                    "active"?: boolean,"capacity"?: number,"id"?: string,"staff_id"?: string | null,"start_time": string,"weekday": number
                   }
                   Update: {
-                    "active"?: boolean,"capacity"?: number,"id"?: string,"start_time"?: string,"weekday"?: number
+                    "active"?: boolean,"capacity"?: number,"id"?: string,"staff_id"?: string | null,"start_time"?: string,"weekday"?: number
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "availability_rules_staff_id_fkey"
+      columns: ["staff_id"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["user_id"]
+    }
                   ]
                 },"bookings": {
                   Row: {
@@ -460,6 +472,12 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"complete_past_bookings":
+{ Args: { "p_before": string,"p_limit"?: number }; Returns: number
+                           },
+"format_case_ref":
+{ Args: { "at"?: string,"n": number }; Returns: string
+                           },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },

@@ -13,6 +13,8 @@ vi.mock('./drip', () => ({
 vi.mock('@dpl/db/dispatch', () => ({
   deliverPending: vi.fn(async () => ({ claimed: 5, sent: 4, failed: 1, dead: 0 })),
 }));
+// the clean-up of past calls has its own test (bookings.int.test.ts)
+vi.mock('./bookings', () => ({ completePastBookings: vi.fn(async () => 3) }));
 
 const hasDb = loadLocalEnv();
 
@@ -140,6 +142,7 @@ describe('POST /api/cron/dispatch', () => {
       leads: 3,
       claimed: 5,
       sequenceSent: 2,
+      bookingsCompleted: 3,
     });
   });
 
@@ -158,6 +161,22 @@ describe('POST /api/cron/dispatch', () => {
     const body = await res.json();
     expect(body).toMatchObject({ error: 'dispatch_failed', delivered: 4 });
     expect(body.details[0]).toContain('db down');
+  });
+
+  it('a failing clean-up of past calls does not stop the emails', async () => {
+    vi.stubEnv('CRON_SECRET', 'a-long-cron-secret');
+    const bookings = await import('./bookings');
+    vi.mocked(bookings.completePastBookings).mockRejectedValueOnce(new Error('rpc down'));
+    const res = await call('POST', { authorization: 'Bearer a-long-cron-secret' });
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toMatchObject({
+      error: 'dispatch_failed',
+      scheduled: 2,
+      delivered: 4,
+      bookingsCompleted: 0,
+    });
+    expect(body.details).toEqual([expect.stringContaining('bookings: rpc down')]);
   });
 });
 

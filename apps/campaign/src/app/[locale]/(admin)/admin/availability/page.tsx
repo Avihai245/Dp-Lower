@@ -13,13 +13,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 /**
- * /admin/availability: every member of staff can see the weekly call template, the blocked days and the next
- * bookings; only admins can change them (the controls are not rendered for others, and the Server Actions refuse them).
+ * /admin/availability: every member of staff can see the calendars (each lawyer's weekly hours and days off, the
+ * unassigned template, the days closed for everyone) and the next bookings. Admins change every calendar, a lawyer only
+ * their own; the controls are not rendered for anyone else, and the Server Actions refuse them.
  */
 export default async function AvailabilityPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const session = await requireStaffPage(locale as Locale, '/admin/availability');
   const data = await loadAvailability(await createServerSupabase());
-  return <AvailabilityView data={data} canEdit={session.staff.role === 'admin'} />;
+  return <AvailabilityView data={data} viewer={{ id: session.actor.id, role: session.staff.role }} />;
 }

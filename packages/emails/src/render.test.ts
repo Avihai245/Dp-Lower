@@ -120,14 +120,13 @@ describe.each(ALL_TEMPLATES.flatMap((id) => LOCALES.map((locale) => [id, locale]
       }
     });
 
-    it('shows the portal link', () => {
-      if (
-        id === 'password-reset' ||
-        id === 'booking-cancelled' ||
-        id === 'contact-received' ||
-        id === 'auth-link'
-      )
+    it('shows the portal link (the booking emails: the signed link to the booking step instead)', () => {
+      if (id === 'booking-confirmation' || id === 'booking-cancelled') {
+        expect(urls(r.html)).toContain(ctx.links.booking);
+        expect(r.text).toContain(ctx.links.booking);
         return;
+      }
+      if (id === 'password-reset' || id === 'contact-received' || id === 'auth-link') return;
       expect(urls(r.html)).toContain(ctx.links.portal);
     });
   },
@@ -143,6 +142,102 @@ describe('Welcome 3 books through the landing page', () => {
       ),
     );
     expect(renderEmail('welcome-3', sampleContext('welcome-3', 'he')).html).toContain('קביעת שיחה חינם');
+  });
+});
+
+describe('the booking emails link to the lead’s own booking step', () => {
+  const button = (html: string, href: string, label: string) =>
+    new RegExp(`<a href="${href.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}"[^>]*>${label}</a>`).test(html);
+
+  it('the confirmation’s "Change or cancel" opens the booking step, in both languages', () => {
+    for (const locale of LOCALES) {
+      const ctx = sampleContext('booking-confirmation', locale);
+      const r = renderEmail('booking-confirmation', ctx);
+      expect(button(r.html, ctx.links.booking, locale === 'he' ? 'שינוי או ביטול' : 'Change or cancel')).toBe(
+        true,
+      );
+      expect(ctx.links.booking).toMatch(/\/go\/[\w.-]+$/);
+      expect(ctx.links.booking).not.toBe(ctx.links.portal);
+    }
+    expect(renderEmail('booking-confirmation', sampleContext('booking-confirmation', 'en')).html).toContain(
+      'If something changes, you can move or cancel the call here.',
+    );
+  });
+
+  it('the cancellation’s "Book my free call" and the day-3 email’s button open it too', () => {
+    for (const locale of LOCALES) {
+      for (const id of ['booking-cancelled', 'welcome-3'] as const) {
+        const ctx = sampleContext(id, locale);
+        expect(
+          button(
+            renderEmail(id, ctx).html,
+            ctx.links.booking,
+            locale === 'he' ? 'קביעת שיחה חינם' : 'Book my free call',
+          ),
+          `${id} ${locale}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('the Lead Email’s footer keeps the landing page, never the signed link', () => {
+    const ctx = sampleContext('file-open', 'en');
+    const r = renderEmail('file-open', ctx);
+    expect(urls(r.html)).toContain(ctx.links.landing);
+    expect(urls(r.html)).not.toContain(ctx.links.booking);
+    expect(r.html).toContain('>euro-passports.com</a>');
+    // without a landing link the booking link stands in, as before
+    const legacy = {
+      ...ctx,
+      links: { ...ctx.links, booking: 'https://euro-passports.com/ger-aus/', landing: undefined },
+    };
+    expect(urls(renderEmail('file-open', legacy).html)).toContain('https://euro-passports.com/ger-aus/');
+  });
+});
+
+describe('the booking confirmation names the lawyer when the call is assigned', () => {
+  const data = { startsAt: '2026-10-14T13:30:00.000Z', timezone: 'Asia/Jerusalem', minutes: 20 };
+
+  it('in the call card, in English and Hebrew', () => {
+    const en = renderEmail(
+      'booking-confirmation',
+      sampleContext('booking-confirmation', 'en', { data: { ...data, lawyer: 'Dana Levi' } }),
+    );
+    expect(en.html).toContain(
+      'Your call is with Dana Levi. We will call +1 212 555 0142 and ask for David. 20 minutes, free.',
+    );
+    expect(en.text).toContain('Your call is with Dana Levi.');
+    const he = renderEmail(
+      'booking-confirmation',
+      sampleContext('booking-confirmation', 'he', { data: { ...data, lawyer: 'דנה לוי' } }),
+    );
+    expect(he.html).toContain(
+      'השיחה שלכם תהיה עם <span dir="auto" style="unicode-bidi:isolate;">דנה לוי</span>.',
+    );
+  });
+
+  it('without a phone number, and not at all for an unassigned call', () => {
+    const ctx = sampleContext('booking-confirmation', 'en', { data: { ...data, lawyer: 'Dana Levi' } });
+    expect(
+      renderEmail('booking-confirmation', { ...ctx, lead: { ...ctx.lead, phone: null } }).html,
+    ).toContain('Your call is with Dana Levi. We will call your number and ask for David.');
+    for (const lawyer of [undefined, null, '', '   ']) {
+      const r = renderEmail(
+        'booking-confirmation',
+        sampleContext('booking-confirmation', 'en', { data: { ...data, lawyer } }),
+      );
+      expect(r.html).not.toContain('Your call is with');
+      expect(r.html).toContain('We will call +1 212 555 0142 and ask for David.');
+    }
+  });
+
+  it('escapes a hostile name', () => {
+    const r = renderEmail(
+      'booking-confirmation',
+      sampleContext('booking-confirmation', 'en', { data: { ...data, lawyer: '<script>x</script>' } }),
+    );
+    expect(r.html).not.toContain('<script>x');
+    expect(r.html).toContain('&lt;script&gt;x&lt;/script&gt;');
   });
 });
 

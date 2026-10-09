@@ -2,6 +2,7 @@
 
 import { s, x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 import {
   addExceptionAction,
@@ -14,9 +15,19 @@ import { Link } from '@/i18n/navigation';
 import { useAdmin } from './AdminProvider';
 import { formatCall, formatDate, weekdayName } from './format';
 import { TIME_RE, trimRuleDraft, type RuleDraft } from './model';
+import {
+  blockedFor,
+  canEditScope,
+  defaultScope,
+  inScope,
+  parseScope,
+  scopeParam,
+  type CalendarEditor,
+  type CalendarScope,
+} from './scopes';
 import { settle } from './settle';
-import type { ActionError, AvailabilityData, ExceptionView, RuleView } from './types';
-import { CARD, HelpTip, PageFrame } from './ui';
+import type { ActionError, AvailabilityData, ExceptionView, LawyerView, RuleView } from './types';
+import { CARD, HelpTip, PageFrame, Pill } from './ui';
 import { useRun } from './useRun';
 
 const INPUT =
@@ -32,35 +43,88 @@ const H2 =
 const errorKey = (e: ActionError): string =>
   e === 'duplicate' ? 'duplicate' : e === 'invalid' ? 'invalid' : e === 'forbidden' ? 'forbidden' : 'generic';
 
-/** /admin/availability: the weekly call template, blocked days and slots, and the next bookings. Admins edit; others read. */
-export function AvailabilityView({ data, canEdit }: { data: AvailabilityData; canEdit: boolean }) {
+/**
+ * /admin/availability: the weekly call hours, blocked days and slots, and the next bookings, per calendar: each lawyer's
+ * own (one call at a time) and the unassigned template ("any lawyer"; a day blocked there is closed for everyone).
+ * Admins edit every calendar, a lawyer their own; case managers read. The Server Actions check the same.
+ */
+export function AvailabilityView({ data, viewer }: { data: AvailabilityData; viewer: CalendarEditor }) {
   const t = useTranslations('admin');
   const locale = useLocale();
+  const params = useSearchParams();
   const days = [0, 1, 2, 3, 4, 5, 6];
+  const [scope, setScopeState] = useState<CalendarScope>(() =>
+    parseScope(params.get('calendar'), data.lawyers, defaultScope(viewer, data.lawyers)),
+  );
+  const setScope = (next: CalendarScope) => {
+    setScopeState(next);
+    // the address keeps the calendar (a reload or a shared link opens the same one) without a server round trip; no
+    // state object, so the router takes the new address over (a later refresh would otherwise restore the old one)
+    const url = new URL(window.location.href);
+    url.searchParams.set('calendar', scopeParam(next));
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+  const canEdit = canEditScope(viewer, scope);
+  const lawyer = data.lawyers.find((l) => l.id === scope) ?? null;
+  const key = scopeParam(scope);
 
   return (
     <PageFrame title={t('availability.title')} lead={t('availability.timezone', { timezone: data.timezone, minutes: data.callMinutes })}>
-      {!canEdit && (
+      {viewer.role === 'case_manager' ? (
         <p role="note" style={s('font-size:13.5px;color:#8a4b1f;margin:0 0 14px')}>
           {t('availability.readOnly')}
         </p>
+      ) : (
+        !canEdit && (
+          <p role="note" data-own-only style={s('font-size:13.5px;color:#8a4b1f;margin:0 0 14px')}>
+            {t('availability.scopes.ownOnly')}
+          </p>
+        )
+      )}
+
+      {data.lawyers.length > 0 && (
+        <div
+          role="group"
+          aria-label={t('availability.scopes.label')}
+          data-calendars
+          style={s('display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:18px')}
+        >
+          <Pill on={scope === null} onClick={() => setScope(null)} data-calendar={scopeParam(null)}>
+            {t('availability.scopes.unassigned')}
+          </Pill>
+          {data.lawyers.map((l) => (
+            <Pill key={l.id} on={scope === l.id} onClick={() => setScope(l.id)} data-calendar={l.id}>
+              {l.name}
+            </Pill>
+          ))}
+          <span style={s('margin-left:4px')}>
+            <HelpTip id="calendars" align="left" />
+          </span>
+        </div>
       )}
 
       <section style={s('margin-bottom:14px')}>
         <div style={s('display:flex;align-items:center;gap:10px;margin-bottom:10px')}>
-          <h2 style={s(H2)}>{t('availability.weekly')}</h2>
+          <h2 style={s(H2)}>{lawyer ? t('availability.scopes.weeklyOf', { name: lawyer.name }) : t('availability.weekly')}</h2>
           <HelpTip id="weekly" align="left" />
         </div>
-        <div data-weekly style={s('display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:14px;align-items:start')}>
+        <div data-weekly data-scope={key} style={s('display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:14px;align-items:start')}>
           {days.map((wd) => (
-            <WeekdayCard key={wd} weekday={wd} title={weekdayName(wd, locale)} rules={data.rules.filter((r) => r.weekday === wd)} canEdit={canEdit} />
+            <WeekdayCard
+              key={`${key}-${wd}`}
+              weekday={wd}
+              title={weekdayName(wd, locale)}
+              rules={inScope(data.rules, scope).filter((r) => r.weekday === wd)}
+              scope={scope}
+              canEdit={canEdit}
+            />
           ))}
         </div>
       </section>
 
       <div data-resp="2" style={s('display:grid;grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);gap:14px;align-items:start')}>
-        <BlockedCard exceptions={data.exceptions} canEdit={canEdit} />
-        <UpcomingCard bookings={data.bookings} />
+        <BlockedCard key={key} exceptions={blockedFor(data.exceptions, scope)} scope={scope} lawyer={lawyer} viewer={viewer} />
+        <UpcomingCard bookings={data.bookings} showLawyers={data.lawyers.length > 0 || data.bookings.some((b) => b.lawyer)} />
       </div>
     </PageFrame>
   );
@@ -68,7 +132,19 @@ export function AvailabilityView({ data, canEdit }: { data: AvailabilityData; ca
 
 // -- weekly template ---------------------------------------------------------------------------------------------------
 
-function WeekdayCard({ weekday, title, rules, canEdit }: { weekday: number; title: string; rules: RuleView[]; canEdit: boolean }) {
+function WeekdayCard({
+  weekday,
+  title,
+  rules,
+  scope,
+  canEdit,
+}: {
+  weekday: number;
+  title: string;
+  rules: RuleView[];
+  scope: CalendarScope;
+  canEdit: boolean;
+}) {
   const t = useTranslations('admin');
   return (
     <div data-weekday={weekday} style={s(`${CARD};padding:18px 18px 16px`)}>
@@ -77,11 +153,12 @@ function WeekdayCard({ weekday, title, rules, canEdit }: { weekday: number; titl
       {rules.map((r) => (
         <RuleRow key={r.id} rule={r} canEdit={canEdit} />
       ))}
-      {canEdit && <AddRule weekday={weekday} />}
+      {canEdit && <AddRule weekday={weekday} scope={scope} />}
     </div>
   );
 }
 
+/** One time of a calendar. A lawyer takes one call at a time: their rows have no capacity field (the server stores 1). */
 function RuleRow({ rule, canEdit }: { rule: RuleView; canEdit: boolean }) {
   const t = useTranslations('admin');
   const id = useId();
@@ -105,15 +182,16 @@ function RuleRow({ rule, canEdit }: { rule: RuleView; canEdit: boolean }) {
   }, [rule]);
   const [error, setError] = useState<string | null>(null);
 
+  const perLawyer = rule.staffId !== null;
   const timeOk = TIME_RE.test(time);
-  const capOk = /^\d{1,2}$/.test(capacity) && Number(capacity) <= 50;
+  const capOk = perLawyer || (/^\d{1,2}$/.test(capacity) && Number(capacity) <= 50);
 
   const save = () => {
     if (!timeOk || !capOk) return setError(t('availability.errors.invalid'));
     setError(null);
     void (async () => {
       const res = await settle(() =>
-        updateRuleAction({ id: rule.id, weekday: rule.weekday, startTime: time, capacity: Number(capacity), active }),
+        updateRuleAction({ id: rule.id, weekday: rule.weekday, startTime: time, capacity: perLawyer ? 1 : Number(capacity), active }),
       );
       if (!res.ok) {
         if (res.error === 'unauthorized') fail(res.error);
@@ -140,21 +218,25 @@ function RuleRow({ rule, canEdit }: { rule: RuleView; canEdit: boolean }) {
           onChange={(e) => change({ time: e.target.value })}
           {...x(`${INPUT};width:84px;text-align:center`, { focus: FOCUS })}
         />
-        <label htmlFor={`${id}-c`} className="adm-sr">
-          {t('availability.capacity')}
-        </label>
-        <input
-          id={`${id}-c`}
-          dir="ltr"
-          inputMode="numeric"
-          title={t('availability.capacityHint')}
-          value={capacity}
-          disabled={!canEdit}
-          maxLength={2}
-          aria-invalid={!capOk}
-          onChange={(e) => change({ capacity: e.target.value })}
-          {...x(`${INPUT};width:54px;text-align:center`, { focus: FOCUS })}
-        />
+        {!perLawyer && (
+          <>
+            <label htmlFor={`${id}-c`} className="adm-sr">
+              {t('availability.capacity')}
+            </label>
+            <input
+              id={`${id}-c`}
+              dir="ltr"
+              inputMode="numeric"
+              title={t('availability.capacityHint')}
+              value={capacity}
+              disabled={!canEdit}
+              maxLength={2}
+              aria-invalid={!capOk}
+              onChange={(e) => change({ capacity: e.target.value })}
+              {...x(`${INPUT};width:54px;text-align:center`, { focus: FOCUS })}
+            />
+          </>
+        )}
         <label style={s('display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer')}>
           <input type="checkbox" checked={active} disabled={!canEdit} onChange={(e) => change({ active: e.target.checked })} />
           {t('availability.active')}
@@ -188,7 +270,7 @@ function RuleRow({ rule, canEdit }: { rule: RuleView; canEdit: boolean }) {
   );
 }
 
-function AddRule({ weekday }: { weekday: number }) {
+function AddRule({ weekday, scope }: { weekday: number; scope: CalendarScope }) {
   const t = useTranslations('admin');
   const id = useId();
   const { fail } = useAdmin();
@@ -197,11 +279,14 @@ function AddRule({ weekday }: { weekday: number }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const perLawyer = scope !== null;
   const add = async () => {
-    if (!TIME_RE.test(time) || !/^\d{1,2}$/.test(capacity)) return setError(t('availability.errors.invalid'));
+    if (!TIME_RE.test(time) || (!perLawyer && !/^\d{1,2}$/.test(capacity))) return setError(t('availability.errors.invalid'));
     setError(null);
     setBusy(true);
-    const res = await settle(() => addRuleAction({ weekday, startTime: time, capacity: Number(capacity), active: true }));
+    const res = await settle(() =>
+      addRuleAction({ weekday, startTime: time, capacity: perLawyer ? 1 : Number(capacity), active: true, staffId: scope }),
+    );
     setBusy(false);
     if (!res.ok) {
       if (res.error === 'unauthorized') fail(res.error);
@@ -228,19 +313,23 @@ function AddRule({ weekday }: { weekday: number }) {
           onKeyDown={(e) => e.key === 'Enter' && void add()}
           {...x(`${INPUT};width:84px;text-align:center`, { focus: FOCUS })}
         />
-        <label htmlFor={`${id}-c`} className="adm-sr">
-          {t('availability.capacity')}
-        </label>
-        <input
-          id={`${id}-c`}
-          dir="ltr"
-          inputMode="numeric"
-          title={t('availability.capacityHint')}
-          maxLength={2}
-          value={capacity}
-          onChange={(e) => setCapacity(e.target.value)}
-          {...x(`${INPUT};width:54px;text-align:center`, { focus: FOCUS })}
-        />
+        {!perLawyer && (
+          <>
+            <label htmlFor={`${id}-c`} className="adm-sr">
+              {t('availability.capacity')}
+            </label>
+            <input
+              id={`${id}-c`}
+              dir="ltr"
+              inputMode="numeric"
+              title={t('availability.capacityHint')}
+              maxLength={2}
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              {...x(`${INPUT};width:54px;text-align:center`, { focus: FOCUS })}
+            />
+          </>
+        )}
         <button type="button" data-rule-add disabled={busy} onClick={() => void add()} {...x(`${SMALL};margin-left:auto`, { hover: 'border-color:#14202b' })}>
           {t('availability.add')}
         </button>
@@ -256,7 +345,21 @@ function AddRule({ weekday }: { weekday: number }) {
 
 // -- blocked days and slots -----------------------------------------------------------------------------------------------
 
-function BlockedCard({ exceptions, canEdit }: { exceptions: ExceptionView[]; canEdit: boolean }) {
+/**
+ * Blocked days and slots of a calendar. In the unassigned calendar they close the calendar for everyone; in a lawyer's,
+ * the lawyer's own days off are listed with the days closed for everyone (marked as such), and an admin can add either.
+ */
+function BlockedCard({
+  exceptions,
+  scope,
+  lawyer,
+  viewer,
+}: {
+  exceptions: ExceptionView[];
+  scope: CalendarScope;
+  lawyer: LawyerView | null;
+  viewer: CalendarEditor;
+}) {
   const t = useTranslations('admin');
   const locale = useLocale();
   const id = useId();
@@ -265,15 +368,24 @@ function BlockedCard({ exceptions, canEdit }: { exceptions: ExceptionView[]; can
   const [date, setDate] = useState('');
   const [slot, setSlot] = useState('');
   const [reason, setReason] = useState('');
+  // in a lawyer's calendar: that lawyer only (their id) or everyone ('')
+  const [appliesTo, setAppliesTo] = useState<string>(scope ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const canEdit = canEditScope(viewer, scope);
+  const canCloseForEveryone = canEditScope(viewer, null);
 
   const block = async () => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || (slot !== '' && !TIME_RE.test(slot))) return setError(t('availability.errors.invalid'));
     setError(null);
     setBusy(true);
     const res = await settle(() =>
-      addExceptionAction({ onDate: date, startTime: slot === '' ? null : slot, reason: reason.trim() || undefined }),
+      addExceptionAction({
+        onDate: date,
+        startTime: slot === '' ? null : slot,
+        reason: reason.trim() || undefined,
+        staffId: scope === null ? null : appliesTo || null,
+      }),
     );
     setBusy(false);
     if (!res.ok) {
@@ -296,11 +408,21 @@ function BlockedCard({ exceptions, canEdit }: { exceptions: ExceptionView[]; can
       </div>
       {exceptions.length === 0 && <div style={s('font-size:13.5px;color:#9a948a;padding:6px 0')}>{t('availability.noBlocked')}</div>}
       {exceptions.map((e) => (
-        <div key={e.id} data-exception={e.id} style={s('display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f3eee6;flex-wrap:wrap')}>
+        <div
+          key={e.id}
+          data-exception={e.id}
+          data-applies={e.staffId === null ? 'everyone' : 'lawyer'}
+          style={s('display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f3eee6;flex-wrap:wrap')}
+        >
           <span style={s('font-size:14px;font-weight:600')}>{formatDate(e.onDate, locale)}</span>
           <span style={s('font-size:13px;color:#736d64')}>{e.startTime ? <bdi>{e.startTime}</bdi> : t('availability.wholeDay')}</span>
+          {scope !== null && e.staffId === null && (
+            <span style={s('font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#f6f0e4;color:#7a5c2c')}>
+              {t('availability.scopes.everyone')}
+            </span>
+          )}
           {e.reason && <span style={s('font-size:13px;color:#9a948a;overflow-wrap:anywhere')}>{e.reason}</span>}
-          {canEdit && (
+          {canEditScope(viewer, e.staffId) && (
             <button
               type="button"
               data-exception-delete
@@ -338,6 +460,23 @@ function BlockedCard({ exceptions, canEdit }: { exceptions: ExceptionView[]; can
               />
             </div>
           </div>
+          {lawyer && canCloseForEveryone && (
+            <div>
+              <label htmlFor={`${id}-a`} style={s('display:block;font-size:12px;color:#736d64;margin-bottom:4px')}>
+                {t('availability.scopes.appliesTo')}
+              </label>
+              <select
+                id={`${id}-a`}
+                data-applies-to
+                value={appliesTo}
+                onChange={(e) => setAppliesTo(e.target.value)}
+                {...x(`${INPUT};width:100%;cursor:pointer`, { focus: FOCUS })}
+              >
+                <option value={lawyer.id}>{t('availability.scopes.only', { name: lawyer.name })}</option>
+                <option value="">{t('availability.scopes.everyone')}</option>
+              </select>
+            </div>
+          )}
           <div style={s('display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap')}>
             <div style={s('flex:1;min-width:180px')}>
               <label htmlFor={`${id}-r`} style={s('display:block;font-size:12px;color:#736d64;margin-bottom:4px')}>
@@ -362,7 +501,8 @@ function BlockedCard({ exceptions, canEdit }: { exceptions: ExceptionView[]; can
 
 // -- upcoming bookings ---------------------------------------------------------------------------------------------------
 
-function UpcomingCard({ bookings }: { bookings: AvailabilityData['bookings'] }) {
+/** Every upcoming call, with the lawyer it is assigned to once the firm works with lawyers' calendars. */
+function UpcomingCard({ bookings, showLawyers }: { bookings: AvailabilityData['bookings']; showLawyers: boolean }) {
   const t = useTranslations('admin');
   const locale = useLocale();
   const { listQuery } = useAdmin();
@@ -380,6 +520,11 @@ function UpcomingCard({ bookings }: { bookings: AvailabilityData['bookings'] }) 
               </span>
             </Link>
           ) : null}
+          {showLawyers && (
+            <span data-booking-lawyer={b.lawyer?.id ?? ''} style={s('font-size:13px;color:#736d64')}>
+              {b.lawyer ? t('availability.scopes.lawyer', { name: b.lawyer.name }) : t('availability.scopes.anyLawyer')}
+            </span>
+          )}
           {b.lead?.phone && (
             <a href={`tel:${b.lead.phone.replace(/[^0-9+]/g, '')}`} {...x('font-size:13px;color:#736d64;text-decoration:none;margin-left:auto', { hover: 'color:#7a5c2c' })}>
               <bdi>{b.lead.phone}</bdi>

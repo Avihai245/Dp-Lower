@@ -67,7 +67,9 @@ export function sampleContext(
       unsubscribe: nurture ? `${base}/unsubscribe?t=eyJsaWQiOiIwYjBmMWMxZSIsInAiOiJ1bnN1YiJ9.Zm9vYmFy` : null,
       logo: o.images?.logo ?? 'https://euro-passports.com/email/dpl-logo.png',
       teamPhoto: o.images?.teamPhoto ?? 'https://euro-passports.com/email/dpl-team.jpg',
-      booking: base,
+      // a lead's own booking step: the same signed /go link as the portal's, with next=/booking
+      booking: `${base}/go/eyJsaWQiOiIwYjBmMWMxZSIsInAiOiJwb3J0YWwiLCJuIjoiL2Jvb2tpbmcifQ.YmFyYmF6`,
+      landing: base,
     },
     data: o.data ?? defaults[id],
   };

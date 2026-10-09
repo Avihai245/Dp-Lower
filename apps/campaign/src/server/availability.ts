@@ -36,26 +36,40 @@ export async function loadCallSettings(db: Db): Promise<CallSettings> {
 }
 
 /**
- * The next bookable days with their free slots, from the weekly template, the blocked days/slots and the seats
- * already taken. Slots are UTC instants; the dates are calendar dates in the firm's zone.
+ * The next bookable days with their free slots, from the weekly hours (each lawyer's and the unassigned template), the
+ * blocked days/slots (a lawyer's own, or closed for everyone), the lawyers who take calls and the seats already taken.
+ * Slots are UTC instants; the dates are calendar dates in the firm's zone. A slot is listed while any provider is free.
  */
 export async function loadAvailability(db: Db, now: Date = new Date()): Promise<AvailabilityResponse> {
   const settings = await loadCallSettings(db);
   const today = zonedParts(now, settings.timezone).date;
   const until = new Date(now.getTime() + (LOOKAHEAD_DAYS + 1) * 86_400_000).toISOString();
 
-  const [rules, exceptions, booked] = await Promise.all([
-    db.from('availability_rules').select('weekday, start_time, capacity, active'),
-    db.from('availability_exceptions').select('on_date, start_time').gte('on_date', addDays(today, -1)),
-    db.from('bookings').select('starts_at').eq('status', 'confirmed').gte('starts_at', now.toISOString()).lte('starts_at', until),
+  const [rules, exceptions, booked, lawyers] = await Promise.all([
+    db.from('availability_rules').select('weekday, start_time, capacity, active, staff_id'),
+    db.from('availability_exceptions').select('on_date, start_time, staff_id').gte('on_date', addDays(today, -1)),
+    db
+      .from('bookings')
+      .select('starts_at, assigned_to')
+      .eq('status', 'confirmed')
+      .gte('starts_at', now.toISOString())
+      .lte('starts_at', until),
+    db.from('staff').select('user_id').eq('active', true).eq('role', 'lawyer'),
   ]);
-  for (const r of [rules, exceptions, booked]) if (r.error) throw new Error(`availability query failed: ${r.error.message}`);
+  for (const r of [rules, exceptions, booked, lawyers]) if (r.error) throw new Error(`availability query failed: ${r.error.message}`);
 
   const days: SlotDay[] = computeAvailability({
     now,
-    rules: (rules.data ?? []).map((r) => ({ weekday: r.weekday, startTime: r.start_time, capacity: r.capacity, active: r.active })),
-    exceptions: (exceptions.data ?? []).map((e) => ({ onDate: e.on_date, startTime: e.start_time })),
-    bookedStarts: (booked.data ?? []).map((b) => b.starts_at),
+    rules: (rules.data ?? []).map((r) => ({
+      weekday: r.weekday,
+      startTime: r.start_time,
+      capacity: r.capacity,
+      active: r.active,
+      staffId: r.staff_id,
+    })),
+    exceptions: (exceptions.data ?? []).map((e) => ({ onDate: e.on_date, startTime: e.start_time, staffId: e.staff_id })),
+    bookings: (booked.data ?? []).map((b) => ({ startsAt: b.starts_at, staffId: b.assigned_to })),
+    lawyers: (lawyers.data ?? []).map((s) => s.user_id),
     timezone: settings.timezone,
     horizonDays: settings.horizonDays,
     noticeMinutes: settings.noticeMinutes,

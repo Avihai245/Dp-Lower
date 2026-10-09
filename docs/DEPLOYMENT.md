@@ -70,7 +70,8 @@ The apps never talk to an email provider or a CRM directly. They write every ema
 |---|---|---|
 | `lead.created` | quiz finished and contact details left | create the contact/deal in your CRM, notify the team |
 | `lead.returned` | known email re-entered from another browser | nothing (information) |
-| `booking.created` / `booking.cancelled` | free call booked / cancelled | calendar entry, assign a lawyer, reminder |
+| `booking.created` / `booking.cancelled` | free call booked / cancelled (`data.reason`: `cancelled` by the applicant, `rescheduled`, `staff`) | calendar entry for the lawyer in `data.booking.lawyer` (id, name, email; null when the call is not assigned), reminder |
+| `booking.no_show` | the team marked that the applicant did not take the call | follow up (no email goes to the applicant) |
 | `callback.requested` | "Speak with an AI Advisor" request | call the person back |
 | `contact.created` | website form / lead band / chat | create a lead, notify the team; carries the form's `source` and `utm` |
 | `lead.updated` | name, phone, email or answers changed (by the applicant or by staff) | keep the contact in your CRM current; `data.changed` names the fields, `data.previous.email` the old address after a correction |
@@ -97,7 +98,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co SUPABASE_SERVICE_ROLE
   pnpm bootstrap:admin you@lawoffice.org.il "Your Name" "<a strong password>"
 ```
 
-Sign in at `https://euro-passports.com/sign-in`; staff land on `/admin`. Admins can add more staff (role `lawyer` or `case_manager`) and edit the call-availability template and blocked days.
+Sign in at `https://euro-passports.com/sign-in`; staff land on `/admin`. Admins can add more staff (role `lawyer` or `case_manager`) and edit the call-availability calendars (the unassigned template, each lawyer's hours) and blocked days; a lawyer edits their own hours and days off.
 
 ## 7. Google sign-in (optional)
 
@@ -120,7 +121,7 @@ The design deliberately contains placeholders, each visibly marked in the pages:
 4. Hebrew copy: all Hebrew text was written by an AI translator and must be read by a Hebrew-speaking lawyer or editor before launch (it lives in the same `messages/he/*.json` files and `packages/emails`).
 5. The "Speak with an AI Advisor" button records a callback request for the team; no voice AI is connected. The wording says so.
 6. Confirm the Instagram link in the footers (`sabatier_group_ai_marketing`) and the domains used in canonical URLs.
-7. Booking hours: the weekly template (Sunday to Thursday, 09:00 to 17:00) is a default; adjust it in `/admin/availability`.
+7. Booking hours: the weekly template (Sunday to Thursday, 09:00 to 17:00, two calls per slot, not tied to a lawyer) is a default; adjust it in `/admin/availability`. Once each lawyer (Team, role `lawyer`) has set their own hours there, calls are assigned to them; remove the unassigned template's times when it is no longer wanted.
 
 ## 10. Operations
 

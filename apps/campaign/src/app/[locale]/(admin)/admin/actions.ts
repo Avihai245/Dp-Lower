@@ -12,6 +12,7 @@ import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 
 import { addException, addRule, deleteException, deleteRule, updateRule } from '@/server/crm-availability';
+import { callAction } from '@/server/crm-bookings';
 import { updateContact, sendResetLink } from '@/server/crm-contact';
 import { deleteApplicant } from '@/server/crm-erase';
 import { setInboxStatus } from '@/server/crm-inbox';
@@ -20,6 +21,7 @@ import {
   addNoteInput,
   addRuleInput,
   assignOwnerInput,
+  callActionInput,
   deleteApplicantInput,
   deleteByIdInput,
   deleteNoteInput,
@@ -35,7 +37,7 @@ import {
 } from '@/server/crm-schemas';
 import { updateStaff } from '@/server/crm-team';
 import { addNote, assignOwner, deleteNote, docAction, moveStage, runNextAction, setStatus } from '@/server/crm-write';
-import { errorCode, requireAdmin, requireStaff, type StaffSession } from '@/server/staff';
+import { errorCode, requireAdmin, requireCalendarEditor, requireStaff, type StaffSession } from '@/server/staff';
 
 /**
  * Server Actions of the CRM. The shape of every one of them:
@@ -126,33 +128,40 @@ export async function deleteApplicantAction(input: z.input<typeof deleteApplican
   return run(requireAdmin, deleteApplicantInput, input, (db, s, a) => deleteApplicant(db, s.actor, a.leadId, a.confirm));
 }
 
+/** "Mark call held", "Mark no-show", "Cancel call" on the lead page (see crm-bookings.ts). */
+export async function callActionAction(input: z.input<typeof callActionInput>) {
+  return run(requireStaff, callActionInput, input, (db, s, a) => callAction(db, s.actor, a));
+}
+
 // -- inbox ---------------------------------------------------------------------------------------------------------
 
 export async function setInboxStatusAction(input: z.input<typeof inboxStatusInput>) {
   return run(requireStaff, inboxStatusInput, input, (db, s, a) => setInboxStatus(db, s.actor, a));
 }
 
-// -- availability and team: admins only -----------------------------------------------------------------------------
+// -- availability: admins every calendar, lawyers their own (checked against the stored row) --------------------------
 
 export async function addRuleAction(input: z.input<typeof addRuleInput>) {
-  return run(requireAdmin, addRuleInput, input, (db, _s, a) => addRule(db, a));
+  return run(requireCalendarEditor, addRuleInput, input, (db, s, a) => addRule(db, s, a));
 }
 
 export async function updateRuleAction(input: z.input<typeof updateRuleInput>) {
-  return run(requireAdmin, updateRuleInput, input, (db, _s, a) => updateRule(db, a));
+  return run(requireCalendarEditor, updateRuleInput, input, (db, s, a) => updateRule(db, s, a));
 }
 
 export async function deleteRuleAction(input: z.input<typeof deleteByIdInput>) {
-  return run(requireAdmin, deleteByIdInput, input, (db, _s, a) => deleteRule(db, a.id));
+  return run(requireCalendarEditor, deleteByIdInput, input, (db, s, a) => deleteRule(db, s, a.id));
 }
 
 export async function addExceptionAction(input: z.input<typeof addExceptionInput>) {
-  return run(requireAdmin, addExceptionInput, input, (db, _s, a) => addException(db, a));
+  return run(requireCalendarEditor, addExceptionInput, input, (db, s, a) => addException(db, s, a));
 }
 
 export async function deleteExceptionAction(input: z.input<typeof deleteByIdInput>) {
-  return run(requireAdmin, deleteByIdInput, input, (db, _s, a) => deleteException(db, a.id));
+  return run(requireCalendarEditor, deleteByIdInput, input, (db, s, a) => deleteException(db, s, a.id));
 }
+
+// -- team: admins only ---------------------------------------------------------------------------------------------
 
 export async function updateStaffAction(input: z.input<typeof updateStaffInput>) {
   return run(requireAdmin, updateStaffInput, input, (db, _s, a) => updateStaff(db, a));

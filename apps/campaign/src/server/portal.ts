@@ -80,6 +80,9 @@ export async function loadPortalState(db: Db, lead: LeadRow): Promise<PortalStat
       .from('documents')
       .select('doc_type, status, file_name, uploaded_at, review_note, file_size, mime_type')
       .eq('lead_id', lead.id),
+    // The "Consultation call" stage: the latest call that is booked or took place. A confirmed call whose time has passed
+    // is shown as held (the dispatcher records it so a day later unless the team marks a no-show, which drops it here);
+    // the portal never presents a call as upcoming, so nothing here can show a past call as one.
     db
       .from('bookings')
       .select('id, starts_at, ends_at, timezone')

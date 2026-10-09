@@ -60,6 +60,16 @@ export async function requireAdmin(): Promise<StaffSession> {
   return s;
 }
 
+/**
+ * Availability edits: admins (every calendar) and lawyers (their own hours and days off only; each Server Action checks
+ * the calendar of the row it changes, see crm-availability.ts). Case managers read.
+ */
+export async function requireCalendarEditor(): Promise<StaffSession> {
+  const s = await requireStaff();
+  if (s.staff.role !== 'admin' && s.staff.role !== 'lawyer') throw new ApiError(403, 'forbidden');
+  return s;
+}
+
 /** Maps a thrown value to the error code a Server Action returns to the browser. */
 export function errorCode(e: unknown): 'unauthorized' | 'forbidden' | 'internal' {
   if (e instanceof ApiError) return e.status === 401 ? 'unauthorized' : e.status === 403 ? 'forbidden' : 'internal';

@@ -21,6 +21,7 @@ import type {
   NoteView,
   StaffOption,
 } from '@/components/admin/types';
+import { pickCall } from '@/components/admin/calls';
 import { ancestorLine } from '@/components/admin/model';
 import { asObject, asStringMap, fetchAll } from './crm-util';
 
@@ -127,16 +128,15 @@ export async function loadLeadDetail(db: Db, id: string, labels: DetailLabels): 
     db.from('activity_log').select('*').eq('lead_id', id).order('created_at', { ascending: false }).limit(200),
     db
       .from('bookings')
-      .select('starts_at,ends_at')
+      .select('id,starts_at,ends_at,status,timezone,lawyer:staff!bookings_assigned_to_fkey(user_id,full_name)')
       .eq('lead_id', id)
-      .eq('status', 'confirmed')
-      .gt('starts_at', new Date().toISOString())
-      .order('starts_at')
-      .limit(1)
-      .maybeSingle(),
+      .in('status', ['confirmed', 'completed', 'no_show'])
+      .order('starts_at', { ascending: false })
+      .limit(10),
   ]);
   for (const r of [lead, app, docs, notes, activity, booking]) if (r.error) throw new Error(r.error.message);
   if (!lead.data) return null;
+  const call = pickCall(booking.data ?? [], new Date());
 
   const l = lead.data;
   const data = asStringMap(app.data?.data);
@@ -178,7 +178,7 @@ export async function loadLeadDetail(db: Db, id: string, labels: DetailLabels): 
     notesCount: (notes.data ?? []).length,
     createdAt: l.created_at,
     updatedAt: l.updated_at,
-    nextCallAt: booking.data?.starts_at ?? null,
+    nextCallAt: call?.upcoming ? call.startsAt : null,
     applicationComplete: isApplicationComplete(data) || app.data?.completed_at != null,
     nextActionDoneAt: l.next_action_done_at,
   };
@@ -216,6 +216,6 @@ export async function loadLeadDetail(db: Db, id: string, labels: DetailLabels): 
     answers: quiz,
     notes: noteViews,
     activity: activityViews,
-    call: booking.data ? { startsAt: booking.data.starts_at, endsAt: booking.data.ends_at } : null,
+    call,
   };
 }

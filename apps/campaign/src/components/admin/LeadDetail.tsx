@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { nextActionAction } from '@/app/[locale]/(admin)/admin/actions';
 import { Link } from '@/i18n/navigation';
 import { useAdmin } from './AdminProvider';
+import { CallPanel } from './CallPanel';
 import { DocumentsPanel } from './DocumentsPanel';
 import { ErasePanel } from './ErasePanel';
 import { formatCall } from './format';
@@ -115,7 +116,7 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
               {attention && (
                 <span style={s('font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#fbeeea;color:#8a3b2c')}>{t('lead.attention')}</span>
               )}
-              {detail.call && (
+              {detail.call?.upcoming && (
                 <span
                   data-call-chip
                   style={s('font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#f6f0e4;color:#7a5c2c')}
@@ -222,6 +223,7 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
         </div>
         <div style={s('display:flex;flex-direction:column;gap:14px')}>
           <ContactPanel detail={detail} />
+          {detail.call && <CallPanel key={detail.call.id} leadId={lead.id} call={detail.call} />}
           <OwnerPanel lead={lead} />
           <StatusPanel lead={lead} />
           <NotesPanel detail={detail} />

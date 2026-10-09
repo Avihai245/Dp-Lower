@@ -31,7 +31,7 @@ const source = (dir: string, match: RegExp): string[] =>
 const componentSources = source(__dirname, /\.(ts|tsx)$/);
 const serverSources = source(join(APP, 'src/server'), /^crm.*\.ts$/);
 
-const TOP = ['a11y', 'nav', 'filters', 'search', 'stats', 'views', 'table', 'stage', 'route', 'status', 'waiting', 'board', 'time', 'lead', 'next', 'docs', 'app', 'answers', 'activity', 'contact', 'statusPanel', 'owner', 'notes', 'edit', 'help', 'inbox', 'availability', 'team', 'toast', 'meta'];
+const TOP = ['a11y', 'nav', 'filters', 'search', 'stats', 'views', 'table', 'stage', 'route', 'status', 'waiting', 'board', 'time', 'lead', 'next', 'docs', 'app', 'answers', 'activity', 'contact', 'statusPanel', 'owner', 'notes', 'edit', 'help', 'inbox', 'availability', 'team', 'toast', 'meta', 'callPanel'];
 
 describe('every message the code uses exists in both languages', () => {
   const used = new Set<string>();
@@ -73,6 +73,7 @@ describe('dynamic message families are complete', () => {
     ['activity.inbox', ['new', 'in_progress', 'closed']],
     ['team.roles', ['admin', 'lawyer', 'case_manager']],
     ['availability.errors', ['duplicate', 'invalid', 'forbidden', 'generic']],
+    ['callPanel.phase', ['booked', 'awaiting', 'held', 'no_show']],
     ['toast.error', ['unauthorized', 'forbidden', 'invalid', 'not_found', 'conflict', 'duplicate', 'email_taken', 'stale', 'rate_limited', 'internal']],
   ];
   for (const locale of ['en', 'he'] as const) {
@@ -117,7 +118,7 @@ describe('activity codes', () => {
     }
   }
   // codes the rest of the app writes (portal-session.ts and the API routes): localised when known
-  const others = ['lead_created', 'lead_created_oauth', 'account_created', 'email_verified', 'password_set', 'application_started', 'application_submitted'];
+  const others = ['lead_created', 'lead_created_oauth', 'account_created', 'email_verified', 'password_set', 'application_started', 'application_submitted', 'booking_completed'];
 
   it('finds the codes the CRM writes (sanity check of the scan)', () => {
     for (const c of ['stage_changed', 'status_changed', 'doc_requested', 'doc_reminded', 'doc_received', 'doc_rejected', 'note_added', 'owner_assigned', 'contact_updated', 'password_reset_sent', 'callback_status']) {

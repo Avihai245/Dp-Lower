@@ -171,6 +171,16 @@
       "length": "{minutes} minutes, free.",
       "confirm": "{name}, we have sent the details to <bdi>{email}</bdi>. If something changes, the email has a link to move or cancel it.",
       "change": "Change the time"
+    },
+    "manage": {
+      "yourCall": "Your call: {date}, {time} your time",
+      "keep": "Keep this time",
+      "cancel": "Cancel this call",
+      "confirm": "Cancel your call on {date} at {time}?",
+      "confirmYes": "Yes, cancel it",
+      "confirmNo": "No, keep it",
+      "cancelled": "Your call on {date} at {time} has been cancelled. You can choose a new time below, or skip for now.",
+      "cancelFailed": "We could not cancel the call just now. Please try again."
     }
   },
   "offer": {

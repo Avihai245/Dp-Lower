@@ -53,8 +53,13 @@ export interface EmailLinks {
   /** absolute URLs of the email-safe images (PNG/JPG) */
   logo: string;
   teamPhoto: string;
-  /** landing page, used for "Book my free call" style links */
+  /**
+   * Where the recipient books, moves or cancels the free call ("Book my free call", "Change or cancel"): for a lead, a
+   * signed link (60 days) that opens their own booking step; for anyone else, the landing page.
+   */
   booking: string;
+  /** the campaign's landing page (the Lead Email's footer link); `booking` when not given */
+  landing?: string;
 }
 
 export type AuthLinkKind = 'magiclink' | 'signup' | 'invite' | 'email_change' | 'email' | 'reauthentication';
@@ -62,7 +67,8 @@ export type AuthLinkKind = 'magiclink' | 'signup' | 'invite' | 'email_change' | 
 /** Template-specific data. Each template reads only the fields listed here. */
 export interface EmailData {
   'file-open'?: { applicationState: 'not_started' | 'in_progress' | 'complete'; docsReceived: number; docsTotal: number };
-  'booking-confirmation'?: { startsAt: string; timezone: string; minutes: number };
+  /** `lawyer`: the name of the lawyer the call is assigned to, when it is */
+  'booking-confirmation'?: { startsAt: string; timezone: string; minutes: number; lawyer?: string | null };
   'booking-cancelled'?: { startsAt: string; timezone: string };
   'status-update'?: { status: LeadStatus };
   'document-requested'?: { docTypes: DocType[] };
