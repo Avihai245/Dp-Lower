@@ -491,6 +491,18 @@ test.describe('lead page', () => {
     await expect.poll(async () => (await activity(world.alpha.id, 'owner_cleared')).length).toBe(1);
   });
 
+  test('edit details: a lead without an account of its own cannot be given the address of a staff account', async ({ adminPage: page, world }) => {
+    await openLead(page, world.delta.id);
+    const before = await getLead(world.delta.id);
+    await page.locator('[data-edit-lead]').click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Email').fill(world.manager.email);
+    await dialog.getByRole('button', { name: 'Save changes' }).click();
+    await expect(dialog.getByText('This email address is already in use by another lead or account.')).toBeVisible();
+    expect((await getLead(world.delta.id)).email).toBe(before.email);
+    expect((await activity(world.delta.id, 'contact_updated')).length).toBe(0);
+  });
+
   test('edit details: updates the lead and the Supabase user, ends old sessions on an email change, and emails a password reset link', async ({
     adminPage: page,
     world,
@@ -544,7 +556,12 @@ test.describe('lead page', () => {
     // an address another lead already uses is refused
     await dialog.getByLabel('Email').fill(world.alpha.email);
     await dialog.getByRole('button', { name: 'Save changes' }).click();
-    await expect(dialog.getByText('Another lead already uses this email address.')).toBeVisible();
+    await expect(dialog.getByText('This email address is already in use by another lead or account.')).toBeVisible();
+    expect((await getLead(world.gamma.id)).email).toBe(newEmail);
+    // so is the address of a sign-in account that is no lead's (a member of staff): the lead would otherwise be the way into it
+    await dialog.getByLabel('Email').fill(world.manager.email);
+    await dialog.getByRole('button', { name: 'Save changes' }).click();
+    await expect(dialog.getByText('This email address is already in use by another lead or account.')).toBeVisible();
     expect((await getLead(world.gamma.id)).email).toBe(newEmail);
     await dialog.getByLabel('Email').fill(newEmail);
 

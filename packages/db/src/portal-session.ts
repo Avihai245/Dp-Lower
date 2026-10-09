@@ -21,23 +21,101 @@ const randomPassword = () => randomBytes(24).toString('base64url');
  *     browser than the one that created the lead, anything set up before (password, sessions, lead cookie) is
  *     revoked: this defeats pre-registration of somebody else's email address.
  *  4. A lead that already exists for the email can only be re-entered through an emailed link (/go/[token]).
+ *  5. The same holds for sign-in accounts: an address that already has an account which is not this lead's own (staff,
+ *     a hand-made account, one registered by somebody else) is never taken over by the holder of a lead cookie. Only
+ *     an emailed link, which proves the mailbox, may link such an account (never a staff account), and "Go to my
+ *     portal" never signs anyone in as staff.
  */
 
-/** The Supabase user for a lead; creates (and links) it on first use. */
-export async function ensureAuthUser(db: Db, lead: LeadRow): Promise<{ userId: string; lead: LeadRow }> {
+/**
+ * The address of the lead already belongs to a sign-in account that is not this lead's own (a member of staff, an
+ * account somebody registered by hand, one created by someone else with the same address). Whoever holds only the lead
+ * cookie must never be signed in as that account.
+ */
+export class AccountEmailInUse extends Error {
+  constructor() {
+    super('account_email_in_use');
+    this.name = 'AccountEmailInUse';
+  }
+}
+
+export interface AdoptOptions {
+  /**
+   * The caller has already seen the owner of the mailbox prove control of it (an emailed link). Only then may the lead
+   * take over an existing account that someone else made for the address; a member of staff never can.
+   */
+  mailboxProven?: boolean;
+}
+
+const isStaffUserId = async (db: Db, userId: string): Promise<boolean> => {
+  const { data } = await db.from('staff').select('user_id').eq('user_id', userId).maybeSingle();
+  return !!data;
+};
+
+/**
+ * May this lead take over the existing sign-in account `userId`? 'own': the account the server itself made for this very
+ * lead (`app_metadata.lead_id`, which only the server can write: an earlier request created it and was cut off before
+ * linking it). 'proven': an account someone else made for the address, allowed only once the mailbox is proven and no
+ * other lead holds it. A staff account never.
+ */
+async function adoption(db: Db, userId: string, lead: LeadRow, opts: AdoptOptions): Promise<'own' | 'proven' | null> {
+  if (await isStaffUserId(db, userId)) return null;
+  const { data } = await db.auth.admin.getUserById(userId);
+  if ((data?.user?.app_metadata as { lead_id?: string } | undefined)?.lead_id === lead.id) return 'own';
+  if (!opts.mailboxProven) return null;
+  const { data: other } = await db.from('leads').select('id').eq('user_id', userId).neq('id', lead.id).maybeSingle();
+  return other ? null : 'proven';
+}
+
+/**
+ * Takes over an account somebody else registered for the address. Whoever made it may know its password and may hold
+ * sessions, and the mailbox owner has just proven the address is theirs: both are replaced (the same defence as
+ * markEmailVerified applies to the account of a lead).
+ */
+async function takeOver(db: Db, userId: string, lead: LeadRow): Promise<void> {
+  const { error } = await db.auth.admin.updateUserById(userId, {
+    password: randomPassword(),
+    email_confirm: true,
+    app_metadata: { lead_id: lead.id },
+  });
+  if (error) throw new Error(`taking over the account failed: ${error.message}`);
+  await db.rpc('revoke_user_sessions', { p_user: userId });
+}
+
+/**
+ * The Supabase user for a lead; creates (and links) it on first use. An address that already has a sign-in account
+ * that is not this lead's own is NOT taken over (AccountEmailInUse) unless the mailbox has been proven: linking such an
+ * account would let the holder of a lead cookie, who has proved nothing, sign in as it ("Go to my portal"), a member of
+ * staff included.
+ */
+export async function ensureAuthUser(db: Db, lead: LeadRow, opts: AdoptOptions = {}): Promise<{ userId: string; lead: LeadRow }> {
   if (lead.user_id) return { userId: lead.user_id, lead };
 
-  const { data: existing } = await db.rpc('auth_user_id_by_email', { p_email: lead.email });
-  let userId = (existing as string | null) ?? null;
-  if (!userId) {
+  const lookup = async () => ((await db.rpc('auth_user_id_by_email', { p_email: lead.email })).data as string | null) ?? null;
+  const adopt = async (id: string): Promise<void> => {
+    const how = await adoption(db, id, lead, opts);
+    if (!how) throw new AccountEmailInUse();
+    if (how === 'proven') await takeOver(db, id, lead);
+  };
+
+  let userId = await lookup();
+  if (userId) {
+    await adopt(userId);
+  } else {
     const { data, error } = await db.auth.admin.createUser({
       email: lead.email,
       password: randomPassword(),
       email_confirm: true,
       user_metadata: { full_name: lead.full_name, lead_id: lead.id },
+      app_metadata: { lead_id: lead.id },
     });
-    if (error || !data.user) throw new Error(`createUser failed: ${error?.message ?? 'unknown'}`);
-    userId = data.user.id;
+    if (data?.user) userId = data.user.id;
+    else {
+      // a concurrent request (a double click) created it a moment ago: that one is ours, anyone else's is not
+      userId = await lookup();
+      if (!userId) throw new Error(`createUser failed: ${error?.message ?? 'unknown'}`);
+      await adopt(userId);
+    }
   }
   const { data: updated, error } = await db
     .from('leads')
@@ -89,8 +167,10 @@ export async function markAccountCreated(db: Db, lead: LeadRow): Promise<LeadRow
  * cookie. Route Handlers and Server Actions only. The caller must already have established that this browser may
  * enter the lead: valid lead cookie, a verified emailed token, or a fresh OAuth login.
  */
-export async function openPortalSession(db: Db, lead: LeadRow): Promise<LeadRow> {
-  const { lead: l } = await ensureAuthUser(db, lead);
+export async function openPortalSession(db: Db, lead: LeadRow, opts: AdoptOptions = {}): Promise<LeadRow> {
+  const { lead: l, userId } = await ensureAuthUser(db, lead, opts);
+  // a lead is never a way into a staff account, whatever links it
+  if (await isStaffUserId(db, userId)) throw new AccountEmailInUse();
 
   const { data, error } = await db.auth.admin.generateLink({ type: 'magiclink', email: l.email });
   const tokenHash = data?.properties?.hashed_token;
@@ -113,6 +193,8 @@ export async function openPortalSession(db: Db, lead: LeadRow): Promise<LeadRow>
  * Returns null when the new address is taken by another sign-in user or lead (nothing is changed then).
  */
 export async function changeLeadEmail(db: Db, lead: LeadRow, email: string, extra: Partial<LeadRow> = {}): Promise<LeadRow | null> {
+  // a lead without an account of its own cannot move to an address that already has one (staff, someone else's)
+  if (!lead.user_id && (await db.rpc('auth_user_id_by_email', { p_email: email })).data) return null;
   if (lead.user_id) {
     const { error } = await db.auth.admin.updateUserById(lead.user_id, { email, email_confirm: true, password: randomPassword() });
     if (error) return null;

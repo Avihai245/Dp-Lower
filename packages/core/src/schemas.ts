@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DOC_ALLOWED_MIME, DOC_MAX_BYTES, DOC_TYPES } from './documents';
 import { applicationDataSchema } from './application';
-import { digitsOf, EMAIL_RE } from './format';
+import { digitsOf, EMAIL_RE, multiLine, oneLine } from './format';
 import { LOCALES } from './locale';
 import { quizAnswersSchema } from './quiz';
 import { isValidTimeZone } from './timezone';
@@ -13,15 +13,18 @@ export const emailSchema = z
   .toLowerCase()
   .max(254)
   .regex(EMAIL_RE, 'invalid_email');
-export const nameSchema = z.string().trim().min(2, 'invalid_name').max(120, 'invalid_name');
+/** Free text from a form is cleaned before it is checked: no control or invisible characters (see oneLine). */
+const line = (max: number, min = 0, message?: string) => z.string().transform(oneLine).pipe(z.string().min(min, message).max(max, message));
+const lines = (max: number) => z.string().transform(multiLine).pipe(z.string().max(max));
+
+export const nameSchema = line(120, 2, 'invalid_name');
 export const phoneSchema = z
   .string()
-  .trim()
-  .max(40)
-  .refine((v) => digitsOf(v).length >= 7, 'invalid_phone');
+  .transform(oneLine)
+  .pipe(z.string().max(40).refine((v) => digitsOf(v).length >= 7, 'invalid_phone'));
 export const passwordSchema = z.string().min(8, 'password_too_short').max(72, 'password_too_long');
 
-const utmSchema = z.record(z.string().max(40), z.string().max(300)).refine((o) => Object.keys(o).length <= 12);
+const utmSchema = z.record(line(40), line(300)).refine((o) => Object.keys(o).length <= 12);
 
 /** POST /api/leads: end of the eligibility questions + contact details. */
 export const leadInputSchema = z.object({
@@ -30,7 +33,7 @@ export const leadInputSchema = z.object({
   phone: phoneSchema,
   locale: localeSchema.default('en'),
   answers: quizAnswersSchema.default({}),
-  source: z.string().trim().max(80).optional(),
+  source: line(80).optional(),
   utm: utmSchema.optional(),
   consent: z.boolean().optional(),
 });
@@ -45,10 +48,10 @@ export type BookingInput = z.infer<typeof bookingInputSchema>;
 
 /** POST /api/callbacks ("Speak with an AI Advisor") */
 export const callbackInputSchema = z.object({
-  name: z.string().trim().max(120).optional(),
+  name: line(120).optional(),
   phone: phoneSchema,
   locale: localeSchema.default('en'),
-  source: z.string().trim().max(80).optional(),
+  source: line(80).optional(),
 });
 export type CallbackInput = z.infer<typeof callbackInputSchema>;
 
@@ -56,8 +59,8 @@ export type CallbackInput = z.infer<typeof callbackInputSchema>;
 const contactBase = {
   name: nameSchema,
   locale: localeSchema.default('en'),
-  page: z.string().max(300).optional(),
-  source: z.string().max(80).optional(),
+  page: line(300).optional(),
+  source: line(80).optional(),
   utm: utmSchema.optional(),
   /** honeypot: real visitors never fill it */
   website: z.string().max(0).optional(),
@@ -68,8 +71,8 @@ export const contactSubmissionSchema = z.discriminatedUnion('kind', [
     kind: z.literal('contact'),
     email: emailSchema,
     phone: phoneSchema,
-    matter: z.string().trim().max(120).optional(),
-    note: z.string().trim().max(4000).optional(),
+    matter: line(120).optional(),
+    note: lines(4000).optional(),
     consent: z.literal(true),
   }),
   z.object({
@@ -77,8 +80,8 @@ export const contactSubmissionSchema = z.discriminatedUnion('kind', [
     kind: z.literal('lead_band'),
     email: emailSchema,
     phone: phoneSchema,
-    matter: z.string().trim().max(120).optional(),
-    note: z.string().trim().max(4000).optional(),
+    matter: line(120).optional(),
+    note: lines(4000).optional(),
     consent: z.literal(true),
   }),
   z.object({
@@ -86,8 +89,8 @@ export const contactSubmissionSchema = z.discriminatedUnion('kind', [
     kind: z.literal('chat'),
     email: emailSchema.optional().or(z.literal('').transform(() => undefined)),
     phone: phoneSchema,
-    matter: z.string().trim().max(120).optional(),
-    note: z.string().trim().max(4000).optional(),
+    matter: line(120).optional(),
+    note: lines(4000).optional(),
     consent: z.literal(true),
   }),
 ]);

@@ -234,6 +234,7 @@
     "disclaimer": "Not a legal assessment. Eligibility and the granting of citizenship are not guaranteed.",
     "errors": {
       "portal": "We could not open your portal just now. Please try again.",
+      "accountExists": "This email address already has a sign-in account, so we cannot open it from here. <link>Sign in</link> with its password, or use Forgot it? on that page and we will email you a link.",
       "email": "We could not send the email just now. Please try again."
     }
   }

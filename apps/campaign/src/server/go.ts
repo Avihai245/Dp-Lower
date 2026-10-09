@@ -26,7 +26,8 @@ export async function openFromEmailLink(req: Request, locale: Locale, token: str
 
     const sameBrowser = await isSameBrowser(db, lead);
     const verified = await markEmailVerified(db, lead, { sameBrowser });
-    await openPortalSession(db, verified);
+    // the link was received at this address: the mailbox is proven (a staff account is still never taken over)
+    await openPortalSession(db, verified, { mailboxProven: true });
     return redirectTo(req, localizePath(link.next, locale));
   } catch (e) {
     console.error('[go] could not open the portal from an emailed link', e);

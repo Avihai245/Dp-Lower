@@ -60,6 +60,7 @@ Change these in one search-and-replace if the firm prefers other words.
 - The advisor window was rewritten to say what really happens (a person calls back); its Hebrew needs the firm's approval together with the legal text.
 - Funnel: the note under a locked email field, "את כתובת האימייל של התיק אפשר לשנות רק בפנייה אלינו" (shown to applicants who are signed in or have a password); "זכאות" for "claim"; "שיחת ייעוץ חינם"; "לתוצאה שלי" (the button to the result); the placeholder disclaimer; the Hebrew plural form `two` in the "questions left" text (Hebrew has a dual).
 - Screens the design did not have (expired link, unsubscribe, "we emailed you a link", reset copy, loading and error states): all Hebrew is new text.
+- "Go to my portal" for an address that already has a sign-in account (`funnel.offer.errors.accountExists`, new text in both languages): "לכתובת האימייל הזו כבר יש חשבון, ולכן אי אפשר לפתוח אותו מכאן. התחברו עם הסיסמה שלו, או השתמשו ב„שכחתם?” בעמוד ההתחברות ונשלח לכם קישור במייל."
 - Managing the booked call on the booking step (`funnel.booking.manage.*`, new text in both languages): "השיחה שלכם: {date}, {time} לפי השעון שלכם", "להשאיר את המועד הזה", "ביטול השיחה", "לבטל את השיחה שלכם ({date}, {time})?", "כן, לבטל" / "לא, להשאיר", "השיחה שלכם ({date}, {time}) בוטלה. אפשר לבחור מועד חדש למטה, או לדלג לעכשיו.", "לא הצלחנו לבטל את השיחה כרגע. נסו שוב." The date and time are put in brackets so that the Hebrew date ("יום א׳, 11 באוק׳") does not need a preposition.
 
 ### Client portal
@@ -72,6 +73,7 @@ Change these in one search-and-replace if the firm prefers other words.
 
 ### Staff screens (CRM)
 
+- The refusal of an email address in "Edit details" (`admin.edit.emailTaken`): "כתובת האימייל הזו כבר בשימוש אצל ליד או חשבון אחר."
 - The line after "Edit details" is saved: "נשמר. {first} מקבל/ת מייל המאשר את השינוי" (the design's "{first} gets an email confirming the change") and the longer one after an email change.
 - "חשבון" (Portal, as a stage label in the "waiting on" column), "ליד" (Lead), "בהמתנה" (Waiting on, a table column), "אושר" (Granted), "הוגש לרשות" (Filed with authority), "צוות התיק" (Case team), "דרכון המבקש/ת" (Your passport, in the staff context), "עב" as the label of the language switch.
 - Calendars per lawyer (`availability.scopes.*`, `help.calendars`): "יומן" (Calendar), "ללא שיוך (כל עורך/ת דין)" (Unassigned, any lawyer), "שעות שבועיות: {name}", "אפשר לשנות רק את השעות שלכם.", "סגור לכולם" (Closed for everyone), "חל על" (Applies to), "{name} בלבד", "עורך/ת דין: {name}", "כל עורך/ת דין"; the help text says "ימי היעדרות" for a lawyer's days off.

@@ -5,7 +5,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Database } from './database.types';
-import { ensureAuthUser, markAccountCreated, markEmailVerified } from './portal-session';
+import { AccountEmailInUse, changeLeadEmail, ensureAuthUser, markAccountCreated, markEmailVerified, openPortalSession } from './portal-session';
 import type { LeadRow } from './types';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,11 +19,24 @@ describe.skipIf(!live)('lead -> account bridge (real GoTrue)', () => {
   const stamp = Date.now();
 
   // the database is shared with other work: remove the leads and sign-in users this file created
+  const made: string[] = [];
   afterAll(async () => {
     const { data: leads } = await db.from('leads').select('id, user_id').like('email', `%-${stamp}@example.com`);
     for (const lead of leads ?? []) if (lead.user_id) await db.auth.admin.deleteUser(lead.user_id);
     await db.from('leads').delete().like('email', `%-${stamp}@example.com`);
+    for (const id of made) {
+      await db.from('staff').delete().eq('user_id', id);
+      await db.auth.admin.deleteUser(id);
+    }
   });
+
+  /** A sign-in account that already exists for the address, made by someone other than the lead's own request. */
+  async function foreignAccount(email: string, extra: { password?: string; user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown> } = {}) {
+    const { data, error } = await db.auth.admin.createUser({ email, password: extra.password ?? 'foreign-password-1', email_confirm: true, ...extra });
+    expect(error).toBeNull();
+    made.push(data.user!.id);
+    return data.user!.id;
+  }
 
   async function newLead(tag: string): Promise<LeadRow> {
     const { data, error } = await db.from('leads').insert({ full_name: `Int ${tag}`, email: `int-${tag}-${stamp}@example.com` }).select('*').single();
@@ -140,5 +153,85 @@ describe.skipIf(!live)('lead -> account bridge (real GoTrue)', () => {
     expect(up.error).toBeNull();
     const login = await createClient<Database>(url!, anon!, opts).auth.signInWithPassword({ email: lead.email, password: 'brand-new-password-1' });
     expect(login.error).toBeNull();
+  });
+
+  describe('an address that already has a sign-in account of someone else', () => {
+    it('is never linked to a lead on the word of a lead cookie, and a staff account never at all', async () => {
+      const lead = await newLead('staff');
+      const staffId = await foreignAccount(lead.email);
+      await db.from('staff').insert({ user_id: staffId, full_name: 'Case Staffer', email: lead.email, role: 'case_manager' });
+
+      await expect(ensureAuthUser(db, lead)).rejects.toBeInstanceOf(AccountEmailInUse);
+      // not even when the mailbox is proven: a staff account is not an applicant's
+      await expect(ensureAuthUser(db, lead, { mailboxProven: true })).rejects.toBeInstanceOf(AccountEmailInUse);
+      expect((await db.from('leads').select('user_id').eq('id', lead.id).single()).data?.user_id).toBeNull();
+    });
+
+    it('a lead that was somehow linked to a staff account still cannot sign anyone in as it', async () => {
+      const lead = await newLead('staff-linked');
+      const staffId = await foreignAccount(lead.email);
+      await db.from('staff').insert({ user_id: staffId, full_name: 'Case Staffer', email: lead.email, role: 'admin' });
+      const linked = (await db.from('leads').update({ user_id: staffId }).eq('id', lead.id).select('*').single()).data!;
+      // refused before any session is created (a request context is not even needed to find that out)
+      await expect(openPortalSession(db, linked)).rejects.toBeInstanceOf(AccountEmailInUse);
+      await expect(openPortalSession(db, linked, { mailboxProven: true })).rejects.toBeInstanceOf(AccountEmailInUse);
+    });
+
+    it('an account somebody registered by hand is not adopted by a lead cookie; an emailed link adopts it and replaces its password and sessions', async () => {
+      const lead = await newLead('handmade');
+      const userId = await foreignAccount(lead.email, { password: 'attacker-password-2' });
+      const attacker = createClient<Database>(url!, anon!, opts);
+      expect((await attacker.auth.signInWithPassword({ email: lead.email, password: 'attacker-password-2' })).error).toBeNull();
+
+      await expect(ensureAuthUser(db, lead)).rejects.toBeInstanceOf(AccountEmailInUse);
+      expect((await db.from('leads').select('user_id').eq('id', lead.id).single()).data?.user_id).toBeNull();
+
+      const adopted = await ensureAuthUser(db, lead, { mailboxProven: true });
+      expect(adopted.userId).toBe(userId);
+      expect(adopted.lead.user_id).toBe(userId);
+      // what the registrant knew no longer works
+      expect((await createClient<Database>(url!, anon!, opts).auth.signInWithPassword({ email: lead.email, password: 'attacker-password-2' })).error).not.toBeNull();
+      expect((await attacker.auth.refreshSession()).error).not.toBeNull();
+    });
+
+    it('trusts only what the server wrote: app_metadata.lead_id (an earlier, cut-off attempt) is adopted, user_metadata.lead_id (writable by anyone) is not', async () => {
+      const mine = await newLead('cutoff');
+      const userId = await foreignAccount(mine.email, { app_metadata: { lead_id: mine.id } });
+      expect((await ensureAuthUser(db, mine)).userId).toBe(userId);
+
+      const forged = await newLead('forged-meta');
+      await foreignAccount(forged.email, { user_metadata: { lead_id: forged.id } });
+      await expect(ensureAuthUser(db, forged)).rejects.toBeInstanceOf(AccountEmailInUse);
+    });
+
+    it('an account that another lead already holds is not taken, whoever vouches for the mailbox', async () => {
+      const holder = await newLead('holder');
+      const other = await newLead('other');
+      const userId = await foreignAccount(other.email);
+      await db.from('leads').update({ user_id: userId }).eq('id', holder.id);
+      await expect(ensureAuthUser(db, other, { mailboxProven: true })).rejects.toBeInstanceOf(AccountEmailInUse);
+    });
+
+    it('two requests that race to create the account of a lead agree on one account (the second one finds the first one\'s)', async () => {
+      const lead = await newLead('race');
+      const results = await Promise.allSettled([ensureAuthUser(db, lead), ensureAuthUser(db, lead)]);
+      const ok = results.filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof ensureAuthUser>>> => r.status === 'fulfilled');
+      expect(ok.length).toBeGreaterThanOrEqual(1);
+      expect(new Set(ok.map((r) => r.value.userId)).size).toBe(1);
+      for (const r of results) if (r.status === 'rejected') expect(r.reason).not.toBeInstanceOf(AccountEmailInUse);
+    });
+
+    it('a lead without an account cannot move to an address that has one, a lead with one is refused by the auth server', async () => {
+      const lead = await newLead('mover');
+      const staffId = await foreignAccount(`staff-target-${stamp}@example.com`);
+      await db.from('staff').insert({ user_id: staffId, full_name: 'Target', email: `staff-target-${stamp}@example.com`, role: 'admin' });
+      expect(await changeLeadEmail(db, lead, `staff-target-${stamp}@example.com`)).toBeNull();
+      expect((await db.from('leads').select('email').eq('id', lead.id).single()).data?.email).toBe(lead.email);
+
+      const withAccount = await newLead('mover-account');
+      const { lead: linked } = await ensureAuthUser(db, withAccount);
+      expect(await changeLeadEmail(db, linked, `staff-target-${stamp}@example.com`)).toBeNull();
+      expect((await db.from('leads').select('email').eq('id', withAccount.id).single()).data?.email).toBe(withAccount.email);
+    });
   });
 });

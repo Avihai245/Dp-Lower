@@ -4,7 +4,9 @@ import {
   LEAD_STAGES,
   digitsOf,
   emailSchema,
+  multiLine,
   nameSchema,
+  oneLine,
 } from '@dpl/core';
 import { z } from 'zod';
 import { TIME_RE } from '../components/admin/model';
@@ -33,9 +35,9 @@ export const docActionInput = z.object({
   leadId: uuid,
   docType: z.enum(DOC_TYPES),
   action: z.enum(['request', 'remind', 'receive', 'reject']),
-  note: z.string().trim().max(1000).optional(),
+  note: z.string().transform(oneLine).pipe(z.string().max(1000)).optional(),
 });
-export const addNoteInput = z.object({ leadId: uuid, body: z.string().trim().min(1).max(5000) });
+export const addNoteInput = z.object({ leadId: uuid, body: z.string().transform(multiLine).pipe(z.string().min(1).max(5000)) });
 export const deleteNoteInput = z.object({ noteId: uuid });
 export const assignOwnerInput = z.object({ leadId: uuid, ownerId: uuid.nullable() });
 export const updateContactInput = z.object({
@@ -45,9 +47,8 @@ export const updateContactInput = z.object({
   /** empty is allowed only for a lead that has no phone yet (checked against the stored lead) */
   phone: z
     .string()
-    .trim()
-    .max(40)
-    .refine((v) => v === '' || digitsOf(v).length >= 7, 'invalid_phone'),
+    .transform(oneLine)
+    .pipe(z.string().max(40).refine((v) => v === '' || digitsOf(v).length >= 7, 'invalid_phone')),
 });
 export const leadOnlyInput = z.object({ leadId: uuid });
 /** Deleting an applicant needs the case reference typed back, so it cannot happen by a stray click. */
@@ -83,7 +84,7 @@ export const addExceptionInput = z.object({
   onDate: isoDate,
   /** null blocks the whole day */
   startTime: timeHHMM.nullable(),
-  reason: z.string().trim().max(200).optional(),
+  reason: z.string().transform(oneLine).pipe(z.string().max(200)).optional(),
   staffId: scopeField,
 });
 

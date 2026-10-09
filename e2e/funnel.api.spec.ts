@@ -952,3 +952,97 @@ test.describe('hardening', () => {
     expect(res.status()).toBe(400);
   });
 });
+
+test.describe('an address that already has a sign-in account of someone else', () => {
+  test('a member of staff: a lead made with the address is refused entry ("Go to my portal" is 409), links nothing and opens no session', async ({ playwright }) => {
+    const email = newEmail('staff-takeover');
+    const staffId = await createAuthUser(email, 'Staff-Pass-1!');
+    await makeStaff(staffId, email);
+    const stranger = await newClient(playwright);
+    // a lead may still be started for any address, as before (the owner can unsubscribe from what it sends)
+    const created = await stranger.post('/api/leads', { data: leadBody(email) });
+    expect(created.status()).toBe(201);
+
+    const enter = await stranger.post('/api/portal/enter');
+    expect(enter.status()).toBe(409);
+    expect((await enter.json()).error).toBe('account_exists');
+    expect(setCookies(enter).filter((c) => c.startsWith('sb-'))).toEqual([]);
+    expect((await leadByEmail(email))!.user_id).toBeNull();
+
+    // the browser is not signed in to anything: the CRM sends it to the sign-in page
+    const admin = await stranger.get('/admin', { maxRedirects: 0 });
+    expect([302, 303, 307, 308]).toContain(admin.status());
+    expect(new URL(admin.headers().location!, BASE_URL).pathname).toMatch(/\/sign-in$/);
+    // and the staff member's own password is untouched
+    expect(await passwordSignIn(email, 'Staff-Pass-1!')).toBe(true);
+    await stranger.dispose();
+  });
+
+  test('not even the emailed link of such a lead signs anyone in as the staff account', async ({ playwright }) => {
+    const email = newEmail('staff-link');
+    const staffId = await createAuthUser(email, 'Staff-Pass-2!');
+    await makeStaff(staffId, email);
+    const stranger = await newClient(playwright);
+    expect((await stranger.post('/api/leads', { data: leadBody(email) })).status()).toBe(201);
+    const row = (await leadByEmail(email))!;
+    const res = await stranger.post(`/go/${signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n: '/portal' }, 3600)}`, { maxRedirects: 0 });
+    expect(new URL(res.headers().location!, BASE_URL).pathname).toBe('/link-expired');
+    expect(setCookies(res).filter((c) => c.startsWith('sb-'))).toEqual([]);
+    expect((await leadByEmail(email))!.user_id).toBeNull();
+    await stranger.dispose();
+  });
+
+  test('an account somebody made by hand: the cookie holder is refused; the mailbox owner, through the emailed link, gets it and the old password stops working', async ({ playwright }) => {
+    const email = newEmail('handmade');
+    await createAuthUser(email, 'Known-To-Someone-1!');
+    const visitor = await newClient(playwright);
+    expect((await visitor.post('/api/leads', { data: leadBody(email) })).status()).toBe(201);
+    expect((await visitor.post('/api/portal/enter')).status()).toBe(409);
+    expect((await leadByEmail(email))!.user_id).toBeNull();
+    expect(await passwordSignIn(email, 'Known-To-Someone-1!')).toBe(true);
+
+    const row = (await leadByEmail(email))!;
+    const open = await visitor.post(`/go/${signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n: '/portal' }, 3600)}`, { maxRedirects: 0 });
+    expect(open.status()).toBe(303);
+    expect(new URL(open.headers().location!, BASE_URL).pathname).toBe('/portal');
+    expect(setCookies(open).some((c) => c.startsWith('sb-'))).toBe(true);
+    expect((await leadByEmail(email))!.user_id).not.toBeNull();
+    // whoever registered the address first no longer holds it
+    expect(await passwordSignIn(email, 'Known-To-Someone-1!')).toBe(false);
+    await visitor.dispose();
+  });
+
+  test('an applicant whose account the server made (cut off before it was linked) still gets it', async ({ playwright }) => {
+    const visitor = await newClient(playwright);
+    const lead = await createLead(visitor, 'cutoff');
+    const row = (await leadByEmail(lead.email))!;
+    // what an interrupted "Go to my portal" leaves behind: the account, with the lead named in app_metadata, not yet linked
+    const made = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321'}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '', authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ email: lead.email, password: 'cutoff-Password-1!', email_confirm: true, app_metadata: { lead_id: row.id } }),
+    });
+    expect(made.ok).toBe(true);
+    const enter = await visitor.post('/api/portal/enter');
+    expect(enter.status()).toBe(200);
+    expect((await leadByEmail(lead.email))!.user_id).toBe(((await made.json()) as { id: string }).id);
+    await visitor.dispose();
+  });
+});
+
+test.describe('free text in the forms', () => {
+  test('a name with line breaks cannot reach a mail header: it is stored and queued on one line', async ({ playwright }) => {
+    const client = await newClient(playwright);
+    const email = newEmail('crlf');
+    const res = await client.post('/api/leads', { data: leadBody(email, { fullName: 'Anna\r\nBcc: someone-else@example.com\r\nX-Injected: yes Reinhardt', phone: '+49 30\r\n5550 0100' }) });
+    expect(res.status()).toBe(201);
+    const lead = (await leadByEmail(email))!;
+    expect(lead.full_name).toBe('Anna Bcc: someone-else@example.com X-Injected: yes Reinhardt');
+    expect(lead.full_name).not.toMatch(/[\r\n]/);
+    expect(lead.phone).toBe('+49 30 5550 0100');
+    const mail = await emailEvent(lead.id, 'welcome-1');
+    expect(JSON.stringify(mail.payload.to)).not.toMatch(/\\r|\\n/);
+    expect(mail.payload.subject ?? '').not.toMatch(/[\r\n]/);
+    await client.dispose();
+  });
+});

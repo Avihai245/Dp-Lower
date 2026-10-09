@@ -1,6 +1,6 @@
 import 'server-only';
 import { campaignUrl } from '@dpl/db/links';
-import { ensureAuthUser } from '@dpl/db/portal-session';
+import { AccountEmailInUse, ensureAuthUser } from '@dpl/db/portal-session';
 import { logActivity } from '@dpl/db/outbox';
 import { rateLimit } from '@dpl/db/rate-limit';
 import type { Db } from '@dpl/db/types';
@@ -46,6 +46,9 @@ export async function updateContact(
   if (emailChanged) {
     const { data: clash } = await db.from('leads').select('id').eq('email', a.email).neq('id', a.leadId).maybeSingle();
     if (clash) return fail('email_taken', 'email');
+    // a lead without an account of its own cannot take an address that already has one (staff, someone else's); a lead
+    // with one is refused by the auth server below
+    if (!lead.user_id && (await db.rpc('auth_user_id_by_email', { p_email: a.email })).data) return fail('email_taken', 'email');
   }
 
   if (lead.user_id && (emailChanged || changed.includes('name'))) {
@@ -105,8 +108,10 @@ export async function sendResetLink(db: Db, actor: Actor, leadId: string): Promi
   let lead = found;
   try {
     lead = (await ensureAuthUser(db, found)).lead;
-  } catch {
-    return fail('internal');
+  } catch (e) {
+    // the address already has a sign-in account that is not this lead's: nothing is linked, and the link below, which
+    // only the owner of the mailbox receives, is for that account
+    if (!(e instanceof AccountEmailInUse)) return fail('internal');
   }
   const { data, error } = await db.auth.admin.generateLink({ type: 'recovery', email: lead.email });
   const tokenHash = data?.properties?.hashed_token;

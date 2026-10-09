@@ -3,7 +3,7 @@ import { isValidTimeZone, type Locale } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api';
 import type { LeadSummary } from './logic/api-types';
 import { visitorTimeZone, whenLabel } from './logic/booking-format';
@@ -24,7 +24,7 @@ export function OfferView() {
   const [fileOpen, setFileOpen] = useState(false);
   const [emailed, setEmailed] = useState(false);
   const [busy, setBusy] = useState<'portal' | 'email' | null>(null);
-  const [error, setError] = useState<'portal' | 'email' | null>(null);
+  const [error, setError] = useState<'portal' | 'accountExists' | 'email' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,6 +56,7 @@ export function OfferView() {
     }
     setBusy(null);
     if (res.status === 401) router.replace('/details');
+    else if (res.status === 409) setError('accountExists');
     else setError('portal');
   }
 
@@ -117,6 +118,11 @@ export function OfferView() {
                   <span style={s('display: block; font-size: 11.5px; color: #7a5c2c; margin-top: 6px')}>{t('offer.discount.placeholder')}</span>
                 </div>
                 {error === 'portal' && <p role="alert" style={s('font-size: 14px; line-height: 1.5; color: #a03a2c; margin: 0 0 14px')}>{t('offer.errors.portal')}</p>}
+                {error === 'accountExists' && (
+                  <p role="alert" data-account-exists style={s('font-size: 14px; line-height: 1.5; color: #a03a2c; margin: 0 0 14px')}>
+                    {t.rich('offer.errors.accountExists', { link: (c) => <Link href="/sign-in" style={s('color: inherit; font-weight: 600')}>{c}</Link> })}
+                  </p>
+                )}
                 <button type="button" className="btn btn-primary" disabled={busy === 'portal'} aria-busy={busy === 'portal'} onClick={() => void goPortal()} style={s(`${CTA}; opacity: ${busy === 'portal' ? 0.6 : 1}`)}>
                   {t('offer.goPortal')}
                 </button>
