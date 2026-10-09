@@ -16,6 +16,18 @@ begin
   where n.nspname = 'public'
     and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%');
   assert missing is null, 'functions without a fixed search_path: ' || coalesce(missing, '');
+
+  -- no security-definer function of the public schema can be run by a visitor who is not signed in (advisor 0028); the
+  -- three policy helpers stay open to signed-in users only
+  select string_agg(p.proname, ', ') into missing
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.prosecdef and has_function_privilege('anon', p.oid, 'execute');
+  assert missing is null, 'security-definer functions open to anon: ' || coalesce(missing, '');
+  select string_agg(p.proname, ', ') into missing
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.prosecdef and has_function_privilege('authenticated', p.oid, 'execute')
+    and p.proname not in ('is_staff', 'is_admin', 'owns_lead');
+  assert missing is null, 'security-definer functions open to signed-in users: ' || coalesce(missing, '');
 end $$;
 
 rollback;

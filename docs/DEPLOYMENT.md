@@ -33,6 +33,16 @@ no code changes are needed to go live. Placeholders you must replace are in `<an
 6. **Database, Backups**: enable daily backups (Pro) or schedule `pg_dump`. The `documents` bucket holds passports and civil records: keep it private (it is by default) and restrict who has dashboard access.
 7. Realtime: nothing to do (the migration adds the CRM tables to the publication).
 
+### 2.1 State of the hosted project `Dp-Lower` (set up on 2026-10-09)
+
+Project ref `gfjkvlcecnvrvvqxikhf`, API `https://gfjkvlcecnvrvvqxikhf.supabase.co`, organization "Avihai sabatier" (Pro), region **ap-northeast-1 (Tokyo)**.
+
+Done: all migrations `20261009000001` to `20261009000101` are applied, recorded under their file versions (so `supabase db push` later sees nothing to do); the `documents` bucket is private (20 MB, PDF/JPG/PNG/HEIC/WebP/DOCX); every table has RLS on, the Data API is read-only for signed-in users and closed to visitors, and the SQL tests (`supabase/tests`, all roll back) pass on it; the security advisor lists only two intended items (`rate_limits` has RLS and no policy on purpose: only the server's service role reads it; `is_staff`, `is_admin` and `owns_lead` stay callable by signed-in users because the policies and the sign-in page need them). Auth: Site URL `https://euro-passports.com`; redirect allow-list `https://euro-passports.com/**` and `https://www.lawoffice.org.il/**`; password minimum 8 with the leaked-password check; MFA enrolment off; the case reference counter starts at DPL-26-1001.
+
+Still to do by hand (they need things only the firm has): step 5 above (Send Email hook, once the campaign is deployed and `SEND_EMAIL_HOOK_SECRET` exists), Google (section 7), backups, and the Vercel variables (section 3: the URL and the publishable key are public, the **service role key** is a secret: Project Settings, API Keys, `service_role`).
+
+Region: Tokyo is about 200 ms from Israel for every database round trip, Frankfurt about 60 ms. The project is empty, so moving to `eu-central-1` costs nothing now: create a new project there and apply the migrations (`supabase db push`).
+
 ## 3. Environment variables
 
 Set them in each Vercel project (Settings, Environment Variables, Production + Preview). Generate secrets with `openssl rand -hex 32`.

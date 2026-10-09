@@ -133,6 +133,10 @@ Three more agents that had not written the code: security (the account-takeover 
 
 Accepted or left to the firm: a name typed as `Tom <tom@evil.com>` is stored as `Tom tom@evil.com` (harmless text; the tag characters are stripped); after the team changes an applicant's address in the CRM, the new address receives the "details changed" email but not the confirmation of a call it already holds (the applicant can open the call from the portal); `/en/` redirects twice; `/he/foo.txt` shows the English 404 page; the call panel says "Waiting to be marked" while a call is running. Not covered by any round and worth a manual look before launch: the Realtime subscription scope for each staff role, Server Action replay across roles, a live hostile webhook POST to the Auth hook, and the Hebrew portal screens at 1440 px.
 
+### 1.1d The hosted project
+
+Connecting `Dp-Lower` was itself checked. The advisor found security-definer helpers (`is_staff`, `is_admin`, `owns_lead`, and the platform's `rls_auto_enable`) callable by visitors through `/rest/v1/rpc/...`: migration `20261009000015_helper_function_grants.sql` closes them for visitors (every policy is `to authenticated`), and `010_realtime_and_function_paths.sql` now fails if one is opened again. Accepted: `is_staff`, `is_admin`, `owns_lead` for signed-in users (the policies need them and they answer only about the caller) and `rate_limits` without a policy (deny-all by design). Read as `anon` and as `authenticated` with a stranger's identity, no table returned a row or accepted a write. Not done from the build environment: live requests to the project's API (the network policy blocks `*.supabase.co`), so the apps have not yet been run against it; do it with `pnpm e2e` after pointing `apps/*/.env.local` at the project.
+
 ### 1.2 Per-lawyer availability and the booking lifecycle (B-05, B-08)
 
 See the `/api/bookings` rows in section 8 of `ARCHITECTURE.md` and the data model in its section 6. Summary of the behaviour: each lawyer has their own weekly hours and blocked
