@@ -1,1 +1,8 @@
-{}
+{
+  "skipToContent": "Skip to main content",
+  "redirecting": "Taking you there…",
+  "language": {
+    "name": "עברית",
+    "switchLabel": "עברית — Switch to Hebrew"
+  }
+}

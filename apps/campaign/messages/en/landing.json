@@ -1,1 +1,251 @@
-{}
+{
+  "meta": {
+    "title": "German & Austrian Citizenship by Descent — Free Eligibility Check | Decker Pex Levi",
+    "description": "If a parent, grandparent or great-grandparent fled or was persecuted in Germany or Austria, you may qualify for citizenship. Free 2-minute eligibility check and a call with a lawyer.",
+    "serviceName": "German and Austrian citizenship by descent",
+    "serviceType": "Citizenship restoration",
+    "offerDescription": "Free eligibility check and consultation call"
+  },
+  "header": {
+    "logoAlt": "Decker Pex Levi",
+    "navLabel": "Main navigation",
+    "paths": "Germany & Austria",
+    "process": "How it works",
+    "team": "Our team",
+    "faq": "Questions",
+    "track": "Track my application",
+    "advisor": "Speak with an AI Advisor",
+    "cta": "Check your eligibility"
+  },
+  "hero": {
+    "videoTitle": "Decker Pex Levi background video",
+    "kicker": "German & Austrian citizenship by descent",
+    "title": "Your family history could open the door to European citizenship.",
+    "lead": "If a parent, grandparent or great-grandparent fled or was persecuted in Germany or Austria, provisions in German and Austrian law may allow you, and your children, to seek citizenship today.",
+    "note": "This applies particularly to descendants of Jewish families who were forced to leave Germany or Austria during the Nazi era.",
+    "cta": "Check your eligibility",
+    "advisor": "Speak with an AI Advisor",
+    "advisorHint": "Get a call in seconds",
+    "stars": "5 out of 5 stars",
+    "score": "4.9",
+    "count": "380+ Google reviews",
+    "scroll": "Scroll to explore"
+  },
+  "stats": [
+    {
+      "title": "Germany & Austria",
+      "text": "Both practices handled in-house"
+    },
+    {
+      "title": "Licensed counsel",
+      "text": "Your case is prepared by lawyers, not agents"
+    },
+    {
+      "title": "Records research",
+      "text": "We look for the documents you cannot find"
+    }
+  ],
+  "why": {
+    "kicker": "Why this may apply to you",
+    "title": "Most families never knew this history still counted.",
+    "photoAlt": "Hands holding a historical family photograph beside old letters and a map of Central Europe",
+    "story": [
+      "“My grandmother left Vienna in 1938.”",
+      "“Our family rarely spoke about what happened.”",
+      "“I never realized that history could still create rights today.”"
+    ],
+    "p1": "Germany and Austria both created ways for descendants of people persecuted or driven out during the Nazi era to reclaim the citizenship their family lost. The provisions have widened in recent years, so families told long ago that they did not qualify often do now.",
+    "p2": "You do not need documents, German, or a complete family tree to begin. Only a rough sense of who left, and when."
+  },
+  "routes": {
+    "kicker": "Two routes",
+    "title": "Your family's country decides the route. We work out which.",
+    "cta": "Check this route →",
+    "items": [
+      {
+        "kicker": "Route 01 · Deutschland",
+        "country": "Germany",
+        "title": "Restoration under German law",
+        "body": "For descendants of those who lost or were denied German citizenship between 1933 and 1945. The provisions have widened in recent years."
+      },
+      {
+        "kicker": "Route 02 · Österreich",
+        "country": "Austria",
+        "title": "Citizenship for descendants",
+        "body": "For descendants of those who fled Austria because of persecution, with no limit on how many generations back the line reaches."
+      }
+    ]
+  },
+  "attorneys": {
+    "kicker": "Our team",
+    "title": "The attorneys behind your case.",
+    "intro": "Licensed attorneys, not agents. Your case is prepared and signed by a qualified lawyer registered with the Israel Bar Association.",
+    "photoToCome": "Photograph to come",
+    "ranking": "Decker Pex Levi is ranked among Israel's leading immigration law firms. Dun's 100, 2026.",
+    "credentialsTitle": "Admissions and memberships",
+    "people": [
+      {
+        "name": "Anat Levi",
+        "role": "Attorney · Managing Partner",
+        "bio": "Anat Levi is the managing partner of Decker Pex Levi and oversees the firm's citizenship practice. She specialises in German and Austrian citizenship by descent, working through the family history and the records each route requires. Clients describe her as professional and efficient, and write about the personal attention that left them feeling their case was in good hands."
+      },
+      {
+        "name": "Michael Decker",
+        "role": "Attorney · Founding Partner",
+        "bio": "Michael Decker is a founding partner of the firm. He was among the first lawyers in Israel to develop this field, obtaining German and Austrian passports for descendants under the updated citizenship laws. He brings decades of experience in immigration and citizenship law across Israel and Europe."
+      },
+      {
+        "name": "Yehoshua Pex",
+        "role": "Attorney · Founding Partner",
+        "bio": "Yehoshua Pex is a founding partner of the firm and its link to clients around the world. The practice serves families in Hebrew, English, Russian, Ukrainian, Arabic, German, Dutch and Spanish, so people can discuss their family history in their own language. Client reviews single him out as reliable, professional, and providing service at the highest level."
+      }
+    ],
+    "credentials": [
+      {
+        "name": "Israel Bar Association",
+        "note": "All attorneys of the firm are members"
+      },
+      {
+        "name": "Dun's 100, 2026",
+        "note": "Ranked among Israel's leading immigration firms"
+      },
+      {
+        "name": "German and Austrian filings",
+        "note": "Both practices handled in-house"
+      },
+      {
+        "name": "Eight working languages",
+        "note": "Hebrew, English, Russian, Ukrainian, Arabic, German, Dutch, Spanish"
+      }
+    ]
+  },
+  "reputation": {
+    "kicker": "Reputation",
+    "title": "Those two minutes are where these families started.",
+    "score": "4.9",
+    "stars": "5 out of 5 stars",
+    "count": "380+ reviews on Google",
+    "featuredQuote": "“{text}”",
+    "marqueeAlt": "Client review on Google",
+    "showAll": "See all reviews",
+    "showFewer": "Show fewer reviews",
+    "figureTag": "To verify",
+    "figures": [
+      "Families helped with German and Austrian cases",
+      "Years the practice has run these cases",
+      "Approval rate on cases filed by the firm",
+      "Countries our clients write to us from"
+    ],
+    "figuresNote": "Figures to be confirmed by the firm before launch.",
+    "reviews": [
+      {
+        "name": "Jason Miller",
+        "date": "2026-08-27",
+        "text": "DP Lower made a complicated process surprisingly simple. They were responsive, organized, and clear about what documents I needed at every stage. I'm very happy with the service and would absolutely recommend their team."
+      },
+      {
+        "name": "Sarah Klein",
+        "date": "2026-08-05",
+        "text": "I contacted DP Lower because my grandmother was born in Germany and I had no idea whether that could make me eligible for citizenship. They explained everything clearly and helped me understand the process from the very beginning. Excellent experience."
+      },
+      {
+        "name": "David Bernstein",
+        "date": "2026-07-14",
+        "text": "Professional from start to finish. The team helped me locate the documents I needed and kept me updated throughout the process. Getting my German citizenship was something I had been thinking about for years, and I'm glad I finally did it with them."
+      },
+      {
+        "name": "Emily Goldberg",
+        "date": "2026-06-22",
+        "text": "What I appreciated most was how patient everyone was. I had a lot of questions about my family history and eligibility, and I never felt rushed. They walked me through each step and made the whole experience much less intimidating."
+      },
+      {
+        "name": "Jonathan Weiss",
+        "date": "2026-06-03",
+        "text": "Great team and very professional service. They knew exactly what was required for my Austrian citizenship case and guided me through the documentation step by step. Highly recommended."
+      },
+      {
+        "name": "Rachel Hoffman",
+        "date": "2026-05-18",
+        "text": "My family had very limited information about my grandfather's life in Germany, so I assumed the process would be almost impossible. DP Lower helped us understand what was missing and how to move forward. Their guidance made a huge difference."
+      },
+      {
+        "name": "Daniel Friedman",
+        "date": "2026-04-29",
+        "text": "From the initial eligibility check through the documentation process, everything was clear and well organized. I always knew what stage my application was at and what was needed from me next. Very positive experience."
+      },
+      {
+        "name": "Jessica Stein",
+        "date": "2026-04-07",
+        "text": "I started looking into German citizenship mainly because I wanted my children to have more opportunities to live and study in Europe in the future. DP Lower made the process easy to understand and supported our family throughout. I'm incredibly grateful."
+      },
+      {
+        "name": "Robert Adler",
+        "date": "2026-03-16",
+        "text": "Excellent communication and very knowledgeable people. Whenever I had a question, someone was there to explain what was happening. The process took time, but I always felt that my case was being handled professionally."
+      },
+      {
+        "name": "Lauren Kaplan",
+        "date": "2026-02-24",
+        "text": "I honestly expected the citizenship process to be overwhelming. It wasn't. The team broke everything down into manageable steps, helped with the documents, and kept things moving. A very professional and reassuring experience."
+      },
+      {
+        "name": "Andrew Feldman",
+        "date": "2026-02-02",
+        "text": "My grandfather left Austria many years ago, and I wasn't even sure our family would qualify. DP Lower reviewed our situation, explained the process clearly, and guided us through everything that followed. I would definitely recommend speaking with them if you have Austrian family history."
+      },
+      {
+        "name": "Barbara Levine",
+        "date": "2026-01-12",
+        "text": "I began this process because I wanted my grandchildren to have the opportunity to study and build a future in Europe if they choose to. DP Lower was patient, kind, and extremely professional throughout the entire process. For our family, obtaining European citizenship means giving the next generation more possibilities."
+      }
+    ]
+  },
+  "caseStudy": {
+    "kicker": "One case in full",
+    "title": "A grandmother's Vienna, reconstructed.",
+    "who": "Austrian route · client name and photograph to be supplied",
+    "parts": [
+      {
+        "label": "Where it began",
+        "text": "“My grandmother fled Vienna in 1938. I had no documents and didn't know where to start.”"
+      },
+      {
+        "label": "What we did",
+        "text": "“They located the original emigration records, translated all documents, and handled the full application.”"
+      },
+      {
+        "label": "Outcome",
+        "text": "“14 months later, I held an Austrian passport.”"
+      }
+    ],
+    "disclaimer": "Illustrative case, pending client approval. Outcomes depend on each family's records; no result is guaranteed."
+  },
+  "benefits": {
+    "kicker": "What citizenship can mean",
+    "title": "One decision today can open Europe for the next generation.",
+    "lead": "An EU passport isn't a document you use once. It stays in the family, and it passes on.",
+    "items": [
+      {
+        "title": "Live in Europe",
+        "body": "As an EU citizen you may live in EU member states, subject to each state's rules."
+      },
+      {
+        "title": "Work",
+        "body": "Access to employment across the EU without a separate work permit."
+      },
+      {
+        "title": "Study",
+        "body": "European universities at domestic rather than international rates."
+      },
+      {
+        "title": "Travel",
+        "body": "An EU passport alongside the one you already hold."
+      },
+      {
+        "title": "Your children",
+        "body": "Citizenship may pass to the next generation, subject to applicable rules."
+      }
+    ],
+    "disclaimer": "Rights associated with EU citizenship are subject to the rules of each member state. Nothing here is a guarantee of eligibility or of citizenship being granted."
+  }
+}
