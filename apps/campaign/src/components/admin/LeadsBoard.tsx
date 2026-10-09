@@ -113,7 +113,7 @@ export function LeadsBoard({ rows }: { rows: LeadRow[] }) {
                       </span>
                       <span style={s(`margin-left:auto;font-size:11.5px;color:${sub(50)}`)}>{ago(r.updatedAt)}</span>
                     </div>
-                    <div style={s('font-size:15px;font-weight:600;line-height:1.25')}>
+                    <div style={s('font-size:15px;font-weight:600;line-height:1.25;overflow-wrap:anywhere')}>
                       <Link
                         href={`/admin/leads/${r.id}${listQuery}`}
                         onClick={(e) => e.stopPropagation()}

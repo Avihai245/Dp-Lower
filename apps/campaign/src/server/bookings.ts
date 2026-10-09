@@ -1,7 +1,7 @@
 import 'server-only';
 import type { BookingInput } from '@dpl/core';
 import { ApiError } from '@dpl/db/http';
-import { enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
+import { cancelPendingEmails, enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
 import type { BookingRow, Db, LeadRow } from '@dpl/db/types';
 import type { BookingSummary } from '@/components/funnel/logic/api-types';
 import { loadCallSettings } from './availability';
@@ -87,6 +87,8 @@ export async function bookCall(db: Db, lead: LeadRow, input: BookingInput): Prom
   const snapshot = leadSnapshot(lead);
 
   if (previous) {
+    // the confirmation of the call that was moved, if it has not been delivered yet, would announce a time that no longer exists
+    await withdrawConfirmation(db, lead.id, previous.id, 'cancelled: the call was moved');
     await enqueueEvent(db, {
       type: 'booking.cancelled',
       leadId: lead.id,
@@ -126,6 +128,11 @@ export async function bookCall(db: Db, lead: LeadRow, input: BookingInput): Prom
   return { booking, created: true };
 }
 
+/** The confirmation of one booking, if it is still waiting to be delivered, is withdrawn. */
+async function withdrawConfirmation(db: Db, leadId: string, bookingId: string, reason: string): Promise<void> {
+  await cancelPendingEmails(db, leadId, reason, { template: 'booking-confirmation', dedupePrefix: `booking-confirmation:${bookingId}` });
+}
+
 /** Who cancelled: the applicant (funnel / emailed link) or the firm (CRM). */
 export type CancelledBy = { kind: 'applicant' } | { kind: 'staff'; actor: { id: string; name: string } };
 
@@ -134,6 +141,7 @@ export type CancelledBy = { kind: 'applicant' } | { kind: 'staff'; actor: { id: 
  * email to the applicant. Keyed by the booking, so a retried request never sends twice.
  */
 export async function recordCancellation(db: Db, lead: LeadRow, booking: BookingRow, by: CancelledBy): Promise<void> {
+  await withdrawConfirmation(db, lead.id, booking.id, 'cancelled: the call was cancelled');
   const settings = await loadCallSettings(db);
   const summary = toBookingSummary(booking);
   await enqueueEvent(db, {

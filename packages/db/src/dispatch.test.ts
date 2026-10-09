@@ -116,6 +116,23 @@ describe('deliverPending', () => {
       expect(calls).toHaveLength(0);
     });
 
+    it('a transactional email for an address that has since been corrected is dropped too (it carries the name, the phone and the time of the call), except the ones meant for another address', async () => {
+      const tx = (template: string, to: string) =>
+        ev({ id: `t-${template}`, channel: 'email', type: 'email.send', payload: { category: 'transactional', template, to: { email: to } } });
+      const stale = fakeDb([tx('booking-confirmation', 'typo@example.com')], [lead]);
+      expect(await deliverPending(stale.db)).toMatchObject({ sent: 0, cancelled: 1 });
+      expect(String(stale.patches[0]!.patch.last_error)).toContain('corrected');
+      // the notice to the address the file had, and the auth server's confirmation to a new address, are addressed elsewhere on purpose
+      for (const template of ['details-changed', 'auth-link']) {
+        calls.length = 0;
+        const kept = fakeDb([tx(template, 'elsewhere@example.com')], [lead]);
+        expect(await deliverPending(kept.db), template).toMatchObject({ sent: 1, cancelled: 0 });
+      }
+      // and one to the lead's own address goes out, whatever the case
+      const own = fakeDb([tx('booking-confirmation', 'Anna@Example.com')], [lead]);
+      expect(await deliverPending(own.db)).toMatchObject({ sent: 1, cancelled: 0 });
+    });
+
     it('leaves transactional emails alone: a booking confirmation still goes to someone who unsubscribed', async () => {
       const tx = ev({ id: 't1', channel: 'email', type: 'email.send', payload: { category: 'transactional', to: { email: 'anna@example.com' } } });
       const { db } = fakeDb([tx], [{ ...lead, unsubscribed_at: '2026-10-02T00:00:00Z' }]);

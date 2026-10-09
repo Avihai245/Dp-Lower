@@ -1,7 +1,7 @@
 import 'server-only';
 import { campaignUrl } from '@dpl/db/links';
 import { AccountEmailInUse, ensureAuthUser } from '@dpl/db/portal-session';
-import { logActivity } from '@dpl/db/outbox';
+import { cancelPendingEmails, logActivity } from '@dpl/db/outbox';
 import { rateLimit } from '@dpl/db/rate-limit';
 import type { Db } from '@dpl/db/types';
 import { randomUUID } from 'node:crypto';
@@ -77,6 +77,9 @@ export async function updateContact(
   const updated = { ...lead, full_name: fullName, email: a.email, phone, ...(emailChanged ? { session_epoch: lead.session_epoch + 1 } : {}) };
   await announceUpdate(db, updated, changed, emailChanged ? { email: lead.email } : undefined);
   const fields = changed as Array<'name' | 'email' | 'phone'>;
+  // what was queued for the old address (a booking confirmation, a status update) is no longer for their mailbox; the notice
+  // to the old address below is queued after this, on purpose
+  if (emailChanged) await cancelPendingEmails(db, lead.id, 'cancelled: the address was changed by the team', { notTo: a.email });
   const key = randomUUID();
   await queueEmail({ template: 'details-changed', lead: updated, data: { variant: 'current', changed: fields }, dedupeKey: `staff:details-changed:${lead.id}:${key}:current` });
   // the address the file had until now: told, with nothing in the mail that opens the file

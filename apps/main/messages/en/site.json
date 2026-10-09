@@ -139,6 +139,7 @@
     "consent": "I confirm that I have read the <privacy>privacy policy</privacy> and agree to it.",
     "submit": "Request my free consultation",
     "sending": "Sending…",
+    "noscript": "This form needs JavaScript to send your message. Please turn it on, or call or write to us using the contact details on this site.",
     "disclaimer": "Sending an enquiry does not create a lawyer-client relationship, and nothing on this site is legal advice.",
     "errors": {
       "name": "Please enter your name.",

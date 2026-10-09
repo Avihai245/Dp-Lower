@@ -136,6 +136,7 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
           ref={panelRef}
           id={`${uid}-dialog`}
           role="dialog"
+          aria-modal="true"
           aria-label={t('chat.dialog')}
           tabIndex={-1}
           data-chat

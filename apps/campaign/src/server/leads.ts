@@ -2,7 +2,7 @@ import 'server-only';
 import { DOC_TYPES, capitalizeName, firstNameOf, routeFromAnswers, type LeadInput, type Locale } from '@dpl/core';
 import { ApiError } from '@dpl/db/http';
 import { getSessionLead } from '@dpl/db/lead-session';
-import { enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
+import { cancelPendingEmails, enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
 import { changeLeadEmail, isSameBrowser } from '@dpl/db/portal-session';
 import { createServerSupabase } from '@dpl/db/server';
 import { asJson, type BookingRow, type Db, type LeadRow } from '@dpl/db/types';
@@ -168,6 +168,9 @@ async function correctEmail(db: Db, lead: LeadRow, input: LeadInput): Promise<Le
   const moved = await changeLeadEmail(db, lead, input.email);
   if (!moved) return null;
   const { lead: updated, changed } = await updateLead(db, moved, input);
+  // nothing that was queued for the mistyped address may reach it: a booking confirmation carries the name, the phone number
+  // and the time of the call (the nurture emails are cancelled by restartForNewAddress; this takes every other kind)
+  await cancelPendingEmails(db, lead.id, 'cancelled: the address was corrected', { notTo: updated.email });
   await logActivity(db, {
     leadId: lead.id,
     code: 'email_changed',

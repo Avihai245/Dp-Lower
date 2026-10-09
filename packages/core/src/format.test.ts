@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capitalizeName, multiLine, oneLine } from './format';
+import { capitalizeName, isEmail, multiLine, nameText, oneLine, phoneText } from './format';
 import { callbackInputSchema, contactSubmissionSchema, leadInputSchema } from './schemas';
 
 const LEAD = { fullName: 'Anna Reinhardt', email: 'anna@example.com', phone: '+49 30 5550 0100' };
@@ -63,5 +63,29 @@ describe('what the form schemas let through', () => {
     expect(c.name).toBe('Dana Levi');
     expect(c.matter).toBe('German citizenship');
     expect(c.note).toBe('Hello,\n\nI have a question .');
+  });
+});
+
+describe('names, phone numbers and addresses from a form', () => {
+  it('a name loses the characters that make it look like markup or an address header', () => {
+    expect(nameText('Tom & Jerry <tom@evil.com>')).toBe('Tom & Jerry tom@evil.com');
+    expect(nameText('"><script>alert(1)</script>')).toBe('scriptalert(1)/script');
+    expect(nameText('Anna \\ Reinhardt\u202E')).toBe('Anna Reinhardt');
+    for (const name of ['Anna Reinhardt', "O'Neil-Smith", 'דוד כהן', 'José María']) expect(nameText(name)).toBe(name);
+    expect(leadInputSchema.parse({ ...LEAD, fullName: 'Tom <tom@evil.com>' }).fullName).toBe('Tom tom@evil.com');
+    expect(leadInputSchema.safeParse({ ...LEAD, fullName: '<>' }).success).toBe(false);
+  });
+
+  it('a phone number keeps digits and the usual separators only', () => {
+    expect(phoneText('<script>1234567</script>')).toBe('1234567');
+    expect(phoneText('+49 (30) 5550-0100')).toBe('+49 (30) 5550-0100');
+    expect(phoneText('03.372.4722\n')).toBe('03.372.4722');
+    expect(leadInputSchema.parse({ ...LEAD, phone: '<b>+49 30 5550 0100</b>' }).phone).toBe('+49 30 5550 0100');
+    expect(leadInputSchema.safeParse({ ...LEAD, phone: '<b>12</b>' }).success).toBe(false);
+  });
+
+  it('an address is what a mail provider takes: ASCII, no quoted local part, a dotted domain', () => {
+    for (const ok of ['anna@example.com', 'anna.reinhardt+case@mail.example.co.il', "o'neil@example.org", 'a_b-c@sub.example.de', 'x@xn--p1ai.xn--p1ai']) expect(isEmail(ok), ok).toBe(true);
+    for (const bad of ['"quoted"@example.com', 'üser@exämple.com', 'שם@דוגמה.קום', 'a@b', 'a@b.c', 'a b@example.com', '@example.com', 'a@@example.com', 'a@example..com', 'a@-.com'.replace('-.', '.')]) expect(isEmail(bad), bad).toBe(false);
   });
 });

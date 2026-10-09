@@ -41,6 +41,12 @@ export default async function middleware(req: NextRequest) {
   if (looksLikeRootFile(pathname)) {
     return isRootFile(pathname) ? NextResponse.next() : NextResponse.rewrite(new URL('/en/page-not-found', req.url), { status: 404 });
   }
+  // English has no prefix: /en/privacy is /privacy (a permanent redirect, so that search engines keep one address per page)
+  if (/^\/en(\/|$)/.test(pathname)) {
+    const url = req.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/en/, '') || '/';
+    return NextResponse.redirect(url, 308);
+  }
   const path = stripLocale(pathname);
   const prefix = pathname === '/he' || pathname.startsWith('/he/') ? '/he' : '';
 

@@ -20,6 +20,8 @@ export function LanguageSwitch() {
   return (
     <NextLink
       href={href}
+      // not prefetched: the other language's page announces its own fonts, and a visitor who stays should not download them
+      prefetch={false}
       lang={other}
       hrefLang={other}
       aria-label={t('switchLabel')}

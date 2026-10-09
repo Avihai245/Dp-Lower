@@ -30,6 +30,16 @@ describe('files at the root', () => {
     }
   });
 
+  it('the explicit English prefix redirects permanently to the clean address, query string kept', () => {
+    for (const [from, to] of [['/en', '/'], ['/en/', '/'], ['/en/about', '/about'], ['/en/services/german-citizenship?utm_source=x', '/services/german-citizenship?utm_source=x']] as const) {
+      const res = get(from);
+      expect(res.status, from).toBe(308);
+      expect(res.headers.get('location'), from).toBe(`http://localhost:3000${to}`);
+    }
+    // not a prefix: a page whose name merely starts with "en"
+    expect(get('/entry').status).toBe(404);
+  });
+
   it('the old prototype links and the ordinary 404 still work', () => {
     expect(get('/?p=service/german-citizenship').status).toBe(301);
     expect(get('/nope').status).toBe(404);

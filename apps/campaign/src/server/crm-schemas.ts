@@ -7,6 +7,7 @@ import {
   multiLine,
   nameSchema,
   oneLine,
+  phoneText,
 } from '@dpl/core';
 import { z } from 'zod';
 import { TIME_RE } from '../components/admin/model';
@@ -47,7 +48,7 @@ export const updateContactInput = z.object({
   /** empty is allowed only for a lead that has no phone yet (checked against the stored lead) */
   phone: z
     .string()
-    .transform(oneLine)
+    .transform(phoneText)
     .pipe(z.string().max(40).refine((v) => v === '' || digitsOf(v).length >= 7, 'invalid_phone')),
 });
 export const leadOnlyInput = z.object({ leadId: uuid });

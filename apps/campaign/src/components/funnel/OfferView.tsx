@@ -81,7 +81,7 @@ export function OfferView() {
   return (
     <Page>
       <StepHeader current="result" logoAlt={t('brand.logoAlt')} labels={labels} ariaLabel={t('steps.label')} />
-      <div data-pad style={s('flex: 1; display: flex; justify-content: center; padding: clamp(40px, 7vh, 84px) 20px 72px')}>
+      <main data-pad style={s('flex: 1; display: flex; justify-content: center; padding: clamp(40px, 7vh, 84px) 20px 72px')}>
         <div data-fx-anim style={s(`width: 100%; max-width: 600px; animation: ${lead && offer ? 'qIn 340ms cubic-bezier(0.2,0,0,1) both' : 'none'}; visibility: ${lead && offer ? 'visible' : 'hidden'}`)}>
           {lead && offer && (
             <>
@@ -161,7 +161,7 @@ export function OfferView() {
             </>
           )}
         </div>
-      </div>
+      </main>
     </Page>
   );
 }

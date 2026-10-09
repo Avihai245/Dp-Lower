@@ -40,14 +40,13 @@ describe('first-touch attribution', () => {
     expect(attributionFor('', store).source).toBe('google');
   });
 
-  it('parameters on the page being sent from are added to, and override, the stored ones', () => {
+  it('parameters on the page being sent from replace the stored ones as a whole; two touches are never mixed', () => {
     const store = memory();
-    rememberFirstTouch('?utm_source=google&utm_medium=cpc', '', 'x.org', store);
-    expect(attributionFor('?utm_medium=email&utm_content=b', store).utm).toEqual({
-      utm_source: 'google',
-      utm_medium: 'email',
-      utm_content: 'b',
-    });
+    rememberFirstTouch('?utm_source=google&utm_medium=cpc&utm_campaign=spring', '', 'x.org', store);
+    expect(attributionFor('?utm_medium=email&utm_content=b', store).utm).toEqual({ utm_medium: 'email', utm_content: 'b' });
+    expect(attributionFor('?utm_source=second&utm_campaign=c2', store)).toEqual({ utm: { utm_source: 'second', utm_campaign: 'c2' }, source: 'second' });
+    // a page without campaign parameters keeps the first touch
+    expect(attributionFor('?page=2', store).utm).toEqual({ utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'spring' });
   });
 
   it('falls back to the referring site, then to "direct"', () => {

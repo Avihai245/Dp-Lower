@@ -55,10 +55,10 @@ export async function deliverPending(db: Db, limit = 25): Promise<DispatchResult
   const events = (data ?? []) as EventRow[];
   result.claimed = events.length;
 
-  const nurtureStops = await nurtureCancellations(db, events);
+  const mailStops = await emailCancellations(db, events);
 
   for (const e of events) {
-    const stop = nurtureStops.get(e.id);
+    const stop = mailStops.get(e.id);
     if (stop) {
       await db.from('events').update({ status: 'cancelled', last_error: stop, locked_at: null }).eq('id', e.id);
       result.cancelled++;
@@ -94,23 +94,35 @@ type NurtureLead = { id: string; email: string; unsubscribed_at: string | null; 
 
 const asDate = (v: string | null): Date | null => (v ? new Date(v) : null);
 
+/** Emails that are addressed to somebody other than the lead's address on purpose: the notice to the address the file had, the auth server's confirmation to a new address. */
+const ADDRESSED_ELSEWHERE = new Set(['details-changed', 'auth-link']);
+
 /**
- * For the nurture emails among `events`: why each one must not go out after all, looked up from the lead as it is now.
+ * For the emails of leads among `events`: why each one must not go out after all, looked up from the lead as it is now.
+ *  - every email: the address was corrected since it was queued (it would go to a mailbox that is no longer theirs);
+ *  - nurture emails also: the sequence has stopped, the lead is gone, the email is stale.
  * Returns event id -> reason; emails that may go out are absent.
  */
-async function nurtureCancellations(db: Db, events: EventRow[]): Promise<Map<string, string>> {
+async function emailCancellations(db: Db, events: EventRow[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
-  const nurture = events.filter((e) => e.channel === 'email' && (e.payload as { category?: string } | null)?.category === 'nurture');
-  if (nurture.length === 0) return out;
+  const mails = events.filter((e) => e.channel === 'email' && !!e.lead_id);
+  if (mails.length === 0) return out;
 
-  const ids = [...new Set(nurture.map((e) => e.lead_id).filter((id): id is string => !!id))];
+  const ids = [...new Set(mails.map((e) => e.lead_id).filter((id): id is string => !!id))];
   const { data } = await db.from('leads').select('id, email, unsubscribed_at, submitted_at, stage, status').in('id', ids);
   const leads = new Map((data ?? []).map((l) => [l.id, l as NurtureLead]));
 
-  for (const e of nurture) {
+  for (const e of mails) {
     const lead = e.lead_id ? leads.get(e.lead_id) : undefined;
+    const payload = e.payload as { category?: string; template?: string; to?: { email?: string } } | null;
+    const isNurture = payload?.category === 'nurture';
     if (!lead) {
-      out.set(e.id, 'cancelled: the lead no longer exists');
+      if (isNurture) out.set(e.id, 'cancelled: the lead no longer exists');
+      continue;
+    }
+    if (!isNurture) {
+      const to = payload?.to?.email?.toLowerCase();
+      if (to && to !== lead.email.toLowerCase() && !ADDRESSED_ELSEWHERE.has(payload?.template ?? '')) out.set(e.id, 'cancelled: the address was corrected');
       continue;
     }
     const stopped = dripStopReason({ unsubscribedAt: asDate(lead.unsubscribed_at), submittedAt: asDate(lead.submitted_at), stage: lead.stage, status: lead.status });

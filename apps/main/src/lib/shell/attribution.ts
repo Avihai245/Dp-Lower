@@ -63,15 +63,17 @@ export function rememberFirstTouch(
 }
 
 /**
- * The `utm` and `source` fields of a form submission: the first-touch parameters, overridden by any that the current URL
- * carries, and a short source label (utm_source, else the referring site, else "direct").
+ * The `utm` and `source` fields of a form submission: the first-touch parameters, unless the page being sent from carries
+ * campaign parameters of its own (a newer click), which are used instead, as a whole: two touches are never mixed into
+ * one. The source is a short label (utm_source, else the referring site, else "direct").
  */
 export function attributionFor(
   search: string,
   store: Pick<Storage, 'getItem'>,
 ): { utm: Record<string, string>; source: string } {
   const stored = read(store);
-  const utm = { ...stored.utm, ...parseUtm(search) };
+  const current = parseUtm(search);
+  const utm = Object.keys(current).length > 0 ? current : stored.utm;
   const keys = Object.keys(utm);
   const capped = keys.length > 12 ? Object.fromEntries(keys.slice(0, 12).map((k) => [k, utm[k]!])) : utm;
   return { utm: capped, source: (capped['utm_source'] || stored.referrer || 'direct').slice(0, 80) };

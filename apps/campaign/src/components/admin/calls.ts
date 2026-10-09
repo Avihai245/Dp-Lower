@@ -14,15 +14,17 @@ export interface CallRow {
 const isStatus = (v: string): v is CallStatus => v === 'confirmed' || v === 'completed' || v === 'no_show';
 
 /**
- * The upcoming call (confirmed, not over yet), or else the latest one whose time has come: held, a no-show, or
- * confirmed and waiting for the team to mark it. Cancelled calls are left to the activity.
+ * The upcoming call (confirmed, not over yet), or else the latest one the team has marked (held, a no-show: also while
+ * the slot is still running, so the result can be seen and corrected) or whose time has come and waits to be marked.
+ * Cancelled calls are left to the activity.
  */
 export function pickCall(rows: readonly CallRow[], now: Date): CallView | null {
   const ahead = (r: CallRow) => new Date(r.ends_at).getTime() > now.getTime();
+  const marked = (r: CallRow) => r.status === 'completed' || r.status === 'no_show';
   const row =
     rows.find((r) => r.status === 'confirmed' && ahead(r)) ??
     rows
-      .filter((r) => isStatus(r.status) && !ahead(r))
+      .filter((r) => isStatus(r.status) && (marked(r) || !ahead(r)))
       .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime())[0];
   if (!row || !isStatus(row.status)) return null;
   return {

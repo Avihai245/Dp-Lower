@@ -91,6 +91,17 @@ describe('protected pages', () => {
   });
 });
 
+describe('the explicit English prefix', () => {
+  it('redirects permanently to the clean address, query string kept', async () => {
+    for (const [from, to] of [['/en', '/'], ['/en/privacy', '/privacy'], ['/en/eligibility?source=main-site', '/eligibility?source=main-site']] as const) {
+      const res = await get(from);
+      expect(res.status, from).toBe(308);
+      expect(location(res), from).toBe(to);
+    }
+    expect((await get('/entry')).status).toBe(200);
+  });
+});
+
 describe('files at the root', () => {
   const matched = (p: string) => new RegExp(`^${config.matcher[0]}$`).test(p);
 

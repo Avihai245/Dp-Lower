@@ -114,6 +114,8 @@ describe.skipIf(!hasDb)('queueContactAck (local Supabase)', () => {
     });
     const p = (await event(id))[0]!.payload as Payload;
     expect(p.html).not.toContain('<script>');
-    expect(p.html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    // the greeting is a name: the characters of markup are not part of it
+    expect(p.html).toContain('Scriptalert(1)/script');
+    expect(p.html).not.toContain('&lt;script&gt;');
   });
 });

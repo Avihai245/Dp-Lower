@@ -11,6 +11,7 @@
     "consent": "I have read and agree to the <privacy>privacy policy</privacy>. Decker Pex Levi may contact me about this enquiry.",
     "submit": "Request my free consultation",
     "sending": "Sending…",
+    "noscript": "This form needs JavaScript to send your message. Please turn it on, or call or write to us using the contact details on this site.",
     "disclaimer": "Sending an enquiry does not create a lawyer-client relationship. Nothing on this site is legal advice.",
     "honeypot": "Leave this field empty",
     "errors": {

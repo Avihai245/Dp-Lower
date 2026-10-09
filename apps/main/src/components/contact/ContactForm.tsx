@@ -237,6 +237,9 @@ export function ContactForm({ locale, matters, urgentTel }: ContactFormProps) {
       <Eyebrow as="h2" strong id={`${uid}-title`}>
         {t('eyebrow')}
       </Eyebrow>
+      <noscript>
+        <p style={s('font-size: 14px; line-height: 1.55; color: #a03a2c; margin: 0 0 14px')}>{t('noscript')}</p>
+      </noscript>
       <div style={s('display: flex; flex-direction: column; gap: 18px')}>
         <div>
           <label style={s('display: block')}>
@@ -396,9 +399,9 @@ export function ContactForm({ locale, matters, urgentTel }: ContactFormProps) {
           {captcha && <Turnstile locale={locale} onToken={setToken} resetSignal={tokenRound} />}
           <button
             type="submit"
-            disabled={sending}
+            aria-disabled={sending}
             style={s(
-              `display: block; border-radius: 999px; width: 100%; background: #14202b; color: #f8f5f0; border: 1px solid #14202b; font-family: ${SANS}; font-weight: 700; font-size: 15.5px; letter-spacing: 0.05em; padding: 19px; cursor: ${sending ? 'progress' : 'pointer'}; opacity: ${sending ? '0.6' : ready ? '1' : '0.35'}`,
+              `display: block; border-radius: 999px; width: 100%; background: #14202b; color: #f8f5f0; border: 1px solid #14202b; font-family: ${SANS}; font-weight: 700; font-size: 15.5px; letter-spacing: 0.05em; padding: 19px; cursor: ${sending ? 'progress' : 'pointer'}; opacity: ${sending ? '0.6' : ready ? '1' : '0.35'}; pointer-events: ${sending ? 'none' : 'auto'}`,
             )}
           >
             {sending ? t('sending') : t('submit')}

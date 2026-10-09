@@ -1,4 +1,4 @@
-import type { Locale } from '@dpl/core';
+import { stripBidiControls, type Locale } from '@dpl/core';
 import enFaq from '../../../campaign/messages/en/landingMore.json';
 import heFaq from '../../../campaign/messages/he/landingMore.json';
 import enSeo from '../../messages/en/seo.json';
@@ -22,7 +22,8 @@ export function llmsResponse(locale: Locale, full: boolean): Response {
     strings: STRINGS[locale],
     faq: FAQ[locale],
   };
-  return new Response(full ? buildLlmsFullTxt(options) : buildLlmsTxt(options), {
+  // a text for machines: without the invisible direction marks the Hebrew pages carry
+  return new Response(stripBidiControls(full ? buildLlmsFullTxt(options) : buildLlmsTxt(options)), {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',

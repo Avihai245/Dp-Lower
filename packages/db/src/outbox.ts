@@ -94,6 +94,36 @@ export async function logActivity(db: Db, a: ActivityArgs): Promise<void> {
 }
 
 /**
+ * Emails of a lead that are queued but not yet delivered, withdrawn: `notTo` keeps only those NOT addressed to that address
+ * (the address the lead has now: everything still waiting for the old one is meant for a mailbox that is no longer theirs),
+ * `template` only those of one kind, `dedupePrefix` only those whose dedupe key starts so (the confirmation of one booking).
+ * An email already handed to the sending app cannot be recalled. Returns how many were withdrawn.
+ */
+export async function cancelPendingEmails(
+  db: Db,
+  leadId: string,
+  reason: string,
+  only: { notTo?: string; template?: string; dedupePrefix?: string } = {},
+): Promise<number> {
+  let q = db
+    .from('events')
+    .update({ status: 'cancelled', last_error: reason, locked_at: null })
+    .eq('lead_id', leadId)
+    .eq('channel', 'email')
+    .eq('type', 'email.send')
+    .in('status', ['pending', 'failed']);
+  if (only.notTo) q = q.neq('payload->to->>email', only.notTo.toLowerCase());
+  if (only.template) q = q.eq('payload->>template', only.template);
+  if (only.dedupePrefix) q = q.like('dedupe_key', `${only.dedupePrefix.replace(/[\\%_]/g, '\\$&')}%`);
+  const { data, error } = await q.select('id');
+  if (error) {
+    console.error('[outbox] cancelPendingEmails failed', error.message);
+    return 0;
+  }
+  return data?.length ?? 0;
+}
+
+/**
  * Nurture emails that are queued but not yet delivered stop with the sequence: the person unsubscribed or submitted, or the
  * address was corrected. (The dispatcher checks again at delivery, so an email claimed in the same moment is still caught.)
  * An email already handed to the sending app cannot be recalled.

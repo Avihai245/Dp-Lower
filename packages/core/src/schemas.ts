@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DOC_ALLOWED_MIME, DOC_MAX_BYTES, DOC_TYPES } from './documents';
 import { applicationDataSchema } from './application';
-import { digitsOf, EMAIL_RE, multiLine, oneLine } from './format';
+import { digitsOf, EMAIL_RE, multiLine, nameText, oneLine, phoneText } from './format';
 import { LOCALES } from './locale';
 import { quizAnswersSchema } from './quiz';
 import { isValidTimeZone } from './timezone';
@@ -17,10 +17,10 @@ export const emailSchema = z
 const line = (max: number, min = 0, message?: string) => z.string().transform(oneLine).pipe(z.string().min(min, message).max(max, message));
 const lines = (max: number) => z.string().transform(multiLine).pipe(z.string().max(max));
 
-export const nameSchema = line(120, 2, 'invalid_name');
+export const nameSchema = z.string().transform(nameText).pipe(z.string().min(2, 'invalid_name').max(120, 'invalid_name'));
 export const phoneSchema = z
   .string()
-  .transform(oneLine)
+  .transform(phoneText)
   .pipe(z.string().max(40).refine((v) => digitsOf(v).length >= 7, 'invalid_phone'));
 export const passwordSchema = z.string().min(8, 'password_too_short').max(72, 'password_too_long');
 
@@ -48,7 +48,7 @@ export type BookingInput = z.infer<typeof bookingInputSchema>;
 
 /** POST /api/callbacks ("Speak with an AI Advisor") */
 export const callbackInputSchema = z.object({
-  name: line(120).optional(),
+  name: z.string().transform(nameText).pipe(z.string().max(120)).optional(),
   phone: phoneSchema,
   locale: localeSchema.default('en'),
   source: line(80).optional(),

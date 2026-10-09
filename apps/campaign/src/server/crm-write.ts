@@ -9,7 +9,7 @@ import {
   type LeadStatus,
   type NextActionCode,
 } from '@dpl/core';
-import { enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
+import { cancelPendingEmails, enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
 import type { Db, LeadRow } from '@dpl/db/types';
 import type { ActionResult } from '@/components/admin/types';
 import { queueEmail } from './email';
@@ -31,6 +31,16 @@ const log = (db: Db, actor: Actor, leadId: string, code: string, text: string, m
 
 /** Every deliberate click may send; the key only protects against the same request being replayed. */
 const sendKey = (template: string, leadId: string) => `staff:${template}:${leadId}:${randomUUID()}`;
+
+/**
+ * The applicant is emailed the status the team has set. A status chip is one click, so a slip and its correction a few
+ * seconds apart must not mail the applicant twice: a status email that has not been delivered yet is withdrawn when a newer
+ * one is queued, and the applicant gets the one that is true (emails are delivered every few minutes).
+ */
+async function queueStatusUpdate(db: Db, lead: LeadRow, status: LeadStatus): Promise<void> {
+  await cancelPendingEmails(db, lead.id, 'cancelled: superseded by a newer status', { template: 'status-update' });
+  await queueEmail({ template: 'status-update', lead, data: { status }, dedupeKey: sendKey('status-update', lead.id) });
+}
 
 // -- stage ---------------------------------------------------------------------------------------------------------
 
@@ -73,7 +83,7 @@ export async function setStatus(db: Db, actor: Actor, leadId: string, status: Le
     leadId,
     payload: { lead: leadSnapshot(updated), from: lead.status, to: status, by: actor.name },
   });
-  await queueEmail({ template: 'status-update', lead: updated, data: { status }, dedupeKey: sendKey('status-update', leadId) });
+  await queueStatusUpdate(db, updated, status);
   return done({ status });
 }
 
@@ -244,12 +254,12 @@ export async function runNextAction(db: Db, actor: Actor, leadId: string, expect
       break;
     }
     case 'send_status_update': {
-      await queueEmail({ template: 'status-update', lead, data: { status: lead.status }, dedupeKey: sendKey('status-update', leadId) });
+      await queueStatusUpdate(db, lead, lead.status);
       logged = { code: 'status_update_sent', text: `Status update sent to ${lead.email}`, meta: { email: lead.email, status: lead.status } };
       break;
     }
     case 'send_closing_email': {
-      await queueEmail({ template: 'status-update', lead, data: { status: 'review_completed' }, dedupeKey: sendKey('status-update', leadId) });
+      await queueStatusUpdate(db, lead, 'review_completed');
       logged = { code: 'closing_email_sent', text: `Closing email sent to ${lead.email}`, meta: { email: lead.email } };
       break;
     }

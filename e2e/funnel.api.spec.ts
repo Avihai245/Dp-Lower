@@ -273,6 +273,39 @@ test.describe('POST /api/leads', () => {
   });
 });
 
+test.describe('the confirmation of a call that no longer exists', () => {
+  const confirmations = async (leadId: string) =>
+    (await eventsOf(leadId)).filter((e) => e.type === 'email.send' && e.payload.template === 'booking-confirmation');
+
+  test('moving the call withdraws the confirmation that was still waiting; only the new time is announced', async ({ playwright }) => {
+    const owner = await newClient(playwright);
+    const lead = await createLead(owner, 'moved');
+    const first = await freeSlot(owner, 11);
+    const second = await freeSlot(owner, 12);
+    expect((await owner.post('/api/bookings', { data: { startsAt: first.startsAt, timezone: 'Asia/Jerusalem' } })).status()).toBe(201);
+    expect((await owner.post('/api/bookings', { data: { startsAt: second.startsAt, timezone: 'Asia/Jerusalem' } })).status()).toBe(201);
+    const mails = await confirmations(lead.leadId);
+    expect(mails).toHaveLength(2);
+    expect(mails.filter((e) => e.status === 'pending')).toHaveLength(1);
+    expect(mails.filter((e) => e.status === 'cancelled')).toHaveLength(1);
+    expect(String(mails.find((e) => e.status === 'pending')!.dedupe_key)).toContain((await rest<{ id: string }>('bookings', `lead_id=eq.${lead.leadId}&status=eq.confirmed&select=id`))[0]!.id);
+    await owner.dispose();
+  });
+
+  test('cancelling the call withdraws its confirmation as well (the cancellation email still goes out)', async ({ playwright }) => {
+    const owner = await newClient(playwright);
+    const lead = await createLead(owner, 'cancelled');
+    const slot = await freeSlot(owner, 13);
+    expect((await owner.post('/api/bookings', { data: { startsAt: slot.startsAt, timezone: 'Asia/Jerusalem' } })).status()).toBe(201);
+    expect((await owner.delete('/api/bookings')).status()).toBe(200);
+    const mails = await confirmations(lead.leadId);
+    expect(mails).toHaveLength(1);
+    expect(mails[0]!.status).toBe('cancelled');
+    expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'email.send' && e.payload.template === 'booking-cancelled')).toHaveLength(1);
+    await owner.dispose();
+  });
+});
+
 test.describe('correcting the email on the details page', () => {
   test('the same lead moves to the corrected address: no second lead, old links die, the new address gets welcome 1', async ({ playwright }) => {
     const owner = await newClient(playwright);
@@ -326,6 +359,11 @@ test.describe('correcting the email on the details page', () => {
     expect((await owner.post('/api/leads', { data: leadBody(fixed) })).status()).toBe(200);
     const confirmations = (await eventsOf(lead.leadId)).filter((e) => e.type === 'email.send' && e.payload.template === 'booking-confirmation');
     expect(confirmations.map((e) => e.payload.to?.email).sort()).toEqual([fixed, lead.email].sort());
+    // the one queued for the mistyped address is withdrawn (it carries the name, the phone number and the time of the call);
+    // the one for the corrected address waits to be sent
+    expect(confirmations.find((e) => e.payload.to?.email === lead.email)?.status).toBe('cancelled');
+    expect(confirmations.find((e) => e.payload.to?.email === fixed)?.status).toBe('pending');
+    expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'email.send' && e.payload.to?.email === lead.email && e.status === 'pending')).toEqual([]);
     // still one lead, one booking
     expect(await rest('bookings', `lead_id=eq.${lead.leadId}&status=eq.confirmed&select=id`)).toHaveLength(1);
     await owner.dispose();

@@ -33,6 +33,18 @@ a:hover { color: #a07a3c; }
   [data-cta] { margin-inline-start: auto !important; }
 }
 
+/*
+ * English only: the seven nav items and the two buttons need about 1270px in a single row, and the prototype lets the nav run
+ * under the buttons from 1025px up to there (iPad landscape, small laptops). In that range the nav takes its own row, as it
+ * does from 1024px down. Hebrew, whose labels are shorter, still fits and is left as designed.
+ */
+@media (min-width: 1025px) and (max-width: 1270px) {
+  html[lang="en"] [data-nav] { flex-wrap: wrap !important; gap: 16px 20px !important; }
+  html[lang="en"] [data-navlinks] { order: 3; width: 100%; min-width: 0; gap: 22px !important; overflow-x: auto; margin-inline-start: 0 !important; }
+  html[lang="en"] [data-navlinks]::-webkit-scrollbar { display: none; }
+  html[lang="en"] [data-cta] { margin-inline-start: auto !important; }
+}
+
 /* accessibility widget: html[data-a11y-*] is set by the widget and persisted in localStorage */
 #dpl-page { transition: filter 200ms ease; }
 html[data-a11y-zoom="1"] #dpl-page { zoom: 1.12; }

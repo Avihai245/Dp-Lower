@@ -1,4 +1,4 @@
-import type { EmailPayload, Locale } from '@dpl/core';
+import { nameText, type EmailPayload, type Locale } from '@dpl/core';
 import { isNurtureTemplate, type EmailTemplateId, type RenderedEmail } from './types';
 
 export interface EmailSender {
@@ -32,7 +32,8 @@ export function buildEmailPayload(a: {
   return {
     template: a.template,
     locale: a.locale,
-    to: a.to,
+    // the recipient's name is text from a form: whatever builds the address header downstream gets a plain name
+    to: { email: a.to.email, name: nameText(a.to.name) },
     from: sender.from,
     replyTo: sender.replyTo,
     subject: a.rendered.subject,

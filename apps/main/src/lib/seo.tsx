@@ -1,4 +1,4 @@
-import { type Locale } from '@dpl/core';
+import { stripBidiControls, type Locale } from '@dpl/core';
 import { absoluteUrl, alternates } from '@dpl/i18n';
 import type { Metadata } from 'next';
 
@@ -50,7 +50,7 @@ export function pageMetadata(p: PageMeta): Metadata {
 
 /** Renders one JSON-LD block. '<' is escaped so the payload can never close the script tag. */
 export function JsonLd({ data }: { data: unknown }) {
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: stripBidiControls(JSON.stringify(data)).replace(/</g, '\\u003c') }} />;
 }
 
 export function breadcrumbJsonLd(locale: Locale, items: Array<{ name: string; path: string }>) {

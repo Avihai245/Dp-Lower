@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Database } from './database.types';
-import { cancelPendingNurture, enqueueEmail, enqueueEvent, logActivity } from './outbox';
+import { cancelPendingEmails, cancelPendingNurture, enqueueEmail, enqueueEvent, logActivity } from './outbox';
 import { rateLimit } from './rate-limit';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -47,6 +47,37 @@ describe.skipIf(!(url && service))('outbox + rate limit (real database)', () => 
     expect((await status('tx'))?.status).toBe('pending');
     expect((await status('other'))?.status).toBe('pending');
     await db.from('events').delete().like('dedupe_key', `cancel:${tag}:%`);
+    await db.from('leads').delete().in('id', [lead!.id, other!.id]);
+  });
+
+  it('cancelPendingEmails withdraws what is queued for the old address, one template or one booking, and only for that lead', async () => {
+    const { data: lead } = await db.from('leads').insert({ full_name: 'Moved House', email: `moved-${tag}@example.com` }).select('*').single();
+    const { data: other } = await db.from('leads').insert({ full_name: 'Stay Put', email: `stay-${tag}@example.com` }).select('*').single();
+    const base = { locale: 'en', from: { email: 'f@b.co', name: 'F' }, replyTo: 'r@b.co', subject: 's', preheader: 'p', html: '<p>x</p>', text: 'x', category: 'transactional' } as const;
+    const put = (id: string, key: string, template: string, to: string) =>
+      enqueueEmail(db, { leadId: id, payload: { ...base, template, to: { email: to, name: 'N' } }, dedupeKey: `withdraw:${tag}:${key}` });
+    await put(lead!.id, 'old-confirmation', 'booking-confirmation', 'old@example.com');
+    await put(lead!.id, 'old-status', 'status-update', 'old@example.com');
+    await put(lead!.id, 'new-confirmation', 'booking-confirmation', 'new@example.com');
+    await put(lead!.id, 'b1', 'booking-confirmation', 'new@example.com');
+    await put(other!.id, 'other-old', 'booking-confirmation', 'old@example.com');
+    const status = async (key: string) => (await db.from('events').select('status').eq('dedupe_key', `withdraw:${tag}:${key}`).single()).data?.status;
+
+    // everything not addressed to the address the lead has now
+    // (the address is compared in lower case, as addresses are stored)
+    expect(await cancelPendingEmails(db, lead!.id, 'cancelled: the address was corrected', { notTo: 'NEW@example.com' })).toBe(2);
+    expect(await status('old-confirmation')).toBe('cancelled');
+    expect(await status('old-status')).toBe('cancelled');
+    expect(await status('new-confirmation')).toBe('pending');
+    expect(await status('b1')).toBe('pending');
+    expect(await status('other-old')).toBe('pending');
+
+    // one template; one booking by the start of its dedupe key (a `_` or `%` in it is not a wildcard)
+    expect(await cancelPendingEmails(db, lead!.id, 'cancelled: x', { template: 'booking-confirmation', dedupePrefix: `withdraw:${tag}:b1` })).toBe(1);
+    expect(await status('b1')).toBe('cancelled');
+    expect(await status('new-confirmation')).toBe('pending');
+    expect(await cancelPendingEmails(db, lead!.id, 'cancelled: x', { dedupePrefix: `withdraw:${tag}:%` })).toBe(0);
+    await db.from('events').delete().like('dedupe_key', `withdraw:${tag}:%`);
     await db.from('leads').delete().in('id', [lead!.id, other!.id]);
   });
 

@@ -53,7 +53,7 @@ export function LeadsTable({ rows }: { rows: LeadRow[] }) {
               <td style={s("padding-left:14px;font-family:'Manrope',system-ui,sans-serif;letter-spacing:0.04em;white-space:nowrap")}>
                 <bdi>{r.caseRef}</bdi>
               </td>
-              <td style={s('white-space:nowrap')}>
+              <td style={s('white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis')} title={r.fullName}>
                 <Link
                   href={href(r.id)}
                   onClick={(e) => e.stopPropagation()}

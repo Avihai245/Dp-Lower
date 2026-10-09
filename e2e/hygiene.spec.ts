@@ -88,6 +88,25 @@ test.describe('fonts', () => {
     });
   }
 
+  test('English pages never download the Hebrew fonts (the language switch is not prefetched) and log no unused-preload warning', async ({ page }) => {
+    for (const url of [`${CAMPAIGN}/`, `${CAMPAIGN}/sign-in`, `${MAIN}/`, `${MAIN}/team`]) {
+      const fonts: string[] = [];
+      const warnings: string[] = [];
+      page.on('response', (r) => {
+        if (r.request().resourceType() === 'font') fonts.push(r.url());
+      });
+      page.on('console', (m) => {
+        if (/preloaded using link preload but not used/.test(m.text())) warnings.push(m.text());
+      });
+      await page.goto(url, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(1500);
+      expect(fonts.filter((f) => /hebrew|frank-ruhl|assistant/.test(f)), url).toEqual([]);
+      expect(warnings, url).toEqual([]);
+      page.removeAllListeners('response');
+      page.removeAllListeners('console');
+    }
+  });
+
   test('a Hebrew page does not jump when its fonts arrive (a 412 px phone on a slow connection)', async ({ browser }) => {
     for (const url of [`${CAMPAIGN}/he`, `${MAIN}/he`]) {
       const context = await browser.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true });
@@ -110,6 +129,23 @@ test.describe('fonts', () => {
       await context.close();
     }
   });
+});
+
+test.describe('without JavaScript', () => {
+  for (const [path, figures] of [['/', ['1,200+', '15+', '94%', '30+']], ['/he', ['1,200+', '15+', '94%', '30+']]] as const) {
+    test(`campaign ${path}: the figures show their real values, not 0 (the count-up needs scripts)`, async ({ browser }) => {
+      const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
+      const page = await context.newPage();
+      await page.goto(`${CAMPAIGN}${path}`);
+      const strip = page.locator('[data-count]');
+      await strip.scrollIntoViewIfNeeded();
+      for (const figure of figures) await expect(strip.locator('.dpl-sr-only', { hasText: new RegExp(`^${figure.replace(/[+]/g, '\\+')}$`) })).toBeVisible();
+      // and nothing in it still reads "0+" or "0%"
+      const text = (await strip.innerText()).replace(/\s+/g, ' ');
+      expect(text).not.toMatch(/(^|\s)0[+%]/);
+      await context.close();
+    });
+  }
 });
 
 test.describe('security headers', () => {

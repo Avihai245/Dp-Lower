@@ -95,7 +95,7 @@ export function EligibilityQuiz({ savedAnswers = null }: { savedAnswers?: QuizAn
         <div style={s(`height: 2px; background: #a07a3c; width: ${progressPercent(qi, answers)}%; transition: width 460ms cubic-bezier(0.4,0,0.2,1)`)} />
       </div>
 
-      <div data-pad style={s('flex: 1; display: flex; align-items: center; justify-content: center; padding: 56px 44px 24px')}>
+      <main data-pad style={s('flex: 1; display: flex; align-items: center; justify-content: center; padding: 56px 44px 24px')}>
         {ready && (
           <div key={`q${qi}`} data-fx-anim style={s('width: 100%; max-width: 760px; animation: qIn 340ms cubic-bezier(0.2,0,0,1) both')}>
             <div style={s('font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #a07a3c; margin-bottom: 22px')}>{label}</div>
@@ -139,7 +139,7 @@ export function EligibilityQuiz({ savedAnswers = null }: { savedAnswers?: QuizAn
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       <div style={s('border-top: 1px solid #ece6dc')}>
         <div data-q-foot style={s('max-width: 760px; margin: 0 auto; padding: 14px 44px; display: flex; align-items: center; justify-content: space-between; gap: 16px')}>

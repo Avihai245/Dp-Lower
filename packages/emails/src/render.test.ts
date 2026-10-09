@@ -1,4 +1,4 @@
-import type { Locale } from '@dpl/core';
+import { capitalizeName, type Locale } from '@dpl/core';
 import { JSDOM } from 'jsdom';
 import { describe, expect, it } from 'vitest';
 import { sampleContext } from './fixtures';
@@ -481,8 +481,8 @@ describe('escaping', () => {
         for (const a of Array.from(el.attributes)) expect(a.name.startsWith('on')).toBe(false);
       }
       // ... and it is shown as text
-      // (the contact acknowledgement greets the first word of the name only)
-      const shown = id === 'contact-received' ? HOSTILE.split(/\s+/)[0]! : HOSTILE;
+      // (the contact acknowledgement greets the first word of the name only, as a name: without the characters of markup)
+      const shown = id === 'contact-received' ? capitalizeName(HOSTILE.split(/\s+/)[0]!) : HOSTILE;
       expect(r.html).toContain(
         shown.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
       );

@@ -220,7 +220,10 @@ export function LeadBand() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={onSubmit} noValidate>
+              <form method="post" onSubmit={onSubmit} noValidate>
+                <noscript>
+                  <p style={s('font-size: 14px; line-height: 1.55; color: #a03a2c; margin: 0 0 14px')}>{t('leadBand.noscript')}</p>
+                </noscript>
                 {captcha && <Turnstile locale={locale} onToken={setToken} resetSignal={tokenRound} />}
                 <div data-resp="2" style={s('display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px')}>
                   <div>

@@ -491,6 +491,24 @@ test.describe('lead page', () => {
     await expect.poll(async () => (await activity(world.alpha.id, 'owner_cleared')).length).toBe(1);
   });
 
+  test('a name of 120 letters without a space neither pushes the table sideways nor breaks the card', async ({ adminPage: page, world }) => {
+    const original = world.delta.name;
+    await update('leads', `id=${eq(world.delta.id)}`, { full_name: 'W'.repeat(120) });
+    try {
+      await openList(page, `?q=${'W'.repeat(20)}`);
+      const wrapper = page.locator('table.table').locator('xpath=..');
+      await expect(page.locator(`a[href^="/admin/leads/${world.delta.id}"]`).first()).toBeVisible();
+      const [scroll, client] = await wrapper.evaluate((el) => [el.scrollWidth, el.clientWidth]);
+      expect(scroll, 'the table fits its container').toBeLessThanOrEqual(client + 1);
+      await openLead(page, world.delta.id);
+      const widths = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
+      expect(widths[0], 'the lead page has no sideways scroll').toBeLessThanOrEqual(widths[1]! + 1);
+      await expect(page.locator('h1')).toHaveText('W'.repeat(120));
+    } finally {
+      await update('leads', `id=${eq(world.delta.id)}`, { full_name: original });
+    }
+  });
+
   test('edit details: a lead without an account of its own cannot be given the address of a staff account', async ({ adminPage: page, world }) => {
     await openLead(page, world.delta.id);
     const before = await getLead(world.delta.id);

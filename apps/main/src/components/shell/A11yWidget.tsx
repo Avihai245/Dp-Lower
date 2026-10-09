@@ -92,6 +92,7 @@ export function A11yWidget({ labels: t, open, onToggle, onClose }: Props) {
           ref={panelRef}
           id={panelId}
           role="dialog"
+          aria-modal="true"
           aria-label={t.dialog}
           tabIndex={-1}
           className="dpl-dialog"

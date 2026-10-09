@@ -101,7 +101,7 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
       {/* identity and case stages */}
       <div style={s('background:#fff;border:1px solid #e8e1d5;border-radius:18px;padding:24px 26px;margin-bottom:14px')}>
         <div style={s('display:flex;align-items:flex-start;gap:16px 24px;flex-wrap:wrap')}>
-          <div style={s('flex:1;min-width:240px')}>
+          <div style={s('flex:1;min-width:min(240px,100%);max-width:100%')}>
             <div style={s('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px')}>
               <span style={s('font-size:12.5px;letter-spacing:0.04em;color:#736d64')}>
                 <bdi>{lead.caseRef}</bdi>
@@ -125,7 +125,7 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
                 </span>
               )}
             </div>
-            <h1 style={s("font-family:'Newsreader',Georgia,serif;font-size:34px;line-height:1.1;font-weight:400;letter-spacing:0;margin:0")}>{lead.fullName}</h1>
+            <h1 style={s("font-family:'Newsreader',Georgia,serif;font-size:34px;line-height:1.1;font-weight:400;letter-spacing:0;margin:0;overflow-wrap:anywhere")}>{lead.fullName}</h1>
             <div style={s('font-size:14px;color:#736d64;margin-top:4px')}>{where}</div>
           </div>
           <div style={s('display:flex;gap:8px;align-items:center')}>

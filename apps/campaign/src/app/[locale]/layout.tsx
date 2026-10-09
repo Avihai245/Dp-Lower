@@ -46,7 +46,8 @@ export default async function LocaleLayout({ children, params }: { children: Rea
       <head>
         {/* without JavaScript nothing would ever reveal, so show everything */}
         <noscript>
-          <style>{`[data-reveal],[data-reveal-img],[data-stagger]>*,[data-hero-seq]>*{opacity:1!important;transform:none!important;clip-path:none!important;animation:none!important}`}</style>
+          {/* the figures count up from 0 with scripts: without them show the final value (the text kept for screen readers) instead of "0+" */}
+          <style>{`[data-reveal],[data-reveal-img],[data-stagger]>*,[data-hero-seq]>*{opacity:1!important;transform:none!important;clip-path:none!important;animation:none!important}[data-count] [aria-hidden="true"]{display:none!important}[data-count] .dpl-sr-only{position:static!important;width:auto!important;height:auto!important;margin:0!important;overflow:visible!important;clip:auto!important;white-space:nowrap!important;direction:ltr!important;font-family:var(--font-serif)!important;font-size:clamp(38px,3.4vw,54px)!important;line-height:1!important;color:#14202b!important}`}</style>
         </noscript>
       </head>
       <body>

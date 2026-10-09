@@ -32,6 +32,12 @@ export default function middleware(req: NextRequest) {
   if (target) return NextResponse.redirect(new URL(target, req.url), 301);
   // a file that exists at the root (the icons, robots.txt, sitemap.xml, llms.txt) is served as it is
   if (isRootFile(req.nextUrl.pathname)) return NextResponse.next();
+  // English has no prefix: /en/about is /about (a permanent redirect, so that search engines keep one address per page)
+  if (/^\/en(\/|$)/.test(req.nextUrl.pathname)) {
+    const url = req.nextUrl.clone();
+    url.pathname = req.nextUrl.pathname.replace(/^\/en/, '') || '/';
+    return NextResponse.redirect(url, 308);
+  }
   // Not a page of the site: a server-rendered 404 in the visitor's language (a page calling notFound() would reach the
   // browser as an empty shell). The 404 page itself is an ordinary page that this rewrite points at.
   const missing = missingPageLocale(req.nextUrl.pathname);

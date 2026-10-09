@@ -47,6 +47,15 @@ describe('pickCall', () => {
     expect(callActions(call)).toEqual(['held', 'no_show', 'cancel']);
   });
 
+  it('a call marked held or no-show stays on the page while its slot is still running, and can be corrected', () => {
+    for (const status of ['completed', 'no_show'] as const) {
+      const call = pickCall([row({ id: 'running', starts_at: '2026-10-11T08:50:00Z', status })], now)!;
+      expect(call, status).toMatchObject({ id: 'running', status, upcoming: false, started: true });
+      expect(callPhase(call)).toBe(status === 'completed' ? 'held' : 'no_show');
+      expect(callActions(call)).toEqual(status === 'completed' ? ['no_show'] : ['held']);
+    }
+  });
+
   it('otherwise the latest call whose time has come; cancelled ones are not shown', () => {
     const rows = [
       row({ id: 'a', starts_at: '2026-10-01T09:00:00Z', status: 'completed' }),

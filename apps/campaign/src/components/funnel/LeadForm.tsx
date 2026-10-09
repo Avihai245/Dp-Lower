@@ -124,7 +124,7 @@ export function LeadForm({ initialLead, emailLocked = false }: { initialLead: Le
   return (
     <Page>
       <StepHeader current="details" logoAlt={t('brand.logoAlt')} labels={labels} ariaLabel={t('steps.label')} />
-      <div data-pad style={s('flex: 1; display: flex; justify-content: center; padding: clamp(40px, 7vh, 84px) 20px 72px')}>
+      <main data-pad style={s('flex: 1; display: flex; justify-content: center; padding: clamp(40px, 7vh, 84px) 20px 72px')}>
         {phase === 'existing' ? (
           <div data-fx-anim style={s('width: 100%; max-width: 480px; animation: qIn 340ms cubic-bezier(0.2,0,0,1) both')}>
             <h1 data-h1 style={s(H1_STYLE)}>{t('lead.existing.title')}</h1>
@@ -237,7 +237,7 @@ export function LeadForm({ initialLead, emailLocked = false }: { initialLead: Le
             </div>
           </form>
         )}
-      </div>
+      </main>
     </Page>
   );
 }
