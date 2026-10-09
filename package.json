@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.28.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "pnpm --parallel --filter @dpl/campaign --filter @dpl/main dev",
     "dev:campaign": "pnpm --filter @dpl/campaign dev",
@@ -21,5 +23,18 @@
     "db:types": "supabase gen types typescript --local > packages/db/src/database.types.ts",
     "db:test": "bash supabase/tests/run.sh",
     "bootstrap:admin": "tsx scripts/bootstrap-admin.ts"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
+    "@playwright/test": "1.56.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "15.5.27",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.9.9",
+    "supabase": "^2.120.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
   }
 }

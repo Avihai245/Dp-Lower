@@ -58,3 +58,17 @@ end $$;
 reset role;
 
 rollback;
+
+-- rate limiting
+begin;
+do $$
+declare i int; ok boolean;
+begin
+  for i in 1..3 loop
+    assert public.rate_limit_hit('test:key', 60, 3), 'hit ' || i || ' within limit';
+  end loop;
+  ok := public.rate_limit_hit('test:key', 60, 3);
+  assert not ok, 'fourth hit is limited';
+  assert public.rate_limit_hit('test:other', 60, 3), 'keys are independent';
+end $$;
+rollback;

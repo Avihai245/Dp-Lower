@@ -1,0 +1,93 @@
+/*
+ * Main-site globals ported from the prototype's <helmet> block. Base tokens/reset come from @dpl/ui/base.css.
+ * Direction-sensitive values use logical properties and --dir so English and Hebrew share one stylesheet.
+ *
+ * NOTE for ported components: React serialises inline styles without spaces ("border:0;padding:0"), so the
+ * prototype's attribute selectors on style="..." cannot work; use data-* attributes instead (data-linkbtn marks the
+ * buttons styled as links, which get larger tap targets on touch devices).
+ */
+@media (pointer: coarse) {
+  [data-linkbtn], a[href^="tel:"], a[href^="mailto:"], a[href*="linkedin.com"], a[href*="youtube.com/@"], a[href*="facebook.com"], a[href*="instagram.com"] {
+    padding-top: 12px !important; padding-bottom: 12px !important; margin-top: -12px; margin-bottom: -12px;
+  }
+}
+body { background: #f8f5f0; }
+a { color: #7a5c2c; }
+a:hover { color: #a07a3c; }
+*:focus-visible { outline: 2px solid #a07a3c; outline-offset: 2px; }
+::selection { background: rgba(160, 122, 60, 0.22); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 1024px) {
+  [data-strip] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  [data-strip] > div { border-inline-start: 1px solid #d3c8b6 !important; padding-inline-start: 26px !important; }
+  [data-countries] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  [data-partners] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  [data-quote] { position: static !important; max-width: none !important; margin-top: 0 !important; }
+  [data-mega] > div { grid-template-columns: minmax(0, 1fr) !important; }
+  [data-mega-cols] { grid-template-columns: minmax(0, 1fr) !important; }
+  [data-nav] { flex-wrap: wrap !important; gap: 16px 20px !important; }
+  [data-navlinks] { order: 3; width: 100%; min-width: 0; gap: 22px !important; overflow-x: auto; margin-inline-start: 0 !important; }
+  [data-navlinks]::-webkit-scrollbar { display: none; }
+  [data-cta] { margin-inline-start: auto !important; }
+}
+
+/* accessibility widget: html[data-a11y-*] is set by the widget and persisted in localStorage */
+#dpl-page { transition: filter 200ms ease; }
+html[data-a11y-zoom="1"] #dpl-page { zoom: 1.12; }
+html[data-a11y-zoom="2"] #dpl-page { zoom: 1.28; }
+html[data-a11y-zoom="-1"] #dpl-page { zoom: 0.9; }
+html[data-a11y-filter="grayscale"] #dpl-page { filter: grayscale(1); }
+html[data-a11y-filter="contrast"] #dpl-page { filter: contrast(1.4); }
+html[data-a11y-filter="invert"] #dpl-page { filter: invert(1) hue-rotate(180deg); }
+html[data-a11y-filter="light"] #dpl-page { filter: brightness(1.12) saturate(0.6); }
+html[data-a11y-links="1"] #dpl-page a,
+html[data-a11y-links="1"] #dpl-page button { text-decoration: underline !important; text-underline-offset: 3px; }
+html[data-a11y-font="1"] #dpl-page * { font-family: Arial, Helvetica, sans-serif !important; letter-spacing: normal !important; }
+html[data-a11y-motion="1"] #dpl-page *, html[data-a11y-motion="1"] #dpl-page *::before { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #dpl-page * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+@media (max-width: 1080px) {
+  /* the hero collapses to one column here, so the text crosses the thin end of the horizontal scrim:
+     flatten it to keep the lede legible over a bright frame */
+  [data-hero-scrim] { background: linear-gradient(100deg, rgba(20, 32, 43, 0.95) 0%, rgba(20, 32, 43, 0.92) 60%, rgba(20, 32, 43, 0.88) 100%) !important; }
+  [data-routes] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  [data-steps] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; row-gap: 34px !important; }
+  [data-steps-line] { display: none !important; }
+  [data-resp="2"] { grid-template-columns: minmax(0, 1fr) !important; }
+  [data-resp="3"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  [data-resp="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  [data-h1] { font-size: 46px !important; }
+}
+
+@media (max-width: 720px) {
+  [data-nav] { flex-wrap: nowrap !important; gap: 10px !important; padding-top: 12px !important; padding-bottom: 12px !important; }
+  [data-nav] img { height: 30px !important; }
+  [data-navlinks], [data-cta] { display: none !important; }
+  [data-cta-main] { margin-inline-start: auto !important; padding: 11px 14px !important; font-size: 13px !important; letter-spacing: 0.02em !important; }
+  [data-burger] { display: flex !important; }
+  [data-chat-wrap] { inset-inline: 12px !important; bottom: 14px !important; }
+  [data-chat] { width: 100% !important; max-width: none !important; }
+  [data-art-row] { grid-template-columns: minmax(0, 1fr) !important; gap: 8px !important; }
+  [data-art-row] > :last-child { display: none !important; }
+  [data-kv] { grid-template-columns: minmax(0, 1fr) !important; gap: 6px !important; }
+  body { overflow-x: hidden; }
+  /* comfortable thumb targets on a phone */
+  [data-navlinks] button { padding: 12px 2px !important; }
+  [data-taplist] button, [data-taplist] a { min-height: 44px; display: flex; align-items: center; }
+  [data-util] a { padding: 10px 0; display: inline-block; }
+  [data-strip] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  [data-countries] { grid-template-columns: minmax(0, 1fr) !important; }
+  [data-two] { grid-template-columns: minmax(0, 1fr) !important; }
+  [data-partners] { grid-template-columns: minmax(0, 1fr) !important; }
+  [data-steps] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  [data-resp="3"], [data-resp="4"] { grid-template-columns: minmax(0, 1fr) !important; }
+  [data-h1] { font-size: 36px !important; }
+  [data-big] { font-size: 30px !important; }
+  [data-pad] { padding-inline: 18px !important; }
+  [data-util] { display: none !important; }
+  [data-nav] { flex-wrap: wrap !important; gap: 14px !important; }
+  [data-navlinks] { order: 3; width: 100%; gap: 18px !important; overflow-x: auto; }
+  [data-hero-pad] { padding-top: 56px !important; padding-bottom: 56px !important; }
+}

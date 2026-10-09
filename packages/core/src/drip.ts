@@ -1,0 +1,91 @@
+import type { LeadRoute, LeadStage } from './statuses';
+
+/** Day (after the lead is created) on which each of the 15 welcome emails goes out. Index + 1 = email number. */
+export const WELCOME_DAYS = [0, 2, 3, 5, 8, 11, 14, 18, 22, 26, 30, 34, 38, 42, 46] as const;
+export const WELCOME_COUNT = WELCOME_DAYS.length;
+
+/** An email is skipped (never sent late) when it is overdue by more than this, e.g. after dispatcher downtime. */
+export const MISSED_WINDOW_HOURS = 36;
+/** Minimum gap between two nurture emails to the same person. */
+export const MIN_GAP_HOURS = 20;
+
+export interface DripLeadState {
+  createdAt: Date;
+  unsubscribedAt: Date | null;
+  submittedAt: Date | null;
+  stage: LeadStage;
+  hasBooking: boolean;
+  docsReceived: number;
+  docsTotal: number;
+  route: LeadRoute | null;
+}
+export interface DripRecord {
+  number: number;
+  status: 'queued' | 'sent' | 'skipped';
+  /** when the email was queued/sent; used for the minimum gap */
+  sentAt?: Date | null;
+}
+
+export type SkipReason = 'already_booked' | 'documents_complete' | 'missed_window';
+export type StopReason = 'unsubscribed' | 'submitted' | 'past_application';
+
+export type DripDecision =
+  | { action: 'send'; number: number; scheduledFor: Date }
+  | { action: 'skip'; number: number; scheduledFor: Date; reason: SkipReason }
+  | { action: 'stop'; reason: StopReason };
+
+export const welcomeScheduledFor = (createdAt: Date, number: number): Date =>
+  new Date(createdAt.getTime() + WELCOME_DAYS[number - 1]! * 86_400_000);
+
+/** Why the whole sequence should stop for this lead, if it should. */
+export function dripStopReason(s: Pick<DripLeadState, 'unsubscribedAt' | 'submittedAt' | 'stage'>): StopReason | null {
+  if (s.unsubscribedAt) return 'unsubscribed';
+  if (s.submittedAt) return 'submitted';
+  if (s.stage === 'review' || s.stage === 'filed' || s.stage === 'granted') return 'past_application';
+  return null;
+}
+
+/**
+ * What the dispatcher should do for one lead right now.
+ *  - stops after unsubscribe, submission or when the case has moved past the application;
+ *  - email 3 ("your call is still open") is skipped when a call is booked;
+ *  - emails 2 and 4 (asking for records) are skipped once every document is in;
+ *  - an email overdue by more than MISSED_WINDOW_HOURS is skipped, not sent late;
+ *  - at most one email is sent per run, and not within MIN_GAP_HOURS of the previous one.
+ */
+export function planDrip(state: DripLeadState, records: readonly DripRecord[], now: Date): DripDecision[] {
+  const stop = dripStopReason(state);
+  if (stop) return [{ action: 'stop', reason: stop }];
+
+  const done = new Set(records.map((r) => r.number));
+  const lastSent = records
+    .filter((r) => r.status !== 'skipped' && r.sentAt)
+    .reduce<number>((max, r) => Math.max(max, r.sentAt!.getTime()), 0);
+
+  const decisions: DripDecision[] = [];
+  let sendChosen = false;
+  for (let number = 1; number <= WELCOME_COUNT; number++) {
+    if (done.has(number)) continue;
+    const scheduledFor = welcomeScheduledFor(state.createdAt, number);
+    if (scheduledFor.getTime() > now.getTime()) break;
+
+    if (number === 3 && state.hasBooking) {
+      decisions.push({ action: 'skip', number, scheduledFor, reason: 'already_booked' });
+      continue;
+    }
+    if ((number === 2 || number === 4) && state.docsTotal > 0 && state.docsReceived >= state.docsTotal) {
+      decisions.push({ action: 'skip', number, scheduledFor, reason: 'documents_complete' });
+      continue;
+    }
+    const overdueHours = (now.getTime() - scheduledFor.getTime()) / 3_600_000;
+    if (number > 1 && overdueHours > MISSED_WINDOW_HOURS) {
+      decisions.push({ action: 'skip', number, scheduledFor, reason: 'missed_window' });
+      continue;
+    }
+    if (sendChosen) continue;
+    if (number > 1 && lastSent && now.getTime() - lastSent < MIN_GAP_HOURS * 3_600_000) continue;
+    decisions.push({ action: 'send', number, scheduledFor });
+    sendChosen = true;
+  }
+  return decisions;
+}
