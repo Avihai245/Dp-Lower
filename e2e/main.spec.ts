@@ -160,14 +160,15 @@ for (const L of [
       await page.goto(`${L.prefix}/services/german-citizenship`);
       const band = page.locator('#leadform');
       await band.scrollIntoViewIfNeeded();
-      // a real mouse click on the dimmed button (no field has been touched yet)
-      await band.locator('button[type=submit]').click();
+      // a real mouse click on the dimmed button (no field has been touched yet). Playwright treats aria-disabled as
+      // disabled and would wait for it, so the click is forced: it lands where a visitor's would
+      await band.locator('button[type=submit]').click({ force: true });
       await expect(band.locator('input[name=name]')).toHaveAttribute('aria-invalid', 'true');
       await expect(band.locator('input[name=email]')).toHaveAttribute('aria-invalid', 'true');
       await expect(band.locator('input[name=name]')).toBeFocused();
       // the consent checkbox is the last thing missing: the click names it too
       await fill(page, '#leadform', { name: L.name, phone: '03-372-4722', email: mail(`dim-${L.locale}`) });
-      await band.locator('button[type=submit]').click();
+      await band.locator('button[type=submit]').click({ force: true });
       await expect(band.locator('input[name=consent]')).toBeFocused();
       await expect(band.locator('p[id*="consent"], [role=alert]').first()).toBeVisible();
 
@@ -175,7 +176,7 @@ for (const L of [
       await page.getByRole('button', { name: L.site.chat.launcher }).click();
       const chat = page.getByRole('dialog', { name: L.site.chat.dialog });
       await chat.getByRole('button', { name: L.site.chat.topics[0]! }).click();
-      await chat.locator('button[type=submit]').click();
+      await chat.locator('button[type=submit]').click({ force: true });
       await expect(chat.getByPlaceholder(L.site.chat.placeholders.name)).toHaveAttribute('aria-invalid', 'true');
       expect(problems).toEqual([]);
       await context.close();

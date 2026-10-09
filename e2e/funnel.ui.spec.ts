@@ -234,7 +234,10 @@ test('the quiz resumes at the first unanswered question (shared with the landing
 });
 
 test('no answers are left in the browser once the details are saved or the applicant signs out; the quiz resumes from the file', async ({ browser }) => {
-  const { context, page, problems } = await visitor(browser, { answers: COMPLETE });
+  // (no init script here: it would put the answers back on every page load and hide what this test is about)
+  const { context, page, problems } = await visitor(browser);
+  await page.goto('/eligibility');
+  await page.evaluate((a) => localStorage.setItem('dpl-quiz-v1', JSON.stringify(a)), COMPLETE);
   await page.goto('/details');
   const email = newEmail('draft');
   await page.getByLabel('Full name').fill('anna reinhardt');

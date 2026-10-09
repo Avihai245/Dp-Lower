@@ -327,8 +327,8 @@ test.describe('correcting the email on the details page', () => {
 
   test('another name is another person: a second lead of their own, and the first one is untouched', async ({ playwright }) => {
     const shared = await newClient(playwright);
-    const a = await createLead(shared, 'spouseA');
-    const b = await createLead(shared, 'spouseB', { fullName: 'berta reinhardt' });
+    const a = await createLead(shared, 'spouse-a');
+    const b = await createLead(shared, 'spouse-b', { fullName: 'berta reinhardt' });
     expect(b.leadId).not.toBe(a.leadId);
     expect(await leadByEmail(a.email)).toMatchObject({ id: a.leadId, full_name: 'Anna Reinhardt', email_verified_at: null });
     expect(await leadByEmail(b.email)).toMatchObject({ id: b.leadId, full_name: 'Berta Reinhardt' });

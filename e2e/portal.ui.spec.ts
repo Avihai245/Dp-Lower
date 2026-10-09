@@ -229,17 +229,21 @@ test.describe('application, documents and submission', () => {
   });
 
   test('a status the team sets before the application is submitted shows on the dashboard', async ({ browser }) => {
-    const { page, close } = await signedIn(browser, a);
-    await page.goto('/portal');
-    await expect(page.locator('[data-team-status]')).toHaveCount(0);
-    const before = (await leadRow(a.leadId)).status as string;
-    await adminDb().from('leads').update({ status: 'info_required' }).eq('id', a.leadId);
-    await page.reload();
-    await expect(page.locator('[data-team-status]')).toContainText('Update from our team: Additional Information Required');
-    // the application is still open: the same page still offers the next step
-    await expect(page.getByRole('link', { name: /application/i }).first()).toBeVisible();
-    await adminDb().from('leads').update({ status: before }).eq('id', a.leadId);
-    await close();
+    // an applicant of its own: the others in this block have submitted by now
+    const fresh = await createApplicant();
+    try {
+      const { page, close } = await signedIn(browser, fresh);
+      await page.goto('/portal');
+      await expect(page.locator('[data-team-status]')).toHaveCount(0);
+      await adminDb().from('leads').update({ status: 'info_required' }).eq('id', fresh.leadId);
+      await page.reload();
+      await expect(page.locator('[data-team-status]')).toContainText('Update from our team: Additional Information Required');
+      // the application is still open: the same page still offers the next step
+      await expect(page.getByRole('link', { name: /application/i }).first()).toBeVisible();
+      await close();
+    } finally {
+      await fresh.dispose();
+    }
   });
 
   test('signing out ends the session and clears the lead cookie', async ({ browser }) => {

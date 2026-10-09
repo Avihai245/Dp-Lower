@@ -72,9 +72,11 @@ The apps never talk to an email provider or a CRM directly. They write every ema
 | `lead.returned` | known email re-entered from another browser | nothing (information) |
 | `booking.created` / `booking.cancelled` | free call booked / cancelled | calendar entry, assign a lawyer, reminder |
 | `callback.requested` | "Speak with an AI Advisor" request | call the person back |
-| `contact.created` | website form / lead band / chat | create a lead, notify the team |
-| `account.created`, `application.started`, `application.submitted`, `document.uploaded`, `status.changed`, `stage.changed` | portal and CRM progress | update the CRM stage, alerts |
+| `contact.created` | website form / lead band / chat | create a lead, notify the team; carries the form's `source` and `utm` |
+| `lead.updated` | name, phone, email or answers changed (by the applicant or by staff) | keep the contact in your CRM current; `data.changed` names the fields, `data.previous.email` the old address after a correction |
+| `account.created`, `application.started`, `application.submitted`, `document.uploaded`, `document.removed`, `status.changed`, `stage.changed` | portal and CRM progress | update the CRM stage, alerts |
 | `unsubscribed` | person unsubscribed from emails | mark the contact in your email tool |
+| `lead.deleted` | an administrator deleted an applicant (right to erasure) | delete the contact in your own tools too; the event carries no personal data, only the case reference |
 
 Every CRM event carries `data.lead` (id, caseRef, name, email, phone, locale, route, source, stage, status). Paste a sample by running a test lead through the funnel once, then "Test trigger".
 
@@ -124,7 +126,10 @@ The design deliberately contains placeholders, each visibly marked in the pages:
 
 - **Stuck emails or CRM events**: `select type, status, attempts, last_error from events where status in ('failed','dead','pending') order by created_at;` A `dead` event exhausted its retries (usually a wrong webhook URL): fix the URL, then `update events set status='pending', attempts=0, next_attempt_at=now() where status='dead';`.
 - **Unsubscribes** stop the nurture sequence only; transactional emails (booking confirmation, status updates, password reset) still go out.
-- **Data retention**: applications and documents contain sensitive personal data. Decide a retention period with the firm and delete with the staff tools or SQL; deleting a lead cascades to its application, documents rows, bookings and notes (remove the storage objects under `documents/<lead id>/` too).
+- **Event states**: `pending`, `processing`, `sent`, `failed` (will be retried), `dead` (retries used up) and `cancelled` (deliberately never sent: a queued nurture email for someone who unsubscribed, submitted, corrected their address or was deleted; nurture emails older than 48 hours are cancelled instead of arriving late).
+- **Data retention and erasure**: applications and documents contain sensitive personal data. An administrator can delete an applicant from the lead card (**Delete applicant**, type the case reference to confirm): it removes the stored files, the sign-in user, the application, bookings, notes, events and enquiries of that address, writes a line without personal data to `deletion_log` and emits `lead.deleted`. Decide a retention period with the firm; there is no automatic purge. Staff cannot be deleted this way.
+- **Client address and rate limits**: the per-address limits on the public routes use the address of the visitor as Vercel reports it (`x-vercel-forwarded-for`, then `x-real-ip`, then the right-most `x-forwarded-for` entry, which is the one the platform appends). Behind any other proxy, make sure it overwrites those headers; the left-most `x-forwarded-for` entry is whatever the visitor sent and is never trusted. A database error makes the limiter fail open (the form keeps working).
+- **Content-Security-Policy**: `script-src` allows `'unsafe-inline'` because the pages are static (a per-request nonce would make every page dynamic), and Next.js, the accessibility bootstrap and the structured data use inline scripts. Everything else is closed (`default-src 'self'`, no `eval`, frames only for YouTube and Turnstile). This is an accepted residual risk: no place in the code renders visitor-supplied HTML. If the firm wants a strict policy later, the move is nonce-based CSP with `'strict-dynamic'`.
 - **Rotating secrets**: `APP_SECRET` invalidates emailed portal links (people can request a new one by entering their email in the funnel); rotating the service key requires a redeploy.
 - **Monitoring**: Vercel logs for route errors (`[api] unhandled error`), Supabase Logs and Advisors (security and performance) after schema changes.
 
