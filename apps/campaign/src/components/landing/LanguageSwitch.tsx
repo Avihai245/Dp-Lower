@@ -1,7 +1,8 @@
 'use client';
 import { x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
-import { Link, usePathname } from '@/i18n/navigation';
+import NextLink from 'next/link';
+import { getPathname, usePathname } from '@/i18n/navigation';
 
 /**
  * English / Hebrew switch for the header (the prototype has none). Styled like the "Track my application" link beside
@@ -13,11 +14,12 @@ export function LanguageSwitch() {
   const pathname = usePathname();
   const t = useTranslations('common.language');
   const other = locale === 'he' ? 'en' : 'he';
+  // a plain link to the other language's real URL (English has no prefix): no redirect hop for visitors or crawlers
+  const href = getPathname({ locale: other, href: pathname });
 
   return (
-    <Link
-      href={pathname}
-      locale={other}
+    <NextLink
+      href={href}
       lang={other}
       hrefLang={other}
       aria-label={t('switchLabel')}
@@ -28,6 +30,6 @@ export function LanguageSwitch() {
       )}
     >
       {t('name')}
-    </Link>
+    </NextLink>
   );
 }
