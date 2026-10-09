@@ -210,14 +210,19 @@ test('a known email from another browser shows the inbox state and changes nothi
 });
 
 test('direct visits go where they can continue: no answers -> questions, no lead -> details', async ({ browser }) => {
-  const { context, page } = await visitor(browser);
-  await page.goto('/details');
-  await expect(page).toHaveURL(/\/eligibility$/);
-  await page.goto('/booking');
-  await expect(page).toHaveURL(/\/details$/);
-  await page.goto('/offer');
-  await expect(page).toHaveURL(/\/details$/);
-  await context.close();
+  // nothing answered yet: every later step sends the visitor back to the questions
+  const fresh = await visitor(browser);
+  await fresh.page.goto('/details');
+  await expect(fresh.page).toHaveURL(/\/eligibility$/);
+  await fresh.context.close();
+
+  // questions answered but no lead yet: booking and the offer need the details first
+  const answered = await visitor(browser, { answers: COMPLETE });
+  await answered.page.goto('/booking');
+  await expect(answered.page).toHaveURL(/\/details$/);
+  await answered.page.goto('/offer');
+  await expect(answered.page).toHaveURL(/\/details$/);
+  await answered.context.close();
 });
 
 test('the quiz resumes at the first unanswered question (shared with the landing chat)', async ({ browser }) => {
@@ -256,7 +261,8 @@ test('sign-in: wrong password, forgot-password flow, Google unavailable locally,
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
 
   await page.goto('/sign-in?error=link');
-  await expect(page.getByRole('alert')).toContainText('That link is no longer valid.');
+  // Next.js adds its own role=alert route announcer, so only the page's own alerts are looked at
+  await expect(page.locator('p[role=alert]')).toContainText('That link is no longer valid.');
   await page.goto('/link-expired');
   await expect(heading(page)).toHaveText('This link has expired.');
   await page.getByLabel('Email on your file').fill('nobody@example.com');
