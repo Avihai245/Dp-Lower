@@ -26,7 +26,10 @@ packages/db                Supabase clients, outbox, auth/session plumbing
 packages/ui                RTL-aware style helpers, base CSS, shared hooks
 packages/i18n              typed firm content (en/he) and URL helpers
 packages/emails            email templates (en/he)
-supabase/                  migrations, config, SQL tests
+supabase/                  migrations, config, SQL tests, documentation snippets (cron, Auth hook)
+scripts/                   bootstrap-admin (first administrator)
+tools/                     e2e/ (fake Zapier hook), vitest/, visual/
+docs/                      architecture, deployment, audit, Hebrew review
 tools/visual/              screenshot + diff tools to compare pages with the design prototypes
 e2e/                       Playwright end-to-end tests
 ```
@@ -36,11 +39,12 @@ e2e/                       Playwright end-to-end tests
 | Command | What it checks |
 |---|---|
 | `pnpm typecheck` / `pnpm lint` | TypeScript and ESLint in every package and app |
-| `pnpm test` | about 1,400 unit and integration tests (the integration ones need `pnpm db:start`): domain rules, schemas, email templates against the design's HTML, the nurture scheduler, auth plumbing against a real GoTrue, UI logic, message parity between English and Hebrew |
+| `pnpm test` | about 1,400 unit and integration tests (the ones that use the database run when `apps/campaign/.env.local` points at a running `pnpm db:start`, otherwise they are skipped): domain rules, schemas, email templates against the design's HTML, the nurture scheduler, auth plumbing against a real GoTrue, UI logic, message parity between English and Hebrew |
 | `pnpm db:test` | SQL tests of the row level security, booking capacity and the outbox |
 | `pnpm e2e` | Playwright against the production builds of both apps (start them first, see below): the funnel (API and UI), the client portal, the CRM, the firm website's forms and navigation, SEO crawl of the whole sitemap, security headers and CSP, an axe accessibility scan, and the full journey from the landing page to a reviewed case in English and Hebrew |
 
 ```bash
+# once: `pnpm exec playwright install chromium`; `psql` for `pnpm db:test`; apps/*/.env.local with the local URLs (docs/DEPLOYMENT.md, section 11)
 pnpm build
 pnpm --filter @dpl/campaign start -p 3001 &    # http://localhost:3001
 pnpm --filter @dpl/main start -p 3000 &        # http://localhost:3000

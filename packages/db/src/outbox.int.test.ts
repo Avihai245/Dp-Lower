@@ -8,7 +8,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 describe.skipIf(!(url && service))('outbox + rate limit (real database)', () => {
-  const db = createClient<Database>(url!, service!, { auth: { persistSession: false } });
+  const db = createClient<Database>(url ?? 'http://127.0.0.1:1', service ?? 'unused', { auth: { persistSession: false } }); // the body also runs when the suite is skipped
   const tag = `t${Date.now()}`;
 
   // the database is shared with other work: leave nothing behind

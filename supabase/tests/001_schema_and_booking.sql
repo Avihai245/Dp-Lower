@@ -43,6 +43,8 @@ begin
   select (((current_date + g.i) + time '10:30') at time zone 'Asia/Jerusalem') into v_slot
   from generate_series(2, 14) as g(i)
   where extract(dow from current_date + g.i) between 0 and 4
+    -- a shared database may already hold calls (they are real data, not this test's): take a day with none at 10:30
+    and not exists (select 1 from public.bookings b where b.status = 'confirmed' and b.starts_at = (((current_date + g.i) + time '10:30') at time zone 'Asia/Jerusalem'))
   order by g.i limit 1;
 
   v_b := public.book_slot(v_lead1, v_slot, 'America/New_York');

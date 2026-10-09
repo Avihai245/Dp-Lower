@@ -15,7 +15,7 @@ const live = !!(url && anon && service);
 
 describe.skipIf(!live)('lead -> account bridge (real GoTrue)', () => {
   const opts = { auth: { persistSession: false, autoRefreshToken: false } };
-  const db = createClient<Database>(url!, service!, opts);
+  const db = createClient<Database>(url ?? 'http://127.0.0.1:1', service ?? 'unused', opts); // the body also runs when the suite is skipped
   const stamp = Date.now();
 
   // the database is shared with other work: remove the leads and sign-in users this file created

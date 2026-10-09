@@ -10,13 +10,13 @@ Hebrew-speaking lawyer or editor before launch. This file lists where the text l
 | Area | Files |
 |---|---|
 | Firm website: interface | `apps/main/messages/he/*.json` (`site`, `home`, `pages`, `forms`, `services`, `insights`, `legal`, `seo`, `a11y`) |
-| Firm website: content (22 practice areas, 37 people, 8 articles, 14 testimonials, offices) | `packages/i18n/src/he.ts` (from the design's `dpl-content-he.js`) |
-| Campaign: landing, funnel, sign-in | `apps/campaign/messages/he/*.json` (`landing`, `landingMore`, `funnel`, `auth`, `privacy`, `common`) |
+| Firm website: content (22 practice areas, 37 people, 8 articles, 14 testimonials, offices) | `packages/i18n/src/content/he.ts` (from the design's `dpl-content-he.js`) |
+| Campaign: landing, funnel, sign-in | `apps/campaign/messages/he/*.json` (`landing`, `landingMore`, `funnel`, `auth`, `privacy`, `seo`, `common`) |
 | Client portal | `apps/campaign/messages/he/portal.json` |
 | CRM (staff only) | `apps/campaign/messages/he/admin.json` |
 | Emails (15 welcome emails, the "file open" email, the transactional ones) | `packages/emails/src/templates/*.ts` (Hebrew strings sit next to the English ones) |
 
-Every `messages/en/*.json` key has a Hebrew twin; a unit test fails if one is missing or if a placeholder differs.
+Every `messages/en/*.json` key has a Hebrew twin; a unit test fails if one is missing or empty (placeholders are checked by eye in the review).
 
 ## Terminology that was chosen
 

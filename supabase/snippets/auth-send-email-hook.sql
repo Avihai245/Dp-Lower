@@ -10,7 +10,7 @@
 --           campaign app's environment. Requests whose Standard Webhooks signature does not verify, or whose timestamp
 --           is more than 5 minutes off, are rejected with 401.
 --
--- Local development (supabase/config.toml, owned by the coordinator):
+-- Local development (supabase/config.toml):
 --   [auth.hook.send_email]
 --   enabled = true
 --   uri = "http://host.docker.internal:3001/api/auth/send-email"

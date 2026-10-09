@@ -13,6 +13,7 @@ create extension if not exists pg_net;
 
 -- 2. Keep the shared secret in Vault, not in the job text. Use the same value as CRON_SECRET in the app's environment.
 select vault.create_secret('<CRON_SECRET>', 'dpl_cron_secret', 'Bearer token of POST /api/cron/dispatch');
+--    (to rotate it later: select vault.update_secret((select id from vault.secrets where name = 'dpl_cron_secret'), '<NEW_SECRET>');)
 
 -- 3. Schedule the call (every minute; every 5 minutes is plenty if you prefer: '*/5 * * * *').
 --    Replace the URL with the production domain of the campaign app.

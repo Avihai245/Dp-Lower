@@ -8,9 +8,9 @@ code is organised), `DEPLOYMENT.md` (how to go live) and `HEBREW_REVIEW.md` (the
 
 | Check | Where | What it proves |
 |---|---|---|
-| Unit and integration tests | `pnpm test` (Vitest; 83 files, 1,370+ tests) | Business rules (`@dpl/core`), the email templates (every template, both languages, structure, escaping, fidelity against the design's HTML), the nurture schedule and outbox against the real local Supabase, token and cookie handling, message parity (every English key has a Hebrew twin, same placeholders), Hebrew bidi guard, route lists |
+| Unit and integration tests | `pnpm test` (Vitest; 86 files, 1,408 tests) | Business rules (`@dpl/core`), the email templates (every template, both languages, structure, escaping, fidelity against the design's HTML), the nurture schedule and outbox against the real local Supabase, token and cookie handling, message parity (every English key has a Hebrew twin, non-empty values), Hebrew bidi guard, route lists |
 | SQL tests | `pnpm db:test` (`supabase/tests/001..006` and `010`) | Schema, RLS (applicants read only their own rows, the Data API is read-only for signed-in users), booking capacity under concurrency, per-lawyer booking and the clean-up of past calls, outbox claiming, storage policies, case references, the Realtime publication and pinned function paths |
-| End-to-end | `pnpm e2e` (Playwright, production builds, desktop + phone width, English + Hebrew; 230+ tests) | The whole journey (landing, quiz, details, booking, offer, password, portal, application, uploads, submit, CRM status change visible in the portal), every API route, the three firm-website forms, CRM actions and permissions, SEO of every sitemap URL, no console or CSP errors, no sideways scroll, axe accessibility scan of 40+ pages |
+| End-to-end | `pnpm e2e` (Playwright, production builds, desktop + phone width, English + Hebrew; 246 tests) | The whole journey (landing, quiz, details, booking, offer, password, portal, application, uploads, submit, CRM status change visible in the portal), every API route, the three firm-website forms, CRM actions and permissions, SEO of every sitemap URL, no console or CSP errors, no sideways scroll, axe accessibility scan of 40+ pages |
 | Visual comparison | `tools/visual` | Screenshots of the prototypes next to the app at 1440 and 390 px; differences listed in section 4 |
 | Independent audits (three agents that did not write the code) | this section | See 1.1 |
 | Dependency audit | `pnpm audit --prod` | Clean after the `postcss` override |
@@ -44,7 +44,7 @@ change plus a test; `Accepted` is a decision recorded in section 6; `Open` needs
 | B-01 | (same as C-01) | Fixed |
 | B-02 | Emails 2 and 4 went to people who had uploaded some documents | Fixed: skipped as soon as one document is in |
 | B-03 | Queued nurture emails still went out after unsubscribe or submission, or as a burst after downtime | Fixed: pending nurture events are cancelled on unsubscribe, submission, a corrected address and a deleted lead; events older than 48 hours are never delivered; new event state `cancelled` |
-| B-04 | Case references repeated after about 9,000 leads | Fixed: five or more digits, the email conflict is told apart from a case-reference conflict (migration 12, `005_case_ref.sql`) |
+| B-04 | Case references repeated after about 9,000 leads | Fixed: four or more digits (five from the 10,000th lead), the email conflict is told apart from a case-reference conflict (migration 12, `005_case_ref.sql`) |
 | B-05 | A booked call could not be moved or cancelled; links in emails led to dead ends; past calls stayed "upcoming" | Fixed: see 1.2 |
 | B-06 | Google sign-in or a reset link opened the portal without the lead reaching "Account created" | Fixed: `markAccountCreated()` (idempotent, one CRM event) is called from the auth callback too |
 | B-07 | Correcting the email on /details created a second lead | Fixed: the same lead moves to the new address (identity reset, old links dead, welcome-1 and the booking confirmation to the new address); another name is another person; a lead with a password keeps its address |
@@ -80,7 +80,7 @@ change plus a test; `Accepted` is a decision recorded in section 6; `Open` needs
 ### 1.1b Second round (after the per-lawyer calendars were added)
 
 Four more agents that had not written the code: the plan against the code, the campaign and the CRM used the way people use them, the
-firm website, and the security of everything that changed since the first audit. They found one blocker, three major findings
+firm website, and the security of everything that changed since the first audit. They found one blocker, four major findings
 and about twenty smaller ones. Each was reproduced before it was fixed; a fix has a test. IDs: S = security, P = plan, F = campaign
 and CRM in use, W = firm website.
 
@@ -102,18 +102,18 @@ and CRM in use, W = firm website.
 | P-4, P-5 | No limit on three public GET routes, no `Retry-After`; the nurture sequence ignored statuses the team set before the stage moved | Fixed (300 a minute per address, `Retry-After` on 429; a team-set status stops the sequence, also at delivery) |
 | P-6, P-9 | The email-fidelity tests skipped silently away from the author's machine; images were served with `max-age=0` | Fixed (the sixteen design emails are in `packages/emails/fixtures/design`; a day of cache plus a week of stale-while-revalidate) |
 | P-3, P-7, P-8, P-12 | No Lighthouse evidence; stale paths and test counts in the documents; differences from the plan not written down | Fixed (section 1.3, sections 2 and 3) |
-| F-5 | `<script>1234567</script>` accepted as a phone number, quoted and non-ASCII addresses accepted | Fixed with S-2 |
+| F-5 | `<script>1234567</script>` accepted as a phone number (it is stored as `1234567`: tags and control characters are stripped), quoted and non-ASCII addresses accepted | Fixed with S-2 |
 | F-9 | Funnel screens without a `<main>`; some touch targets under 24 px (Sign out, "Set a password", "← Portal", the camera buttons) | `<main>` added; the target sizes are the design's own and stay (WCAG 2.2 level AA, which Israeli standard 5568 does not require) |
 | F-8 | Applicants cannot remove an uploaded file | Decision recorded: the design has no remove control, an upload can be replaced; the API route and the `document.removed` event exist for a later step |
 | F-12 | Browser Back inside the six questions leaves the quiz (they share one URL) | Accepted: the quiz is one screen with its own "Previous"; progress is kept |
 | F-11 | "No confirmation after saving in the CRM modal" | Not a defect: the button reads "Saved" and the line below says the applicant is emailed (an e2e test asserts both) |
 | W-7, W-8 | 71 of 156 titles are over 65 characters (the prototype's "name, role \| brand" formula); `lastmod` is the date of the content snapshot on most URLs | Open for the firm (titles); the date is deliberate and documented in `crawl.ts` |
-| P-10, P-11, P-13 | HMAC signing and Turnstile are off until their secrets are set; the campaign `llms.txt` lists `/eligibility`, which `robots.txt` disallows; "Mark received" on an empty slot counts as a document for the drip rule | Accepted: documented as recommended in `DEPLOYMENT.md`; the funnel's first step stays listed for answer engines; the firm holds a document it marked received |
+| P-10, P-11, P-13 | HMAC signing and Turnstile are off until their secrets are set; the campaign `llms.txt` lists `/eligibility`, which `robots.txt` disallows; "Mark received" on an empty slot counts as a document for the drip rule | Accepted: documented as optional in `DEPLOYMENT.md`; the funnel's first step stays listed for answer engines; the firm holds a document it marked received |
 | other nits | 22 px "Open in maps" targets, the chat teaser over the hero on 390 px phones, day chips wrapping 4+1, any ZIP accepted as `.docx`, an eight-character password minimum, repeated wrong sign-ins throttled only by Supabase Auth's own limits (hosted default 30 per 5 minutes per address) | Accepted or recorded; none changes the design |
 
 ### 1.2 Per-lawyer availability and the booking lifecycle (B-05, B-08)
 
-See the section "Booking" of `ARCHITECTURE.md`. Summary of the behaviour: each lawyer has their own weekly hours and blocked
+See the `/api/bookings` rows in section 8 of `ARCHITECTURE.md` and the data model in its section 6. Summary of the behaviour: each lawyer has their own weekly hours and blocked
 days (an administrator edits any calendar, a lawyer only their own; the former firm-wide template stays as the
 "unassigned" pool so nothing breaks before lawyers are set up); a booking is assigned to a free lawyer; emails carry a signed link to a page where the
 visitor can move or cancel the call; a call whose time has passed is never shown as upcoming and is marked completed by the
@@ -121,7 +121,25 @@ cron job; staff can mark a call held, no-show or cancelled.
 
 ### 1.3 Measured performance and accessibility
 
-Lighthouse (local production builds, mobile preset): see the table at the end of this section after the final run.
+Lighthouse 12, mobile preset (simulated 4x CPU slowdown, slow 4G), local production builds, measured on the final code on 2026-10-09. One run per page; the scores move by about ±5 between runs (English pages are bimodal: first paint at 1.1 s or 2.3 s depending on the run).
+
+| Page | Performance | Accessibility | Best practices | SEO | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|
+| Firm site home (EN) | 91 | 97 | 96 | 100 | 3.0 s | 120 ms | 0 |
+| Firm site home (HE) | 95 | 97 | 96 | 100 | 2.7 s | 140 ms | 0 |
+| Service page (EN) | 91 | 97 | 100 | 100 | 3.2 s | 90 ms | 0 |
+| Service page (HE) | 96 | 97 | 100 | 100 | 2.7 s | 80 ms | 0 |
+| Team (EN) | 90 | 97 | 100 | 100 | 3.4 s | 40 ms | 0 |
+| Team (HE) | 95 | 97 | 100 | 100 | 3.0 s | 50 ms | 0 |
+| Contact (EN) | 91 | 96 | 100 | 100 | 3.2 s | 100 ms | 0 |
+| Landing page (EN) | 89 | 96 | 96 | 100 | 3.4 s | 60 ms | 0.003 |
+| Landing page (HE) | 93 | 96 | 96 | 100 | 3.2 s | 60 ms | 0 |
+| Quiz (EN) | 90 | 96 | 100 | 58 | 3.6 s | 110 ms | 0.026 |
+| Quiz (HE) | 99 | 96 | 100 | 58 | 1.9 s | 90 ms | 0.004 |
+| Sign-in (EN) | 90 | 96 | 96 | 58 | 3.4 s | 120 ms | 0 |
+| Sign-in (HE) | 97 | 96 | 96 | 58 | 2.6 s | 60 ms | 0 |
+
+The target of 90 is met on every page but the English landing page (89, inside the noise). SEO 58 on the quiz and sign-in pages is intentional: they are `noindex` by design (a funnel step is not a search result). The scores are measured on a development machine, not on Vercel's network; re-measure after the first deploy.
 axe (WCAG 2.0/2.1 A and AA) finds no violation other than colour contrast on any of the pages scanned, in either language.
 
 ## 2. Plan to implementation

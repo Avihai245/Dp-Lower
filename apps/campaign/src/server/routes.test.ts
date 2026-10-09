@@ -1,7 +1,7 @@
 import { createAdminSupabase } from '@dpl/db/admin';
 import type { Db } from '@dpl/db/types';
 import { NextRequest } from 'next/server';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanupLeads, loadLocalEnv, makeLead } from './test-env';
 
 vi.mock('server-only', () => ({}));
@@ -94,6 +94,11 @@ describe('POST /api/cron/dispatch', () => {
   let route: typeof import('../app/api/cron/dispatch/route');
   beforeAll(async () => {
     route = await import('../app/api/cron/dispatch/route');
+  });
+  // the route builds its database client from the environment; the steps themselves are mocked, so any values do
+  beforeEach(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:1');
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'unused');
   });
   afterEach(() => vi.unstubAllEnvs());
 

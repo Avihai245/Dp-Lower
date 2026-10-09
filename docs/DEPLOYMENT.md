@@ -56,7 +56,7 @@ Set them in each Vercel project (Settings, Environment Variables, Production + P
 | `SEND_EMAIL_HOOK_SECRET` | from Supabase step 5 |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET` | optional |
 
-**Main site (`dpl-main`)**: `NEXT_PUBLIC_SITE_URL=https://www.lawoffice.org.il`, `NEXT_PUBLIC_CAMPAIGN_URL=https://euro-passports.com`, the same three Supabase variables, `APP_SECRET`, the Zapier variables, optional Turnstile keys. (Its contact forms write to the same database through the server.)
+**Main site (`dpl-main`)**: `NEXT_PUBLIC_SITE_URL=https://www.lawoffice.org.il`, `NEXT_PUBLIC_CAMPAIGN_URL=https://euro-passports.com`, `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (its contact forms write to the same database through the server), optional `EMAIL_FROM_*` and Turnstile keys. The main site only queues mail and events in the outbox; the campaign's dispatcher delivers them, so the Zapier URLs and `APP_SECRET` belong in the campaign project only.
 
 ## 4. Zapier
 
@@ -79,7 +79,7 @@ The apps never talk to an email provider or a CRM directly. They write every ema
 | `unsubscribed` | person unsubscribed from emails | mark the contact in your email tool |
 | `lead.deleted` | an administrator deleted an applicant (right to erasure) | delete the contact in your own tools too; the event carries no personal data, only the case reference |
 
-Every CRM event carries `data.lead` (id, caseRef, name, email, phone, locale, route, source, stage, status). Paste a sample by running a test lead through the funnel once, then "Test trigger".
+Every CRM event carries `data.lead` (id, caseRef, name, email, phone, locale, route, source, stage, status), except `contact.created` (`data.submission`), `callback.requested` (`data.callback`) and `lead.deleted` (`data.caseRef`, `by`, `deletedAt`). Other events the outbox can carry, if you want them in your CRM: `document.reviewed` (staff approved or rejected a file) and `result.requested` (the applicant asked for their result by email). Paste a sample by running a test lead through the funnel once, then "Test trigger".
 
 If you use a single hook, set only `ZAPIER_WEBHOOK_URL` and keep the filter step.
 
@@ -109,7 +109,7 @@ Google Cloud Console, APIs and Services, Credentials, OAuth client ID (Web). Aut
 ## 8. Search engines and AI discovery
 
 - Submit `https://www.lawoffice.org.il/sitemap.xml` and `https://euro-passports.com/sitemap.xml` in Google Search Console and Bing Webmaster Tools (verify both properties).
-- `robots.txt` is open to search engines and the AI answer engines (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended, Applebot-Extended...). The main site also serves `/llms.txt` and `/llms-full.txt`. Pages are server-rendered, so crawlers that do not run JavaScript still read the full content.
+- `robots.txt` is open to search engines and the AI answer engines (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended, Applebot-Extended...). Both sites serve `/llms.txt` and `/llms-full.txt`. Pages are server-rendered, so crawlers that do not run JavaScript still read the full content.
 - Create a Google Business Profile for both offices with the same name, address and phone as in the structured data.
 - Old `?p=...` and `?lang=he` URLs of the prototype are redirected (301) to the clean addresses.
 
@@ -144,9 +144,13 @@ pnpm db:start            # Docker: local Supabase (API 54321, DB 54322, mail inb
 pnpm db:reset            # applies migrations to the local database
 cp apps/campaign/.env.example apps/campaign/.env.local   # fill from `pnpm exec supabase status -o env`
 cp apps/main/.env.example apps/main/.env.local
+# in both files point the three URLs at the local servers (the examples hold the production domains, which make the
+# production build upgrade requests to https and write production canonicals and cookies):
+#   NEXT_PUBLIC_SITE_URL=http://localhost:3000  NEXT_PUBLIC_MAIN_SITE_URL=http://localhost:3000  NEXT_PUBLIC_CAMPAIGN_URL=http://localhost:3001
+# (main: NEXT_PUBLIC_SITE_URL=http://localhost:3000, NEXT_PUBLIC_CAMPAIGN_URL=http://localhost:3001)
 pnpm dev:campaign        # http://localhost:3001  (Hebrew: /he)
 pnpm dev:main            # http://localhost:3000
-pnpm test                # unit + integration tests (integration needs `pnpm db:start`)
+pnpm test                # unit + integration tests (the database ones run when the Supabase variables are set, otherwise they are skipped)
 pnpm db:test             # SQL tests (RLS, booking, outbox)
 pnpm e2e                 # Playwright end-to-end suite
 ```
