@@ -30,6 +30,22 @@ export function startProtoServer() {
   );
 }
 
+// The prototypes load Newsreader and Manrope from Google Fonts. Fetching them is unreliable in sandboxes and the
+// fallback fonts have different metrics, so both sides of a comparison use the very same files: the @fontsource
+// packages the apps bundle.
+const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+const FONT_DIR = path.join(REPO, 'apps/campaign/node_modules/@fontsource-variable');
+const FONT_FILES = {
+  'manrope.woff2': 'manrope/files/manrope-latin-wght-normal.woff2',
+  'newsreader.woff2': 'newsreader/files/newsreader-latin-opsz-normal.woff2',
+  'newsreader-italic.woff2': 'newsreader/files/newsreader-latin-opsz-italic.woff2',
+};
+const FONT_CSS = `
+@font-face { font-family: 'Newsreader'; font-style: normal; font-weight: 200 800; font-display: block; src: url(https://fonts.gstatic.com/local/newsreader.woff2) format('woff2'); }
+@font-face { font-family: 'Newsreader'; font-style: italic; font-weight: 200 800; font-display: block; src: url(https://fonts.gstatic.com/local/newsreader-italic.woff2) format('woff2'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 200 800; font-display: block; src: url(https://fonts.gstatic.com/local/manrope.woff2) format('woff2'); }
+`;
+
 const UNPKG = {
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js': 'react/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js': 'react-dom/umd/react-dom.production.min.js',
@@ -41,6 +57,14 @@ const BLOCKED = /youtube\.com|youtube-nocookie\.com|ytimg\.com|googletagmanager|
 export async function prepareContext(context) {
   await context.route('**/*', (route) => {
     const url = route.request().url();
+    if (/^https:\/\/fonts\.googleapis\.com\//.test(url)) {
+      return route.fulfill({ status: 200, contentType: 'text/css', headers: { 'access-control-allow-origin': '*' }, body: FONT_CSS });
+    }
+    if (url.startsWith('https://fonts.gstatic.com/local/')) {
+      const file = FONT_FILES[url.split('/').pop()];
+      if (!file || !fs.existsSync(path.join(FONT_DIR, file))) return route.abort();
+      return route.fulfill({ status: 200, contentType: 'font/woff2', headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(path.join(FONT_DIR, file)) });
+    }
     if (UNPKG[url]) return route.fulfill({ path: path.join(LIBS_DIR, UNPKG[url]), contentType: 'text/javascript' });
     if (BLOCKED.test(url)) return route.abort();
     return route.continue();
