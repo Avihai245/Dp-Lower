@@ -56,3 +56,60 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+
+  e2e:
+    name: end-to-end (Playwright, production builds)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: pnpm install --frozen-lockfile
+      - run: supabase start -x studio,imgproxy,edge-runtime,vector,logflare,postgres-meta
+      - name: Environment of the two apps (the specs read the Supabase keys from apps/campaign/.env.local)
+        run: |
+          eval "$(supabase status -o env | sed 's/^/export /')"
+          secret="$(openssl rand -hex 32)"
+          cat > apps/campaign/.env.local <<ENV
+          NEXT_PUBLIC_SITE_URL=http://localhost:3001
+          NEXT_PUBLIC_MAIN_SITE_URL=http://localhost:3000
+          NEXT_PUBLIC_CAMPAIGN_URL=http://localhost:3001
+          NEXT_PUBLIC_SUPABASE_URL=$API_URL
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          APP_SECRET=$secret
+          CRON_SECRET=ci-cron-secret
+          ENV
+          cat > apps/main/.env.local <<ENV
+          NEXT_PUBLIC_SITE_URL=http://localhost:3000
+          NEXT_PUBLIC_CAMPAIGN_URL=http://localhost:3001
+          NEXT_PUBLIC_SUPABASE_URL=$API_URL
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          APP_SECRET=$secret
+          ENV
+      - run: pnpm build
+      - name: Start both apps
+        run: |
+          (cd apps/campaign && nohup pnpm exec next start -p 3001 > "$RUNNER_TEMP/campaign.log" 2>&1 &)
+          (cd apps/main && nohup pnpm exec next start -p 3000 > "$RUNNER_TEMP/main.log" 2>&1 &)
+          for port in 3000 3001; do
+            for i in $(seq 1 60); do curl -fsS "http://localhost:$port/" > /dev/null && break; sleep 1; done
+          done
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+            ${{ runner.temp }}/*.log
