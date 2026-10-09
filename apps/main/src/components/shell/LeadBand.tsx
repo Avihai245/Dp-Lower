@@ -4,6 +4,7 @@ import type { Locale } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { type ChangeEvent, type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { TURNSTILE_SITE_KEY, Turnstile } from '@/components/contact/Turnstile';
 import { Link } from '@/i18n/navigation';
 import { FIRM } from '@/lib/shell/firm';
 import {
@@ -48,7 +49,10 @@ export function LeadBand() {
   const [touched, setTouched] = useState<Partial<Record<LeadField, boolean>>>({});
   const [attempted, setAttempted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [failure, setFailure] = useState<'rate' | 'failed' | null>(null);
+  const [failure, setFailure] = useState<'rate' | 'captcha' | 'failed' | null>(null);
+  const captcha = TURNSTILE_SITE_KEY !== '';
+  const [token, setToken] = useState<string | null>(null);
+  const [tokenRound, setTokenRound] = useState(0);
   const [sent, setSent] = useState<{ name: string; phone: string; email: string } | null>(null);
 
   const nameRef = useRef<HTMLInputElement>(null);
@@ -81,11 +85,17 @@ export function LeadBand() {
       fieldRefs[errors[0]!].current?.focus();
       return;
     }
+    if (captcha && !token) {
+      setFailure('captcha');
+      return;
+    }
     setSending(true);
     setFailure(null);
-    const result = await postContact(
-      buildLeadBandPayload(values, { locale, page: window.location.pathname, utm: parseUtm(window.location.search) }),
-    );
+    const payload = buildLeadBandPayload(values, { locale, page: window.location.pathname, utm: parseUtm(window.location.search) });
+    const result = await postContact(captcha ? { ...payload, turnstileToken: token ?? undefined } : payload);
+    // a Turnstile token is good for one submission
+    setToken(null);
+    setTokenRound((r) => r + 1);
     setSending(false);
     if (!result.ok) {
       setFailure(result.reason);
@@ -210,6 +220,7 @@ export function LeadBand() {
               </div>
             ) : (
               <form onSubmit={onSubmit} noValidate>
+                {captcha && <Turnstile locale={locale} onToken={setToken} resetSignal={tokenRound} />}
                 <div data-resp="2" style={s('display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px')}>
                   <div>
                     <label style={s('display: block')}>
@@ -339,7 +350,7 @@ export function LeadBand() {
                     role="alert"
                     style={s('font-size: 14px; line-height: 1.55; color: #7a2418; background: #fbf3f1; border-left: 3px solid #9b2c1f; padding: 12px 14px; margin: 0 0 16px')}
                   >
-                    {t.rich(failure === 'rate' ? 'leadBand.errors.rate' : 'leadBand.errors.failed', {
+                    {t.rich(failure === 'rate' ? 'leadBand.errors.rate' : failure === 'captcha' ? 'leadBand.errors.captcha' : 'leadBand.errors.failed', {
                       phone: phoneTel,
                       n: (chunks) => <bdi dir="ltr">{chunks}</bdi>,
                     })}

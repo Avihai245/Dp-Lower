@@ -96,6 +96,8 @@ export interface ContactPayload {
   utm?: Record<string, string>;
   /** honeypot, filled only by bots */
   website?: string;
+  /** Cloudflare Turnstile token; required by the API once TURNSTILE_SECRET is set on the server */
+  turnstileToken?: string;
 }
 
 export interface SubmitContext {
@@ -127,9 +129,12 @@ export const buildLeadBandPayload = (v: LeadValues & { website: string; matterIn
 export const buildChatPayload = (v: LeadValues & { website: string; topicIndex: number }, ctx: SubmitContext): ContactPayload =>
   payload('chat', v, CHAT_TOPIC_VALUES[v.topicIndex] ?? CHAT_TOPIC_VALUES[CHAT_TOPIC_VALUES.length - 1], ctx);
 
-export type SubmitResult = { ok: true } | { ok: false; reason: 'rate' | 'failed' };
+export type SubmitResult = { ok: true } | { ok: false; reason: 'rate' | 'captcha' | 'failed' };
 
-/** POST /api/contact answers 201 {ok:true}; 429 means the per-IP limit was hit, anything else (or no network) is a plain failure. */
+/**
+ * POST /api/contact answers 201 {ok:true}; 429 means the per-IP limit was hit, 400 captcha_failed that the Turnstile
+ * check was missing or refused, anything else (or no network) is a plain failure.
+ */
 export async function postContact(body: ContactPayload, doFetch: typeof fetch = fetch): Promise<SubmitResult> {
   try {
     const res = await doFetch(CONTACT_ENDPOINT, {
@@ -138,7 +143,12 @@ export async function postContact(body: ContactPayload, doFetch: typeof fetch = 
       body: JSON.stringify(body),
     });
     if (res.ok) return { ok: true };
-    return { ok: false, reason: res.status === 429 ? 'rate' : 'failed' };
+    if (res.status === 429) return { ok: false, reason: 'rate' };
+    if (res.status === 400) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (body?.error === 'captcha_failed') return { ok: false, reason: 'captcha' };
+    }
+    return { ok: false, reason: 'failed' };
   } catch {
     return { ok: false, reason: 'failed' };
   }

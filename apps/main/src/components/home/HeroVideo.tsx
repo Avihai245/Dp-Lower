@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 /** The firm's film, muted and looping behind the hero text. Parameters exactly as in the prototype. */
 const VIDEO_SRC =
-  'https://www.youtube.com/embed/IYQ1_m3cCMA?autoplay=1&mute=1&controls=0&loop=1&playlist=IYQ1_m3cCMA&start=36&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0';
+  'https://www.youtube-nocookie.com/embed/IYQ1_m3cCMA?autoplay=1&mute=1&controls=0&loop=1&playlist=IYQ1_m3cCMA&start=36&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0';
 
 /** The video is for desktop screens only (SEO-README); phones and tablets keep the poster. */
 const DESKTOP = '(min-width: 961px)';

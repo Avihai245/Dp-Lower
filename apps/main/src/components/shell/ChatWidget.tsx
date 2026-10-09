@@ -4,6 +4,7 @@ import type { Locale } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { TURNSTILE_SITE_KEY, Turnstile } from '@/components/contact/Turnstile';
 import { Link } from '@/i18n/navigation';
 import {
   autoCapitalize,
@@ -51,7 +52,10 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
   const [touched, setTouched] = useState<Partial<Record<LeadField, boolean>>>({});
   const [attempted, setAttempted] = useState(false);
   const [sending, setSending] = useState(false);
-  const [failure, setFailure] = useState<'rate' | 'failed' | null>(null);
+  const [failure, setFailure] = useState<'rate' | 'captcha' | 'failed' | null>(null);
+  const captcha = TURNSTILE_SITE_KEY !== '';
+  const [token, setToken] = useState<string | null>(null);
+  const [tokenRound, setTokenRound] = useState(0);
   const [sent, setSent] = useState<{ name: string; phone: string } | null>(null);
 
   const panelRef = useRef<HTMLDivElement>(null);
@@ -87,11 +91,17 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
       fieldRefs[errors[0]!].current?.focus();
       return;
     }
+    if (captcha && !token) {
+      setFailure('captcha');
+      return;
+    }
     setSending(true);
     setFailure(null);
-    const result = await postContact(
-      buildChatPayload({ ...values, topicIndex: topic }, { locale, page: window.location.pathname, utm: parseUtm(window.location.search) }),
-    );
+    const payload = buildChatPayload({ ...values, topicIndex: topic }, { locale, page: window.location.pathname, utm: parseUtm(window.location.search) });
+    const result = await postContact(captcha ? { ...payload, turnstileToken: token ?? undefined } : payload);
+    // a Turnstile token is good for one submission
+    setToken(null);
+    setTokenRound((r) => r + 1);
     setSending(false);
     if (!result.ok) {
       setFailure(result.reason);
@@ -194,6 +204,7 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
 
             {step === 1 && (
               <form onSubmit={onSubmit} noValidate style={s('display: flex; flex-direction: column; gap: 10px; margin-top: 4px')}>
+                {captcha && <Turnstile locale={locale} onToken={setToken} resetSignal={tokenRound} />}
                 <input
                   {...fieldProps('name')}
                   type="text"
@@ -292,7 +303,7 @@ export function ChatWidget({ open, onToggle, onClose }: Props) {
                     role="alert"
                     style={s('font-size: 13.5px; line-height: 1.55; color: #7a2418; background: #fbf3f1; border-left: 3px solid #9b2c1f; padding: 10px 12px; margin: 0')}
                   >
-                    {t.rich(failure === 'rate' ? 'chat.errors.rate' : 'chat.errors.failed', {
+                    {t.rich(failure === 'rate' ? 'chat.errors.rate' : failure === 'captcha' ? 'chat.errors.captcha' : 'chat.errors.failed', {
                       phone: t('phones.telAviv'),
                       n: (chunks) => <bdi dir="ltr">{chunks}</bdi>,
                     })}

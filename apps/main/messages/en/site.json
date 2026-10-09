@@ -148,7 +148,8 @@
       "email": "Please enter a valid email address.",
       "consent": "Please confirm that you have read the privacy policy.",
       "rate": "Too many requests from your connection. Please wait a minute and try again, or call us on <n>{phone}</n>.",
-      "failed": "We could not send your enquiry. Please try again, or call us on <n>{phone}</n>."
+      "failed": "We could not send your enquiry. Please try again, or call us on <n>{phone}</n>.",
+      "captcha": "The security check did not complete. Please try again in a moment, or call us on <n>{phone}</n>."
     },
     "sentTitle": "<n>{name}</n>, your enquiry is with us.",
     "sentLine": "An attorney will call <n>{phone}</n> within one business day, and a confirmation is on its way to <n>{email}</n>.",
@@ -238,7 +239,8 @@
       "email": "Please enter a valid email address, or leave it empty.",
       "consent": "Please confirm that you have read the privacy policy.",
       "rate": "Too many requests from your connection. Please wait a minute and try again, or call us on <n>{phone}</n>.",
-      "failed": "We could not send your request. Please try again, or call us on <n>{phone}</n>."
+      "failed": "We could not send your request. Please try again, or call us on <n>{phone}</n>.",
+      "captcha": "The security check did not complete. Please try again in a moment, or call us on <n>{phone}</n>."
     },
     "doneTitle": "<n>{name}</n>, we have your details.",
     "doneLine": "An attorney from the relevant department will call <n>{phone}</n>, usually within one business day."

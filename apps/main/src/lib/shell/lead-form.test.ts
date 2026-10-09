@@ -194,3 +194,18 @@ describe('postContact', () => {
     expect(await postContact(body, f)).toEqual({ ok: false, reason: 'failed' });
   });
 });
+
+describe('postContact result mapping (captcha)', () => {
+  const body = { kind: 'lead_band', name: 'Ana', phone: '5551234567', matter: 'x', consent: true, locale: 'en', page: '/' } as const;
+  const respond = (status: number, json?: unknown) => (async () => new Response(json === undefined ? null : JSON.stringify(json), { status })) as unknown as typeof fetch;
+
+  it('maps a refused Turnstile check to "captcha", the rate limit to "rate", anything else to "failed"', async () => {
+    const { postContact } = await import('./lead-form');
+    expect(await postContact(body, respond(201, { ok: true }))).toEqual({ ok: true });
+    expect(await postContact(body, respond(400, { error: 'captcha_failed' }))).toEqual({ ok: false, reason: 'captcha' });
+    expect(await postContact(body, respond(400, { error: 'invalid_body' }))).toEqual({ ok: false, reason: 'failed' });
+    expect(await postContact(body, respond(429, { error: 'rate_limited' }))).toEqual({ ok: false, reason: 'rate' });
+    expect(await postContact(body, respond(500))).toEqual({ ok: false, reason: 'failed' });
+    expect(await postContact(body, (async () => { throw new Error('offline'); }) as unknown as typeof fetch)).toEqual({ ok: false, reason: 'failed' });
+  });
+});

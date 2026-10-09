@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 const VIDEO_ID = '52rCx7iQeFo';
 /** the prototype's embed, parameter for parameter: muted, looped, no controls, starts at 2:37 */
 const EMBED_URL =
-  `https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1&mute=1&controls=0&loop=1&playlist=${VIDEO_ID}` +
+  `https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&mute=1&controls=0&loop=1&playlist=${VIDEO_ID}` +
   '&start=157&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0';
 
 /**
