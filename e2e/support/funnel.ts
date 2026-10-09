@@ -10,7 +10,7 @@ type PlaywrightRunner = PlaywrightWorkerArgs['playwright'];
  * Supabase (service role, for assertions and clean-up only) and a few builders. Everything the specs create uses
  * emails of the form e2e-funnel-<run>-<n>@example.com so it can be found and deleted again.
  */
-export const BASE_URL = process.env.FUNNEL_BASE_URL ?? 'http://localhost:3103';
+export const BASE_URL = process.env.FUNNEL_BASE_URL ?? process.env.CAMPAIGN_URL ?? 'http://localhost:3001';
 
 function readEnvFile(): Record<string, string> {
   const file = path.resolve(__dirname, '../../apps/campaign/.env.local');

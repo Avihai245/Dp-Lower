@@ -2,7 +2,7 @@
  * Portal API integration tests: the real routes of the running campaign app against the real local Supabase
  * (database, auth and storage). Run with
  *
- *   PORTAL_BASE_URL=http://localhost:3104 pnpm exec playwright test e2e/portal.api.spec.ts
+ *   pnpm exec playwright test e2e/portal.api.spec.ts
  *
  * Applicants are created with the service-role client (see portal.helpers.ts) and signed in the way the browser is, so
  * every request below carries a real Supabase session cookie. All test data is removed again.

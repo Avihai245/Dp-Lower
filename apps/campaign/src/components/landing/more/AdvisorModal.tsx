@@ -9,10 +9,7 @@ import { useLandingUi } from '../ui-context';
 import '../../../styles/landing-more.css';
 import { useDialog } from './use-dialog';
 
-/** How long the "request received" screen (the designed ring with a counting number) shows before the confirmation. */
-const COUNTDOWN_SECONDS = 5;
-
-type Stage = 'form' | 'received' | 'done';
+type Stage = 'form' | 'done';
 type Problem = 'phone' | 'rate_limited' | 'failed' | null;
 interface Fields {
   name: string;
@@ -25,11 +22,12 @@ const LABEL = 'display:block;font-size:12.5px;font-weight:600;letter-spacing:0.1
 const INPUT = "width:100%;padding:14px 15px;font-size:15.5px;font-family:'Manrope',system-ui,sans-serif;border:1px solid #ece6dc;background:#fff;border-radius:12px;box-sizing:border-box";
 
 /**
- * The "Speak with an AI Advisor" modal: form -> "request received" (the designed 5 second ring) -> confirmation.
+ * The "Speak with an AI Advisor" modal: form -> confirmation.
  *
- * There is no voice AI yet: a person from the firm calls the visitor back. The designed screens and visuals are kept,
- * but every sentence says what really happens (request received, a team member will call shortly), and the request is
- * stored through POST /api/callbacks the moment the form is submitted. Mounted by the page; renders nothing while closed.
+ * There is no voice AI yet: a person from the firm calls the visitor back. The designed form and confirmation are kept,
+ * but every sentence says what really happens (a team member will call shortly), and the prototype's fake 5 second
+ * countdown is gone (the approved plan replaces it with the confirmation). The request is stored through
+ * POST /api/callbacks the moment the form is submitted. Mounted by the page; renders nothing while closed.
  */
 export function AdvisorModal() {
   const { advisorOpen, closeAdvisor, chatOpen } = useLandingUi();
@@ -57,7 +55,6 @@ function AdvisorDialog({
   const t = useTranslations('landingMore.advisor');
   const locale = useLocale();
   const [stage, setStage] = useState<Stage>('form');
-  const [count, setCount] = useState(COUNTDOWN_SECONDS);
   const [problem, setProblem] = useState<Problem>(null);
   // the Turnstile token (only when a site key is configured; the server decides what a missing one means)
   const captcha = useRef<string | null>(null);
@@ -86,23 +83,6 @@ function AdvisorDialog({
       alive.current = false;
     };
   }, []);
-
-  // "request received" holds for COUNTDOWN_SECONDS, then settles on the confirmation
-  useEffect(() => {
-    if (stage !== 'received') return;
-    let left = COUNTDOWN_SECONDS;
-    const id = window.setInterval(() => {
-      left -= 1;
-      if (left <= 0) {
-        window.clearInterval(id);
-        setCount(0);
-        setStage('done');
-      } else {
-        setCount(left);
-      }
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [stage]);
 
   // the button that was pressed is replaced by the next stage: hand focus to the dialog (its title is announced)
   useEffect(() => {
@@ -141,8 +121,7 @@ function AdvisorDialog({
     if (!alive.current) return;
     setBusy(false);
     if (res.ok) {
-      setCount(COUNTDOWN_SECONDS);
-      setStage('received');
+      setStage('done');
       return;
     }
     // a token is single use: ask for a fresh one before the next attempt
@@ -251,29 +230,6 @@ function AdvisorDialog({
               style={s('position:absolute;width:1px;height:1px;padding:0;margin:-1px;border:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;opacity:0')}
             />
           </form>
-        )}
-
-        {stage === 'received' && (
-          <div style={s('text-align:center;padding:12px 0 4px')}>
-            <div style={s(`${KICKER};margin-bottom:22px`)}>{t('receivedKicker')}</div>
-            <div
-              aria-hidden="true"
-              style={s('width:132px;height:132px;margin:0 auto 26px;border-radius:50%;border:2px solid #ece6dc;display:grid;place-items:center;position:relative')}
-            >
-              <span style={s(`${SERIF};font-size:58px;line-height:1;color:#14202b`)}>{count}</span>
-            </div>
-            <h3 id={titleId} style={s(`${SERIF};font-weight:400;font-size:28px;line-height:1.2;letter-spacing:normal;color:#14202b;margin:0 0 10px`)}>
-              {t('receivedTitle')}
-            </h3>
-            <p style={s('font-size:15.5px;line-height:1.65;color:#736d64;margin:0 0 24px')}>{t('receivedBody')}</p>
-            <button
-              type="button"
-              onClick={onClose}
-              style={s("background:transparent;border:0;color:#736d64;font-family:'Manrope',system-ui,sans-serif;font-size:13.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px")}
-            >
-              {t('receivedClose')}
-            </button>
-          </div>
         )}
 
         {stage === 'done' && (

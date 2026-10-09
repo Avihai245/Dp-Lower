@@ -23,10 +23,10 @@ import {
  */
 
 /**
- * The campaign app the specs run against: `ADMIN_BASE_URL` when set, else the `baseURL` of the Playwright project that
- * is running them (the repository's own config or e2e/playwright.admin.config.ts), else the CRM dev port.
+ * The campaign app the specs run against: `ADMIN_BASE_URL` when set, else `CAMPAIGN_URL`, else the `baseURL` of the
+ * Playwright project that is running them (playwright.config.ts: the campaign app on port 3001).
  */
-export const baseUrlFor = (projectBaseUrl: string | undefined): string => process.env.ADMIN_BASE_URL ?? projectBaseUrl ?? 'http://localhost:3105';
+export const baseUrlFor = (projectBaseUrl: string | undefined): string => process.env.ADMIN_BASE_URL ?? process.env.CAMPAIGN_URL ?? projectBaseUrl ?? 'http://localhost:3001';
 export const SOURCE = 'e2e-admin';
 const PASSWORD = 'E2e-Admin-Pass-1!';
 

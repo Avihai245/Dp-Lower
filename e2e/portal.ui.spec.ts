@@ -2,7 +2,7 @@
  * Portal UI tests in a real browser: the guided tour, autosave and resume, uploads, submission and sign-out, in English,
  * and the mirrored Hebrew page. They use the real routes and the real local Supabase (see portal.helpers.ts); run with
  *
- *   PORTAL_BASE_URL=http://localhost:3104 pnpm exec playwright test e2e/portal.ui.spec.ts
+ *   pnpm exec playwright test e2e/portal.ui.spec.ts
  *
  * One browser at a time (workers: 1 is the default for a single file); every applicant is removed at the end.
  */

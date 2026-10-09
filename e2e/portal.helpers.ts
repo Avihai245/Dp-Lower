@@ -2,7 +2,7 @@
  * Test helpers for the portal end-to-end specs (e2e/portal.*.spec.ts).
  *
  * They need the local Supabase (docs/ARCHITECTURE.md section 3) and a running campaign app at PORTAL_BASE_URL
- * (default http://localhost:3104). Every applicant is created through the service-role client with a unique
+ * (default CAMPAIGN_URL, else http://localhost:3001). Every applicant is created through the service-role client with a unique
  * `portal-e2e+...@example.com` address and removed again by dispose(): the database is shared, so nothing is left behind
  * (outbox events of the test leads included, they must never reach the dispatcher).
  *
@@ -20,7 +20,7 @@ const fromCampaign = createRequire(path.join(campaignDir, 'package.json'));
 const envFile = path.join(campaignDir, '.env.local');
 if (fs.existsSync(envFile)) process.loadEnvFile(envFile);
 
-export const BASE_URL = process.env.PORTAL_BASE_URL ?? 'http://localhost:3104';
+export const BASE_URL = process.env.PORTAL_BASE_URL ?? process.env.CAMPAIGN_URL ?? 'http://localhost:3001';
 
 const need = (name: string): string => {
   const v = process.env[name];

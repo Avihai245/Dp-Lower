@@ -81,7 +81,7 @@
     }
   },
   "submitted": {
-    "kicker": "{route} · Filed {date}",
+    "kicker": "{route} · Submitted {date}",
     "route": {
       "germany": "Germany · Art. 116(2) route",
       "austria": "Austria · §58c route",

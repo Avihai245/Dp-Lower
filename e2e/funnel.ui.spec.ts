@@ -5,7 +5,7 @@ import { BASE_URL, cleanup, createAuthUser, leadBody, leadByEmail, makeStaff, ne
  * Browser tests of the funnel screens: the six questions, the details form, the booking, the result and the
  * sign-in family, in English and Hebrew (RTL). Run against a dev or production server:
  *
- *   FUNNEL_BASE_URL=http://localhost:3103 pnpm exec playwright test e2e/funnel.ui.spec.ts
+ *   pnpm exec playwright test e2e/funnel.ui.spec.ts
  */
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(120_000);

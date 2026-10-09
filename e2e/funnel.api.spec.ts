@@ -22,10 +22,10 @@ import {
 
 /**
  * API integration tests of the campaign funnel against a running dev/prod server (FUNNEL_BASE_URL, default
- * http://localhost:3103) and the local Supabase. Every "browser" is its own APIRequestContext with its own cookie jar
+ * http://localhost:3001) and the local Supabase. Every "browser" is its own APIRequestContext with its own cookie jar
  * and its own x-forwarded-for address, so the per-IP rate limits of one test never affect another.
  *
- *   FUNNEL_BASE_URL=http://localhost:3103 pnpm exec playwright test e2e/funnel.api.spec.ts
+ *   pnpm exec playwright test e2e/funnel.api.spec.ts
  */
 test.describe.configure({ mode: 'serial' });
 test.use({ baseURL: BASE_URL });
