@@ -33,7 +33,7 @@ export function AdminNav() {
     <header style={s('background:var(--color-bg);border-bottom:1px solid var(--color-divider)')}>
       <div data-nav style={s('display:flex;align-items:center;gap:20px;padding:12px 24px;flex-wrap:wrap')}>
         <div style={s('display:flex;align-items:center;gap:10px')}>
-          <img src="/images/DPL_logo.webp" alt={t('nav.brandAlt')} decoding="async" style={s('height:24px;width:auto;display:block')} />
+          <img src="/images/DPL_logo-sm.webp" alt={t('nav.brandAlt')} width={320} height={114} decoding="async" style={s('height:24px;width:auto;display:block')} />
           <span
             data-hide-xs
             style={s(

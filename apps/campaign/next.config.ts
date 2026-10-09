@@ -57,6 +57,17 @@ const config: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [{ protocol: 'https', hostname: 'i.ytimg.com' }],
   },
+  webpack(config) {
+    // a font file imported from code (src/lib/font-preload.ts, only for its URL) is emitted exactly like the ones the CSS
+    // names: same folder, same content hash, so the preload is the request the stylesheet makes anyway
+    config.module.rules.push({
+      test: /\.woff2$/,
+      issuer: { not: [/\.(css|scss|sass)$/] },
+      type: 'asset/resource',
+      generator: { filename: 'static/media/[name].[hash:8][ext]' },
+    });
+    return config;
+  },
   async headers() {
     return [{ source: '/:path*', headers: [...securityHeaders, { key: 'Content-Security-Policy', value: contentSecurityPolicy() }] }];
   },

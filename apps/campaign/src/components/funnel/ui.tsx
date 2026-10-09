@@ -15,7 +15,7 @@ export function Page({ children, className = 'fx' }: { children: ReactNode; clas
 }
 
 export function Logo({ alt, height = 32, flex = false }: { alt: string; height?: number; flex?: boolean }) {
-  return <img src="/images/DPL_logo.webp" alt={alt} decoding="async" style={s(`height: ${height}px; width: auto; display: block${flex ? '; flex: none' : ''}`)} />;
+  return <img src="/images/DPL_logo-sm.webp" alt={alt} width={320} height={114} decoding="async" style={s(`height: ${height}px; width: auto; display: block${flex ? '; flex: none' : ''}`)} />;
 }
 
 type Step = 'details' | 'call' | 'result';

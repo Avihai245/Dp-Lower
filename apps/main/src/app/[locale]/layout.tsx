@@ -5,6 +5,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { ClientMessages } from '@/components/ClientMessages';
+import { preloadHebrewFonts } from '@/lib/font-preload';
 import { routing } from '@/i18n/routing';
 
 import '@fontsource-variable/manrope';
@@ -37,6 +38,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
+  if (locale === 'he') preloadHebrewFonts();
 
   return (
     <html lang={locale} dir={dirOf(locale as Locale)} suppressHydrationWarning>

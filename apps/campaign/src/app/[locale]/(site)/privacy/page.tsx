@@ -47,10 +47,10 @@ export default async function PrivacyPage({ params }: Params) {
         >
           <Link href="/" style={s('display:block;line-height:0')}>
             <img
-              src="/images/DPL_logo.webp"
+              src="/images/DPL_logo-sm.webp"
               alt={t('logoAlt')}
-              width={800}
-              height={286}
+              width={320}
+              height={114}
               decoding="async"
               style={s('height:44px;width:auto;display:block')}
             />

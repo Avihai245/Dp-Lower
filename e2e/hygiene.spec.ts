@@ -55,6 +55,63 @@ async function scrollThrough(page: Page) {
 const strip = (u: string | null) => (u ?? '').replace(/\/+$/, '');
 const meta = (page: Page, selector: string, attr = 'content') => page.locator(selector).first().getAttribute(attr);
 
+test.describe('fonts', () => {
+  for (const [name, origin, path] of [
+    ['campaign', CAMPAIGN, '/'],
+    ['campaign', CAMPAIGN, '/sign-in'],
+    ['main', MAIN, '/'],
+    ['main', MAIN, '/team'],
+  ] as const) {
+    test(`${name} ${path}: the Hebrew page asks for its four font files with the page, the English one for none`, async ({ request }) => {
+      // a page rendered ahead of time carries the hints in its HTML, one rendered per request in a `Link` response header
+      const preloaded = async (url: string) => {
+        const res = await request.get(url);
+        const inHtml = [...(await res.text()).matchAll(/<link rel="preload" href="([^"]+)" as="font"[^>]*>/g)].map((m) => m[1]!);
+        const inHeader = [...(res.headers()['link'] ?? '').matchAll(/<([^>]+\.woff2)>; rel=preload; as="font"/g)].map((m) => m[1]!);
+        return [...new Set([...inHtml, ...inHeader])];
+      };
+      expect(await preloaded(`${origin}${path}`)).toEqual([]);
+
+      const hebrew = await preloaded(`${origin}/he${path === '/' ? '' : path}`);
+      expect(hebrew.map((h) => h.replace(/^.*\/|\.[0-9a-f]{8}\.woff2$/g, '')).sort()).toEqual([
+        'assistant-hebrew-wght-normal',
+        'assistant-latin-wght-normal',
+        'frank-ruhl-libre-hebrew-wght-normal',
+        'frank-ruhl-libre-latin-wght-normal',
+      ]);
+      for (const href of hebrew) {
+        const res = await request.get(`${origin}${href}`);
+        expect(res.status(), href).toBe(200);
+        expect(res.headers()['content-type']).toContain('font/woff2');
+        expect(res.headers()['cache-control']).toContain('immutable');
+      }
+    });
+  }
+
+  test('a Hebrew page does not jump when its fonts arrive (a 412 px phone on a slow connection)', async ({ browser }) => {
+    for (const url of [`${CAMPAIGN}/he`, `${MAIN}/he`]) {
+      const context = await browser.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true });
+      const page = await context.newPage();
+      const cdp = await context.newCDPSession(page);
+      await cdp.send('Network.enable');
+      await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 });
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+      await page.addInitScript(() => {
+        const w = window as unknown as { __cls: number };
+        w.__cls = 0;
+        new PerformanceObserver((list) => {
+          for (const e of list.getEntries() as unknown as Array<{ value: number; hadRecentInput: boolean }>) if (!e.hadRecentInput) w.__cls += e.value;
+        }).observe({ type: 'layout-shift', buffered: true });
+      });
+      await page.goto(url, { waitUntil: 'load' });
+      await page.waitForTimeout(3500);
+      // the headline numbers of Lighthouse: 0.1 is "good"; before the fonts were preloaded this page measured 0.21
+      expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls), url).toBeLessThan(0.05);
+      await context.close();
+    }
+  });
+});
+
 test.describe('security headers', () => {
   for (const [name, origin] of [['campaign', CAMPAIGN], ['main', MAIN]] as const) {
     test(`${name}: every response carries the hardening headers and a strict CSP`, async ({ request }) => {

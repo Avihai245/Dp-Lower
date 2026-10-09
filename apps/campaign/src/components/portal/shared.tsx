@@ -22,7 +22,7 @@ export const richTags = {
 
 export function PortalLogo() {
   const t = useTranslations('portal.header');
-  return <img src="/images/DPL_logo.webp" alt={t('logoAlt')} decoding="async" style={s('height: 30px; width: auto; display: block')} />;
+  return <img src="/images/DPL_logo-sm.webp" alt={t('logoAlt')} width={320} height={114} decoding="async" style={s('height: 30px; width: auto; display: block')} />;
 }
 
 /**
