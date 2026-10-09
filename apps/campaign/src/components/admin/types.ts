@@ -88,6 +88,8 @@ export interface LeadDetailData {
   sections: boolean[];
   /** postal address from the application, shown under Contact */
   address: string | null;
+  /** where the lead came from: the source label and the campaign (utm_*) parameters of the first visit */
+  origin: { source: string | null; utm: Record<string, string> };
   answers: AnswerView[];
   notes: NoteView[];
   activity: ActivityView[];

@@ -44,6 +44,12 @@ export function ContactPanel({ detail }: { detail: LeadDetailData }) {
             {detail.address}
           </span>
         )}
+        {(detail.origin.source || Object.keys(detail.origin.utm).length > 0) && (
+          <span data-lead-origin style={s('font-size:13.5px;color:#736d64;overflow-wrap:anywhere')}>
+            <span style={s('display:block;font-size:12px;color:#9a948a')}>{t('contact.origin')}</span>
+            <bdi>{[detail.origin.source, ...Object.entries(detail.origin.utm).map(([k, v]) => `${k.replace(/^utm_/, '')}: ${v}`)].filter(Boolean).join(' · ')}</bdi>
+          </span>
+        )}
       </div>
     </div>
   );

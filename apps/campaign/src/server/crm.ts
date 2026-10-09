@@ -213,6 +213,7 @@ export async function loadLeadDetail(db: Db, id: string, labels: DetailLabels): 
     documents,
     sections,
     address: data.address?.trim() || null,
+    origin: { source: l.source?.trim() || null, utm: asStringMap(l.utm) },
     answers: quiz,
     notes: noteViews,
     activity: activityViews,

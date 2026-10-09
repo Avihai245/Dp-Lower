@@ -283,7 +283,8 @@
   },
   "contact": {
     "title": "פרטי קשר",
-    "address": "כתובת"
+    "address": "כתובת",
+    "origin": "מקור הפנייה"
   },
   "statusPanel": {
     "title": "הסטטוס שמוצג למבקש/ת",

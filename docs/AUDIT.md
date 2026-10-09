@@ -133,6 +133,15 @@ Three more agents that had not written the code: security (the account-takeover 
 
 Accepted or left to the firm: a name typed as `Tom <tom@evil.com>` is stored as `Tom tom@evil.com` (harmless text; the tag characters are stripped); after the team changes an applicant's address in the CRM, the new address receives the "details changed" email but not the confirmation of a call it already holds (the applicant can open the call from the portal); `/en/` redirects twice; `/he/foo.txt` shows the English 404 page; the call panel says "Waiting to be marked" while a call is running. Not covered by any round and worth a manual look before launch: the Realtime subscription scope for each staff role, Server Action replay across roles, a live hostile webhook POST to the Auth hook, and the Hebrew portal screens at 1440 px.
 
+### 1.1e Fourth round: the whole customer journey, from the firm's website to the CRM and the portal
+
+`e2e/full-journey.spec.ts` follows one applicant per language (English and Hebrew) through the 13 steps of the firm's Lead Flow and checks, at each step, the lead row (stage, status, source, campaign parameters), the outbox (every CRM event and email, once and in order; none of the nurture emails left waiting after the application is submitted), the CRM (list, board column, lead page, activity log, inbox, notes, document request, status) and the portal (what the applicant sees after each team action; setting a password; signing in again without creating a second lead). Two gaps surfaced and were fixed:
+
+| ID | Finding | Resolution |
+|---|---|---|
+| J-1 | A visitor who came from an ad to the firm's website and then opened the eligibility check lost the ad: the campaign is another domain and the link carried only `source=main-site` | The website now adds the first-touch `utm_*` parameters to links into the campaign when they are used (click, middle click, copy link); `withCampaignParams` is unit-tested (well-formed keys only, at most eight, values bounded, other sites untouched) |
+| J-2 | The lead page in the CRM did not show where the lead came from | A "Came from" line under Contact shows the source and the campaign parameters (English and Hebrew) |
+
 ### 1.1d The hosted project
 
 Connecting `Dp-Lower` was itself checked. The advisor found security-definer helpers (`is_staff`, `is_admin`, `owns_lead`, and the platform's `rls_auto_enable`) callable by visitors through `/rest/v1/rpc/...`: migration `20261009000015_helper_function_grants.sql` closes them for visitors (every policy is `to authenticated`), and `010_realtime_and_function_paths.sql` now fails if one is opened again. Accepted: `is_staff`, `is_admin`, `owns_lead` for signed-in users (the policies need them and they answer only about the caller) and `rate_limits` without a policy (deny-all by design). Read as `anon` and as `authenticated` with a stranger's identity, no table returned a row or accepted a write. Not done from the build environment: live requests to the project's API (the network policy blocks `*.supabase.co`), so the apps have not yet been run against it; do it with `pnpm e2e` after pointing `apps/*/.env.local` at the project.

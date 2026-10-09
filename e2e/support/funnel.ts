@@ -78,6 +78,7 @@ export async function recoveryTokenHash(email: string): Promise<string> {
 
 export interface LeadRecord {
   id: string;
+  case_ref: string;
   email: string;
   full_name: string;
   phone: string | null;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attributionFor, externalReferrerHost, rememberFirstTouch } from './attribution';
+import { attributionFor, externalReferrerHost, rememberFirstTouch, withCampaignParams } from './attribution';
 
 /** A Storage stand-in that keeps what it is given. */
 function memory(initial: Record<string, string> = {}) {
@@ -89,5 +89,34 @@ describe('first-touch attribution', () => {
     rememberFirstTouch(`?${many}`, '', 'x.org', store);
     expect(Object.keys(attributionFor('?utm_extra=1', store).utm).length).toBeLessThanOrEqual(12);
     expect(attributionFor(`?utm_source=${'a'.repeat(500)}`, memory()).source).toHaveLength(80);
+  });
+});
+
+describe('withCampaignParams', () => {
+  const CAMPAIGN = 'https://euro-passports.com';
+  const utm = { utm_source: 'google', utm_campaign: 'spring' };
+
+  it('adds the first-touch parameters to a link into the campaign, keeping the rest of the link', () => {
+    const out = new URL(withCampaignParams('https://euro-passports.com/he/eligibility?source=main-site', utm, CAMPAIGN));
+    expect(out.pathname).toBe('/he/eligibility');
+    expect(out.searchParams.get('source')).toBe('main-site');
+    expect(out.searchParams.get('utm_source')).toBe('google');
+    expect(out.searchParams.get('utm_campaign')).toBe('spring');
+  });
+
+  it('leaves other sites, links that carry their own utm_* and invalid input alone', () => {
+    expect(withCampaignParams('https://example.org/eligibility', utm, CAMPAIGN)).toBe('https://example.org/eligibility');
+    expect(withCampaignParams('https://euro-passports.com/?utm_source=x', utm, CAMPAIGN)).toBe('https://euro-passports.com/?utm_source=x');
+    expect(withCampaignParams('/relative', utm, CAMPAIGN)).toBe('/relative');
+    expect(withCampaignParams('https://euro-passports.com/eligibility', {}, CAMPAIGN)).toBe('https://euro-passports.com/eligibility');
+  });
+
+  it('only passes well-formed utm_* keys, at most eight, with bounded values', () => {
+    const many = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`utm_k${i}`, 'v']));
+    const out = new URL(withCampaignParams('https://euro-passports.com/eligibility', { ...many, bad_key: 'x', 'utm_ä': 'y', utm_long: 'z'.repeat(500) }, CAMPAIGN));
+    const keys = [...out.searchParams.keys()];
+    expect(keys.filter((k) => k.startsWith('utm_')).length).toBe(8);
+    expect(keys).not.toContain('bad_key');
+    expect(keys).not.toContain('utm_ä');
   });
 });

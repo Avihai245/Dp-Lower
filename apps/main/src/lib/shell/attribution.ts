@@ -87,3 +87,28 @@ export function currentAttribution(): { utm: Record<string, string>; source: str
     return attributionFor(window.location.search, { getItem: () => null });
   }
 }
+
+const UTM_KEY = /^utm_[a-z0-9_]{1,30}$/;
+
+/**
+ * A link into the campaign app with the visitor's first-touch campaign parameters added, so that a lead who came from an
+ * ad to the firm's site and went on to the eligibility check is still attributed to that ad (the campaign is another
+ * domain: it can only learn it from the link). Links to anything else, and links that already carry utm_* of their own,
+ * are returned unchanged.
+ */
+export function withCampaignParams(href: string, utm: Record<string, string>, campaignOrigin: string): string {
+  try {
+    const url = new URL(href);
+    if (url.origin !== new URL(campaignOrigin).origin) return href;
+    for (const key of url.searchParams.keys()) if (key.toLowerCase().startsWith('utm_')) return href;
+    let added = 0;
+    for (const [key, value] of Object.entries(utm)) {
+      if (added >= 8 || !UTM_KEY.test(key) || !value) continue;
+      url.searchParams.set(key, value.slice(0, 100));
+      added++;
+    }
+    return added ? url.toString() : href;
+  } catch {
+    return href;
+  }
+}
