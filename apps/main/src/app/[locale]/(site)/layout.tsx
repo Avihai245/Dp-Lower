@@ -4,8 +4,8 @@ import { s } from '@dpl/ui';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { preload } from 'react-dom';
-import { ClientMessages } from '@/components/ClientMessages';
 import { A11yInit } from '@/components/shell/A11yInit';
+import type { A11yLabels } from '@/components/shell/A11yWidget';
 import { CloseBand } from '@/components/shell/CloseBand';
 import { FloatingWidgets } from '@/components/shell/FloatingWidgets';
 import { Footer } from '@/components/shell/Footer';
@@ -29,6 +29,7 @@ export default async function SiteLayout({ children, params }: { children: React
   setRequestLocale(requested);
   const locale = requested as Locale; // already validated by the [locale] layout
   const t = await getTranslations('site');
+  const ta = await getTranslations('a11y');
   const content = getContent(locale);
   preload('/images/DPL_logo.webp', { as: 'image', fetchPriority: 'high' });
 
@@ -45,8 +46,28 @@ export default async function SiteLayout({ children, params }: { children: React
     portalHref,
   );
 
+  const a11y: A11yLabels = {
+    open: ta('open'),
+    dialog: ta('dialog'),
+    title: ta('title'),
+    close: ta('close'),
+    tools: {
+      larger: ta('tools.larger'),
+      smaller: ta('tools.smaller'),
+      contrast: ta('tools.contrast'),
+      invert: ta('tools.invert'),
+      grayscale: ta('tools.grayscale'),
+      light: ta('tools.light'),
+      links: ta('tools.links'),
+      font: ta('tools.font'),
+      motion: ta('tools.motion'),
+    },
+    reset: ta('reset'),
+    statement: ta('statement'),
+  };
+
   return (
-    <ClientMessages namespaces={['site', 'a11y']}>
+    <>
       <A11yInit />
       <div style={s("background: #f8f5f0; color: #23292f; font-family: 'Manrope', system-ui, sans-serif; -webkit-font-smoothing: antialiased")}>
         <SkipLink />
@@ -68,8 +89,8 @@ export default async function SiteLayout({ children, params }: { children: React
           <LeadOrClose lead={<LeadBand />} close={<CloseBand />} />
           <Footer locale={locale} />
         </div>
-        <FloatingWidgets />
+        <FloatingWidgets a11y={a11y} />
       </div>
-    </ClientMessages>
+    </>
   );
 }

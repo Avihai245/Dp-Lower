@@ -1,7 +1,6 @@
 'use client';
 
 import { s, x } from '@dpl/ui';
-import { useTranslations } from 'next-intl';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import {
@@ -18,10 +17,23 @@ import { useDialog } from './useDialog';
 // layout effects run before paint on the client; on the server this is a plain (inert) effect
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
+type ToolId = 'larger' | 'smaller' | 'contrast' | 'invert' | 'grayscale' | 'light' | 'links' | 'font' | 'motion';
+
 interface Tool {
-  id: 'larger' | 'smaller' | 'contrast' | 'invert' | 'grayscale' | 'light' | 'links' | 'font' | 'motion';
+  id: ToolId;
   on: boolean;
   action: A11yAction;
+}
+
+/** The widget's texts (the `a11y` messages), resolved on the server and passed down. */
+export interface A11yLabels {
+  open: string;
+  dialog: string;
+  title: string;
+  close: string;
+  tools: Record<ToolId, string>;
+  reset: string;
+  statement: string;
 }
 
 const tools = (a: A11yState): Tool[] => [
@@ -40,6 +52,7 @@ const cell = (on: boolean) =>
   `text-align: left; padding: 11px 12px; font-family: 'Manrope', system-ui, sans-serif; font-size: 13.5px; line-height: 1.3; cursor: pointer; border: 1px solid ${on ? '#14202b' : '#ded7ca'}; background: ${on ? '#14202b' : 'transparent'}; color: ${on ? '#f8f5f0' : '#14202b'}`;
 
 interface Props {
+  labels: A11yLabels;
   open: boolean;
   onToggle: () => void;
   onClose: () => void;
@@ -50,8 +63,7 @@ interface Props {
  * links, a readable font and "stop animation". The choices are applied as data-a11y-* attributes on <html>
  * (globals.css styles #dpl-page from them) and remembered in localStorage.
  */
-export function A11yWidget({ open, onToggle, onClose }: Props) {
-  const t = useTranslations('a11y');
+export function A11yWidget({ labels: t, open, onToggle, onClose }: Props) {
   const panelId = useId();
   const [state, setState] = useState<A11yState>(DEFAULT_A11Y);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -80,17 +92,17 @@ export function A11yWidget({ open, onToggle, onClose }: Props) {
           ref={panelRef}
           id={panelId}
           role="dialog"
-          aria-label={t('dialog')}
+          aria-label={t.dialog}
           tabIndex={-1}
           className="dpl-dialog"
           onKeyDown={onKeyDown}
           style={s("width: 280px; max-width: calc(100vw - 44px); background: #fff; border: 1px solid #14202b; box-shadow: 0 22px 60px rgba(20,32,43,0.22); font-family: 'Manrope', system-ui, sans-serif; animation: fadeIn 160ms ease both")}
         >
           <div style={s('display: flex; align-items: center; gap: 10px; background: #14202b; color: #f8f5f0; padding: 14px 16px')}>
-            <span style={s('font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; flex: 1')}>{t('title')}</span>
+            <span style={s('font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; flex: 1')}>{t.title}</span>
             <button
               type="button"
-              aria-label={t('close')}
+              aria-label={t.close}
               onClick={() => {
                 onClose();
                 launcherRef.current?.focus();
@@ -103,7 +115,7 @@ export function A11yWidget({ open, onToggle, onClose }: Props) {
           <div style={s('padding: 12px 14px 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px')}>
             {tools(state).map((tool) => (
               <button key={tool.id} type="button" aria-pressed={tool.on} onClick={() => change(tool.action)} style={s(cell(tool.on))}>
-                {t(`tools.${tool.id}`)}
+                {t.tools[tool.id]}
               </button>
             ))}
           </div>
@@ -113,15 +125,15 @@ export function A11yWidget({ open, onToggle, onClose }: Props) {
               onClick={() => change({ type: 'reset' })}
               style={s("width: 100%; background: transparent; border: 1px solid #d8cfc0; padding: 10px; font-family: 'Manrope', system-ui, sans-serif; font-size: 13.5px; color: #14202b; cursor: pointer; margin-bottom: 10px")}
             >
-              {t('reset')}
+              {t.reset}
             </button>
             <Link
               href="/accessibility"
               onClick={onClose}
               data-linkbtn
-              style={s("background: none; border: 0; padding: 0; font-family: 'Manrope', system-ui, sans-serif; font-size: 13px; color: #7a5c2c; cursor: pointer; text-decoration: underline")}
+              style={s("background: none; border: 0; padding: 0; font-family: 'Manrope', system-ui, sans-serif; font-size: 13px; color: #7a5c2c; cursor: pointer; text-decoration: underline; text-underline-offset: auto")}
             >
-              {t('statement')}
+              {t.statement}
             </Link>
           </div>
         </div>
@@ -130,11 +142,11 @@ export function A11yWidget({ open, onToggle, onClose }: Props) {
         ref={launcherRef}
         type="button"
         onClick={onToggle}
-        aria-label={t('open')}
+        aria-label={t.open}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
-        title={t('open')}
+        title={t.open}
         {...x(
           'width: 54px; height: 54px; border-radius: 50%; background: #14202b; color: #f8f5f0; border: 2px solid #f8f5f0; box-shadow: 0 10px 30px rgba(20,32,43,0.3); cursor: pointer; display: grid; place-items: center; flex: none',
           { hover: 'background: #22323f' },

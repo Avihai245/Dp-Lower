@@ -297,6 +297,8 @@ export function LeadBand() {
                   name="website"
                   tabIndex={-1}
                   autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore
                   aria-hidden="true"
                   value={values.website}
                   onChange={(e) => set({ website: e.target.value })}
