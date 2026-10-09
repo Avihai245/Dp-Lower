@@ -13,7 +13,10 @@ const resetEn = {
   preheader: 'Use the link below to set a new password. It is valid for one hour.',
   kicker: 'Password reset',
   h1: 'Set a new password.',
-  ledes: ['{first}, we received a request to set a new password for your portal.', 'Use the secure link below. It is valid for one hour.'],
+  ledes: [
+    '{first}, we received a request to set a new password for your portal.',
+    'Use the secure link below. It is valid for one hour.',
+  ],
   cta: 'Set a new password',
   heroNote: 'If you did not ask for this, you can ignore this email. Nothing will change.',
   fallback: 'If the button does not work, copy this address into your browser:',
@@ -25,7 +28,10 @@ const resetHe: typeof resetEn = {
   preheader: 'השתמשו בקישור שלהלן כדי להגדיר סיסמה חדשה. הוא תקף לשעה אחת.',
   kicker: 'איפוס סיסמה',
   h1: 'הגדרת סיסמה חדשה.',
-  ledes: ['{first}, קיבלנו בקשה להגדיר סיסמה חדשה לפורטל שלכם.', 'השתמשו בקישור המאובטח שלהלן. הוא תקף לשעה אחת.'],
+  ledes: [
+    '{first}, קיבלנו בקשה להגדיר סיסמה חדשה לפורטל שלכם.',
+    'השתמשו בקישור המאובטח שלהלן. הוא תקף לשעה אחת.',
+  ],
   cta: 'הגדרת סיסמה חדשה',
   heroNote: 'אם לא ביקשתם זאת, אפשר להתעלם מהודעה זו. שום דבר לא ישתנה.',
   fallback: 'אם הכפתור לא עובד, העתיקו את הכתובת הזו לדפדפן:',
@@ -176,7 +182,14 @@ export const authLink = define('welcome', { en: AUTH.en, he: AUTH.he }, (k, c) =
         note: k.r(ignore),
       }),
       ...(hasLink || code
-        ? [section(k, { bg: 'paper', pad: '30px 44px 32px 44px' }, ...(hasLink ? [fallbackLink(k, c.fallback, d.url)] : []), ...(code ? [code] : []))]
+        ? [
+            section(
+              k,
+              { bg: 'paper', pad: '30px 44px 32px 44px' },
+              ...(hasLink ? [fallbackLink(k, c.fallback, d.url)] : []),
+              ...(code ? [code] : []),
+            ),
+          ]
         : []),
       txFooter(k, { reason: copy.reason }),
     ],

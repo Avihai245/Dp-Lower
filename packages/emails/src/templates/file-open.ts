@@ -11,7 +11,8 @@ import { ea, esc, ltr, safeUrl, type Frag } from '../text';
  */
 const en = {
   subject: 'Your German or Austrian citizenship file is open',
-  preheader: 'Your answers are saved. Add your family records and a licensed lawyer starts reading your case, at no cost.',
+  preheader:
+    'Your answers are saved. Add your family records and a licensed lawyer starts reading your case, at no cost.',
   tagline: 'German & Austrian Citizenship Practice',
   kicker: 'File opened · awaiting your records',
   h1: 'The hardest part of your case is the part we do for you.',
@@ -21,7 +22,12 @@ const en = {
   coverNote: 'No card, no fee, no obligation. Everything saves as you go.',
   plateTitle: 'Your file, as it stands',
   plateRef: 'Ref {ref}',
-  rows: { eligibility: 'Eligibility check', family: 'Family connection', application: 'Application', records: 'Records received' },
+  rows: {
+    eligibility: 'Eligibility check',
+    family: 'Family connection',
+    application: 'Application',
+    records: 'Records received',
+  },
   completed: 'Completed',
   application: { not_started: 'Not yet started', in_progress: 'In progress', complete: 'Completed' },
   recordsNone: 'None yet',
@@ -47,7 +53,8 @@ const en = {
   quoteBy: '<ltr>Rachel Hoffman</ltr> · ★★★★★ 4.9 average across <ltr>380+</ltr> reviews',
   teamEyebrow: 'Who reads your case',
   teamTitle: 'The people who will handle your file',
-  teamText: 'Licensed attorneys, not agents. Every case is prepared and signed by a lawyer registered with the Israel Bar Association.',
+  teamText:
+    'Licensed attorneys, not agents. Every case is prepared and signed by a lawyer registered with the Israel Bar Association.',
   teamAlt: "The Decker Pex Levi team at the firm's offices in Tel Aviv",
   teamNames: 'Anat Levi · Michael Decker · Yehoshua Pex',
   teamBody:
@@ -67,7 +74,10 @@ const en = {
       q: 'We were told years ago that we did not qualify.',
       a: 'That may no longer hold. Both the German and Austrian provisions widened in recent years, and families refused under the older rules are often eligible now.',
     },
-    { q: 'Who sees what I upload?', a: 'Only the lawyers and case managers working on your file. Your documents are held confidentially by the firm and removed on request.' },
+    {
+      q: 'Who sees what I upload?',
+      a: 'Only the lawyers and case managers working on your file. Your documents are held confidentially by the firm and removed on request.',
+    },
     {
       q: 'How long does a case take?',
       a: 'It depends on the archives and the consulate, not on us. After reading your file, a lawyer gives you a realistic timeline for your route rather than an average.',
@@ -137,13 +147,16 @@ const he: typeof en = {
     },
     {
       q: 'האם הוספת המידע שלי מחייבת אותי במשהו?',
-      a: 'לא. מילוי הבקשה והעלאת הרשומות אינם עולים כסף ואינם מחייבים. אתם רואים את השכר לפני שמתחילה כל עבודה בתשלום, ואז אתם מחליטים.',
+      a: 'לא. מילוי הבקשה והעלאת הרשומות אינם עולים כסף ואינם מחייבים. אתם רואים את שכר הטרחה לפני שמתחילה כל עבודה בתשלום, ואז אתם מחליטים.',
     },
     {
       q: 'נאמר לנו לפני שנים שאיננו זכאים.',
       a: 'ייתכן שזה כבר לא נכון. ההוראות הגרמניות והאוסטריות הורחבו בשנים האחרונות, ומשפחות שנדחו לפי הכללים הישנים זכאיות לעיתים קרובות כיום.',
     },
-    { q: 'מי רואה את מה שאני מעלה?', a: 'רק עורכי הדין ומנהלי התיקים שעובדים על התיק שלכם. המסמכים שלכם נשמרים בסודיות במשרד ונמחקים לפי בקשה.' },
+    {
+      q: 'מי רואה את מה שאני מעלה?',
+      a: 'רק עורכי הדין ומנהלי התיקים שעובדים על התיק שלכם. המסמכים שלכם נשמרים בסודיות במשרד ונמחקים לפי בקשה.',
+    },
     {
       q: 'כמה זמן לוקח תיק?',
       a: 'זה תלוי בארכיונים ובקונסוליה, לא בנו. לאחר שקרא את התיק שלכם, עורך דין נותן לכם לוח זמנים ריאלי למסלול שלכם ולא ממוצע.',
@@ -239,7 +252,9 @@ export const fileOpen = define('lead', { en, he }, (k, c) => {
   // ── the file plate
   const appTone = data.applicationState === 'complete' ? 'ink' : 'brass';
   const records =
-    data.docsReceived === 0 ? c.recordsNone : k.r(c.recordsSome, { n: String(data.docsReceived), total: String(data.docsTotal) }).text;
+    data.docsReceived === 0
+      ? c.recordsNone
+      : k.r(c.recordsSome, { n: String(data.docsReceived), total: String(data.docsTotal) }).text;
   const plateBlock = plate(k, {
     title: k.r(c.plateTitle),
     right: ref ? k.r(c.plateRef, { ref: ltr(ref) }) : undefined,
@@ -252,7 +267,13 @@ export const fileOpen = define('lead', { en, he }, (k, c) => {
   });
 
   // ── what happens next
-  const stepsBlock = [eyebrow(k, k.r(c.stepsEyebrow), { mb: 18, cls: '' }), steps(k, c.steps.map((s) => k.r(s)))];
+  const stepsBlock = [
+    eyebrow(k, k.r(c.stepsEyebrow), { mb: 18, cls: '' }),
+    steps(
+      k,
+      c.steps.map((s) => k.r(s)),
+    ),
+  ];
 
   // ── why now
   const why = c.whyNow.map((w) => ({ title: k.r(w.title), body: k.r(w.body) }));
@@ -356,8 +377,11 @@ export const fileOpen = define('lead', { en, he }, (k, c) => {
   };
 
   // ── footer (centred, on a slightly darker paper)
-  const unsub = links.unsubscribe ? `<a href="${ea(links.unsubscribe)}" style="${LINK}">${esc(c.unsubscribe)}</a> &middot; ` : '';
-  const sabatier = '<a href="https://www.instagram.com/sabatier_group_ai_marketing/" style="color:#7a5c2c; text-decoration:underline;">Sabatier Group LLC</a>';
+  const unsub = links.unsubscribe
+    ? `<a href="${ea(links.unsubscribe)}" style="${LINK}">${esc(c.unsubscribe)}</a> &middot; `
+    : '';
+  const sabatier =
+    '<a href="https://www.instagram.com/sabatier_group_ai_marketing/" style="color:#7a5c2c; text-decoration:underline;">Sabatier Group LLC</a>';
   const credit = k.r(c.credit, { sabatier: 'SABATIER' });
   const footer: Frag = {
     html: `

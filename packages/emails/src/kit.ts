@@ -19,10 +19,15 @@ export class Kit {
   constructor(readonly ctx: EmailContext) {
     this.locale = ctx.locale;
     this.rtl = ctx.locale === 'he';
-    this.SANS = this.rtl ? "Assistant,Arial,Helvetica,sans-serif" : 'Arial,Helvetica,sans-serif';
-    this.SERIF = this.rtl ? "'Frank Ruhl Libre','Times New Roman',Times,serif" : "Georgia,'Times New Roman',serif";
+    this.SANS = this.rtl ? 'Assistant,Arial,Helvetica,sans-serif' : 'Arial,Helvetica,sans-serif';
+    this.SERIF = this.rtl
+      ? "'Frank Ruhl Libre','Times New Roman',Times,serif"
+      : "Georgia,'Times New Roman',serif";
     this.first =
-      ctx.lead.firstName.trim() || ctx.lead.fullName.trim() || ctx.lead.email.split('@')[0] || (this.rtl ? 'שלום' : 'Hello');
+      ctx.lead.firstName.trim() ||
+      ctx.lead.fullName.trim() ||
+      ctx.lead.email.split('@')[0] ||
+      (this.rtl ? 'שלום' : 'Hello');
   }
 
   /** The text for each locale; `he` is used for Hebrew, `en` otherwise. */
@@ -75,7 +80,9 @@ export class Kit {
 
   /** `padding:` shorthand written in the LTR orientation of the source; mirrored in Hebrew. */
   pad(top: string, right: string, bottom: string, left: string): string {
-    return this.rtl ? `padding:${top} ${left} ${bottom} ${right};` : `padding:${top} ${right} ${bottom} ${left};`;
+    return this.rtl
+      ? `padding:${top} ${left} ${bottom} ${right};`
+      : `padding:${top} ${right} ${bottom} ${left};`;
   }
 
   /** `border-left:` of the source: the start-side border (right in Hebrew). */
@@ -104,7 +111,11 @@ const px = (v: number | string): string => (typeof v === 'number' ? `${v}px` : v
 // ---------------------------------------------------------------------------------------------------------------
 
 /** Small tracked caps label in brass ("THE PEOPLE WHO WILL HANDLE YOUR CASE"). */
-export function eyebrow(k: Kit, text: Frag, o: { mb: number | string; center?: boolean; cls?: string } = { mb: 20 }): Frag {
+export function eyebrow(
+  k: Kit,
+  text: Frag,
+  o: { mb: number | string; center?: boolean; cls?: string } = { mb: 20 },
+): Frag {
   const cls = o.cls === '' ? '' : ` class="${o.cls ?? 't-brass'}"`;
   const html = `<p${cls} style="margin:0 0 ${px(o.mb)} 0; font-family:${k.SANS}; font-size:10px; line-height:15px; ${k.caps('0.2em')}color:#7a5c2c;${o.center ? ' text-align:center;' : ''}">${text.html}</p>`;
   return { html, text: k.rtl ? text.text : text.text.toUpperCase() };
@@ -206,7 +217,10 @@ ${rows}
  * The brass-framed pill button. The frame is a gradient that flows where animation is supported (Apple Mail, iOS
  * Mail, ...) and plain brass everywhere else (the `bgcolor` fallback of the source).
  */
-export function cta(k: Kit, o: { href: string; label: string; variant: 'brass' | 'ink'; center?: boolean }): Frag {
+export function cta(
+  k: Kit,
+  o: { href: string; label: string; variant: 'brass' | 'ink'; center?: boolean },
+): Frag {
   const align = o.center ? ' align="center"' : '';
   const link = (color: string) =>
     `<a href="${ea(o.href)}" style="display:block; font-family:${k.SANS}; font-size:16px; line-height:20px; font-weight:bold; ${k.caps('0.07em')}color:${color}; text-decoration:none;">${esc(o.label)}</a>`;
@@ -265,13 +279,22 @@ export function section(
     </td>
   </tr>
 `;
-  return { html, text: children.map((c) => c.text).filter(Boolean).join('\n\n') };
+  return {
+    html,
+    text: children
+      .map((c) => c.text)
+      .filter(Boolean)
+      .join('\n\n'),
+  };
 }
 
 /** Hairline or brass rule row. */
 export function ruleRow(h: 1 | 2): Frag {
   const color = h === 2 ? '#a07a3c' : '#e0d8ca';
-  return { html: `\n  <tr class="rule"><td class="rule" style="height:${h}px; background-color:${color}; line-height:${h}px; font-size:0;">&nbsp;</td></tr>\n`, text: '' };
+  return {
+    html: `\n  <tr class="rule"><td class="rule" style="height:${h}px; background-color:${color}; line-height:${h}px; font-size:0;">&nbsp;</td></tr>\n`,
+    text: '',
+  };
 }
 
 /** Logo + practice line, then the brass rule. */
@@ -385,7 +408,9 @@ ${f.disclaimer ? `      <p class="t-mute" style="margin:0 0 14px 0; font-family:
     name,
     f.practice,
     f.disclaimer?.text ?? '',
-    f.reason.text + (unsub ? ` ${f.unsubscribeLabel}: ${safeUrl(links.unsubscribe!)}` : '') + (priv ? ` ${f.privacyLabel}: ${safeUrl(links.privacy)}` : ''),
+    f.reason.text +
+      (unsub ? ` ${f.unsubscribeLabel}: ${safeUrl(links.unsubscribe!)}` : '') +
+      (priv ? ` ${f.privacyLabel}: ${safeUrl(links.privacy)}` : ''),
   ];
   return { html, text: `--\n${textLines.filter(Boolean).join('\n')}` };
 }

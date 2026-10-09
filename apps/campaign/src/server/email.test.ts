@@ -56,8 +56,16 @@ describe.skipIf(!hasDb)('queueEmail (local Supabase)', () => {
     const e = await event(`booking.created:${l.id}`);
     expect(e).toMatchObject({ type: 'email.send', channel: 'email', status: 'pending', lead_id: l.id });
     const p = e!.payload as Payload;
-    expect(p).toMatchObject({ template: 'booking-confirmation', category: 'transactional', locale: 'en', to: { email: l.email, name: 'rachel hoffman' } });
-    expect(p.from).toEqual({ email: process.env.EMAIL_FROM_ADDRESS ?? 'cases@euro-passports.com', name: process.env.EMAIL_FROM_NAME ?? 'Decker Pex Levi' });
+    expect(p).toMatchObject({
+      template: 'booking-confirmation',
+      category: 'transactional',
+      locale: 'en',
+      to: { email: l.email, name: 'rachel hoffman' },
+    });
+    expect(p.from).toEqual({
+      email: process.env.EMAIL_FROM_ADDRESS ?? 'cases@euro-passports.com',
+      name: process.env.EMAIL_FROM_NAME ?? 'Decker Pex Levi',
+    });
     expect(p.replyTo).toBe(process.env.EMAIL_REPLY_TO ?? 'office@lawoffice.org.il');
     expect(p.subject).toBe('Your free call is booked');
     expect(p.html).toContain('Rachel, your call is booked.');
@@ -73,8 +81,19 @@ describe.skipIf(!hasDb)('queueEmail (local Supabase)', () => {
     const key = `test:dedupe:${l.id}`;
     keys.push(key);
     const at = new Date(Date.now() + 3_600_000);
-    await mail.queueEmail({ template: 'status-update', lead: l, data: { status: 'under_review' }, dedupeKey: key, at });
-    await mail.queueEmail({ template: 'status-update', lead: l, data: { status: 'info_required' }, dedupeKey: key });
+    await mail.queueEmail({
+      template: 'status-update',
+      lead: l,
+      data: { status: 'under_review' },
+      dedupeKey: key,
+      at,
+    });
+    await mail.queueEmail({
+      template: 'status-update',
+      lead: l,
+      data: { status: 'info_required' },
+      dedupeKey: key,
+    });
     const { data } = await db.from('events').select('*').eq('dedupe_key', key);
     expect(data).toHaveLength(1);
     expect((data![0]!.payload as Payload).subject).toBe('Your case status: Under Review');
@@ -87,7 +106,9 @@ describe.skipIf(!hasDb)('queueEmail (local Supabase)', () => {
     await mail.queueEmail({ template: 'application-received', lead: l });
     const { data } = await db.from('events').select('*').eq('lead_id', l.id);
     expect(data).toHaveLength(1);
-    expect(data![0]!.dedupe_key).toMatch(new RegExp(`^email:application-received:${l.id}:\\d{4}-\\d{2}-\\d{2}T\\d{2}$`));
+    expect(data![0]!.dedupe_key).toMatch(
+      new RegExp(`^email:application-received:${l.id}:\\d{4}-\\d{2}-\\d{2}T\\d{2}$`),
+    );
   });
 
   it('adds an unsubscribe link to nurture emails and skips unsubscribed leads', async () => {
@@ -100,7 +121,12 @@ describe.skipIf(!hasDb)('queueEmail (local Supabase)', () => {
     expect(p.html).toMatch(/\/unsubscribe\?t=/);
     expect(await event(`welcome:${unsub.id}:4`)).toBeNull();
     // transactional emails still reach an unsubscribed lead
-    await mail.queueEmail({ template: 'booking-cancelled', lead: unsub, data: { startsAt: '2026-10-14T13:30:00.000Z', timezone: 'Asia/Jerusalem' }, dedupeKey: `test:cancel:${unsub.id}` });
+    await mail.queueEmail({
+      template: 'booking-cancelled',
+      lead: unsub,
+      data: { startsAt: '2026-10-14T13:30:00.000Z', timezone: 'Asia/Jerusalem' },
+      dedupeKey: `test:cancel:${unsub.id}`,
+    });
     keys.push(`test:cancel:${unsub.id}`);
     expect(await event(`test:cancel:${unsub.id}`)).not.toBeNull();
   });
@@ -147,7 +173,15 @@ describe.skipIf(!hasDb)('queueEmail (local Supabase)', () => {
     expect(e.lead_id).toBeNull();
     expect((e.payload as Payload).subject).toBe('Set a new password');
     // the same key answers with the existing event instead of throwing
-    expect((await mail.queueEmailToAddress({ template: 'password-reset', to: { email: 'nobody@example.com', name: 'nobody', locale: 'en' }, dedupeKey: key })).id).toBe(e.id);
+    expect(
+      (
+        await mail.queueEmailToAddress({
+          template: 'password-reset',
+          to: { email: 'nobody@example.com', name: 'nobody', locale: 'en' },
+          dedupeKey: key,
+        })
+      ).id,
+    ).toBe(e.id);
   });
 
   it('never throws, even for a lead it cannot render for', async () => {

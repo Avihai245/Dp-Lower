@@ -60,7 +60,8 @@ const run = handle(async (req) => {
     sequenceSent,
     ...(dispatch.skipped ? { deliveryNote: dispatch.skipped } : {}),
   };
-  if (failures.length > 0) return json({ ...body, error: 'dispatch_failed', details: failures }, { status: 500 });
+  if (failures.length > 0)
+    return json({ ...body, error: 'dispatch_failed', details: failures }, { status: 500 });
   return json(body);
 });
 

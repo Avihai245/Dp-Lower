@@ -1,5 +1,12 @@
 import 'server-only';
-import { DOC_TYPES, planDrip, WELCOME_COUNT, welcomeScheduledFor, type DripDecision, type DripRecord } from '@dpl/core';
+import {
+  DOC_TYPES,
+  planDrip,
+  WELCOME_COUNT,
+  welcomeScheduledFor,
+  type DripDecision,
+  type DripRecord,
+} from '@dpl/core';
 import { createAdminSupabase } from '@dpl/db/admin';
 import type { Db, LeadRow } from '@dpl/db/types';
 import { eventByDedupeKey, queueEmailEvent } from './email';
@@ -25,16 +32,31 @@ export const welcomeKey = (leadId: string, number: number): string => `welcome:$
 const templateFor = (number: number): WelcomeTemplateId => `welcome-${number}` as WelcomeTemplateId;
 
 /** Queues email `number` for the lead and records it as 'queued'. Returns false when it could not be queued (it is retried by the next run). */
-async function queueWelcome(db: Db, lead: LeadRow, number: number, scheduledFor: Date, now: Date): Promise<boolean> {
-  const event = await queueEmailEvent({ template: templateFor(number), lead, dedupeKey: welcomeKey(lead.id, number), at: now });
+async function queueWelcome(
+  db: Db,
+  lead: LeadRow,
+  number: number,
+  scheduledFor: Date,
+  now: Date,
+): Promise<boolean> {
+  const event = await queueEmailEvent({
+    template: templateFor(number),
+    lead,
+    dedupeKey: welcomeKey(lead.id, number),
+    at: now,
+  });
   const eventId = event?.id ?? (await eventByDedupeKey(db, welcomeKey(lead.id, number)))?.id ?? null;
   if (!eventId) return false;
-  const { error } = await db
-    .from('email_sequence_state')
-    .upsert(
-      { lead_id: lead.id, number, status: 'queued', scheduled_for: scheduledFor.toISOString(), event_id: eventId },
-      { onConflict: 'lead_id,number', ignoreDuplicates: true },
-    );
+  const { error } = await db.from('email_sequence_state').upsert(
+    {
+      lead_id: lead.id,
+      number,
+      status: 'queued',
+      scheduled_for: scheduledFor.toISOString(),
+      event_id: eventId,
+    },
+    { onConflict: 'lead_id,number', ignoreDuplicates: true },
+  );
   if (error) {
     console.error('[drip] state upsert failed', lead.id, number, error.message);
     return false;
@@ -86,6 +108,7 @@ async function candidateLeads(db: Db, now: Date, onlyLeadIds?: string[]): Promis
         // people who signed in with Google never asked for an eligibility check: no nurture sequence for them
         .neq('source', 'oauth')
         .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
         .range(from, from + PAGE - 1);
       if (ids) q = q.in('id', ids);
       const { data, error } = await q;
@@ -103,7 +126,11 @@ async function candidateLeads(db: Db, now: Date, onlyLeadIds?: string[]): Promis
  * Decides and queues what is due. `now` is injectable for tests; `onlyLeadIds` restricts the run to some leads
  * (tests, or re-running one case by hand).
  */
-export async function scheduleDueEmails(db: Db, now: Date = new Date(), opts: { onlyLeadIds?: string[] } = {}): Promise<ScheduleResult> {
+export async function scheduleDueEmails(
+  db: Db,
+  now: Date = new Date(),
+  opts: { onlyLeadIds?: string[] } = {},
+): Promise<ScheduleResult> {
   const result: ScheduleResult = { leads: 0, scheduled: 0, skipped: 0, stopped: 0, errors: 0 };
   const leads = await candidateLeads(db, now, opts.onlyLeadIds);
   result.leads = leads.length;
@@ -115,7 +142,10 @@ export async function scheduleDueEmails(db: Db, now: Date = new Date(), opts: { 
     leads.map((l) => l.id),
     IN_CHUNK,
   )) {
-    const { data, error } = await db.from('email_sequence_state').select('lead_id, number, status, created_at').in('lead_id', ids);
+    const { data, error } = await db
+      .from('email_sequence_state')
+      .select('lead_id, number, status, created_at')
+      .in('lead_id', ids);
     if (error) throw new Error(`sequence state: ${error.message}`);
     for (const r of data) {
       const list = recordsOf.get(r.lead_id) ?? [];
@@ -129,7 +159,9 @@ export async function scheduleDueEmails(db: Db, now: Date = new Date(), opts: { 
     const done = new Set((recordsOf.get(lead.id) ?? []).map((r) => r.number));
     let next = 1;
     while (next <= WELCOME_COUNT && done.has(next)) next++;
-    return next <= WELCOME_COUNT && welcomeScheduledFor(new Date(lead.created_at), next).getTime() <= now.getTime();
+    return (
+      next <= WELCOME_COUNT && welcomeScheduledFor(new Date(lead.created_at), next).getTime() <= now.getTime()
+    );
   });
   if (due.length === 0) return result;
 
@@ -168,12 +200,16 @@ export async function scheduleDueEmails(db: Db, now: Date = new Date(), opts: { 
       if (d.action === 'stop') {
         result.stopped++;
       } else if (d.action === 'skip') {
-        const { error } = await db
-          .from('email_sequence_state')
-          .upsert(
-            { lead_id: lead.id, number: d.number, status: 'skipped', reason: d.reason, scheduled_for: d.scheduledFor.toISOString() },
-            { onConflict: 'lead_id,number', ignoreDuplicates: true },
-          );
+        const { error } = await db.from('email_sequence_state').upsert(
+          {
+            lead_id: lead.id,
+            number: d.number,
+            status: 'skipped',
+            reason: d.reason,
+            scheduled_for: d.scheduledFor.toISOString(),
+          },
+          { onConflict: 'lead_id,number', ignoreDuplicates: true },
+        );
         if (error) {
           console.error('[drip] skip record failed', lead.id, d.number, error.message);
           result.errors++;
@@ -192,7 +228,12 @@ export async function scheduleDueEmails(db: Db, now: Date = new Date(), opts: { 
 
 /** Marks 'queued' sequence rows as 'sent' once the dispatcher has delivered their event. Returns how many changed. */
 export async function syncSequenceDelivery(db: Db): Promise<number> {
-  const { data: queued, error } = await db.from('email_sequence_state').select('event_id').eq('status', 'queued').not('event_id', 'is', null).limit(1000);
+  const { data: queued, error } = await db
+    .from('email_sequence_state')
+    .select('event_id')
+    .eq('status', 'queued')
+    .not('event_id', 'is', null)
+    .limit(1000);
   if (error) throw new Error(`sequence sync: ${error.message}`);
   const ids = queued.map((r) => r.event_id).filter((id): id is string => !!id);
   let changed = 0;
@@ -200,7 +241,12 @@ export async function syncSequenceDelivery(db: Db): Promise<number> {
     const { data: sent } = await db.from('events').select('id').in('id', part).eq('status', 'sent');
     const sentIds = (sent ?? []).map((e) => e.id);
     if (sentIds.length === 0) continue;
-    const { data: updated } = await db.from('email_sequence_state').update({ status: 'sent' }).in('event_id', sentIds).eq('status', 'queued').select('lead_id');
+    const { data: updated } = await db
+      .from('email_sequence_state')
+      .update({ status: 'sent' })
+      .in('event_id', sentIds)
+      .eq('status', 'queued')
+      .select('lead_id');
     changed += updated?.length ?? 0;
   }
   return changed;

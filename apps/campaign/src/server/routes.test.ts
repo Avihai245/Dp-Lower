@@ -25,9 +25,22 @@ describe('Standard Webhooks verification', () => {
     mod = await import('./standard-webhooks');
   });
   const sign = (o: Partial<{ id: string; timestamp: number; body: string; secret: string }> = {}) =>
-    mod.signStandardWebhook({ secret: o.secret ?? secret, id: o.id ?? 'msg_1', timestamp: o.timestamp ?? now / 1000, body: o.body ?? body });
+    mod.signStandardWebhook({
+      secret: o.secret ?? secret,
+      id: o.id ?? 'msg_1',
+      timestamp: o.timestamp ?? now / 1000,
+      body: o.body ?? body,
+    });
   const verify = (o: Partial<Parameters<typeof mod.verifyStandardWebhook>[0]> = {}) =>
-    mod.verifyStandardWebhook({ secret, id: 'msg_1', timestamp: String(now / 1000), signature: sign(), body, now, ...o });
+    mod.verifyStandardWebhook({
+      secret,
+      id: 'msg_1',
+      timestamp: String(now / 1000),
+      signature: sign(),
+      body,
+      now,
+      ...o,
+    });
 
   it('accepts a correct signature', () => {
     expect(verify()).toBe(true);
@@ -38,7 +51,13 @@ describe('Standard Webhooks verification', () => {
   });
 
   it('rejects a wrong secret, a tampered body, a different id or timestamp and malformed headers', () => {
-    expect(verify({ signature: sign({ secret: `v1,whsec_${Buffer.from('another secret another secret!!').toString('base64')}` }) })).toBe(false);
+    expect(
+      verify({
+        signature: sign({
+          secret: `v1,whsec_${Buffer.from('another secret another secret!!').toString('base64')}`,
+        }),
+      }),
+    ).toBe(false);
     expect(verify({ body: `${body} ` })).toBe(false);
     expect(verify({ id: 'msg_2' })).toBe(false);
     expect(verify({ timestamp: String(now / 1000 + 1) })).toBe(false);
@@ -51,7 +70,10 @@ describe('Standard Webhooks verification', () => {
   });
 
   it('rejects a timestamp more than five minutes off, in either direction', () => {
-    const at = (offset: number) => ({ timestamp: String(now / 1000 + offset), signature: sign({ timestamp: now / 1000 + offset }) });
+    const at = (offset: number) => ({
+      timestamp: String(now / 1000 + offset),
+      signature: sign({ timestamp: now / 1000 + offset }),
+    });
     expect(verify(at(-299))).toBe(true);
     expect(verify(at(299))).toBe(true);
     expect(verify(at(-301))).toBe(false);
@@ -74,7 +96,10 @@ describe('POST /api/cron/dispatch', () => {
   afterEach(() => vi.unstubAllEnvs());
 
   const call = (method: 'POST' | 'GET', headers: Record<string, string> = {}) =>
-    (method === 'POST' ? route.POST : route.GET)(new NextRequest('http://localhost:3001/api/cron/dispatch', { method, headers }), {});
+    (method === 'POST' ? route.POST : route.GET)(
+      new NextRequest('http://localhost:3001/api/cron/dispatch', { method, headers }),
+      {},
+    );
 
   it('answers 401 without the secret', async () => {
     vi.stubEnv('CRON_SECRET', 'a-long-cron-secret');
@@ -85,7 +110,14 @@ describe('POST /api/cron/dispatch', () => {
 
   it('answers 401 for a wrong secret, a wrong scheme and an empty bearer', async () => {
     vi.stubEnv('CRON_SECRET', 'a-long-cron-secret');
-    for (const authorization of ['Bearer nope', 'Bearer a-long-cron-secre', 'Bearer a-long-cron-secret-x', 'Basic a-long-cron-secret', 'a-long-cron-secret', 'Bearer ']) {
+    for (const authorization of [
+      'Bearer nope',
+      'Bearer a-long-cron-secre',
+      'Bearer a-long-cron-secret-x',
+      'Basic a-long-cron-secret',
+      'a-long-cron-secret',
+      'Bearer ',
+    ]) {
       expect((await call('POST', { authorization })).status).toBe(401);
     }
   });
@@ -100,7 +132,15 @@ describe('POST /api/cron/dispatch', () => {
     vi.stubEnv('CRON_SECRET', 'a-long-cron-secret');
     const res = await call('POST', { authorization: 'Bearer a-long-cron-secret' });
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ scheduled: 2, skipped: 1, delivered: 4, failed: 1, leads: 3, claimed: 5, sequenceSent: 2 });
+    expect(await res.json()).toMatchObject({
+      scheduled: 2,
+      skipped: 1,
+      delivered: 4,
+      failed: 1,
+      leads: 3,
+      claimed: 5,
+      sequenceSent: 2,
+    });
   });
 
   it('accepts the same header from Vercel Cron, which calls with GET', async () => {
@@ -142,7 +182,12 @@ describe.skipIf(!hasDb)('POST /api/auth/send-email (local Supabase)', () => {
     if (keys.length) await db.from('events').delete().in('dedupe_key', keys);
   });
 
-  const payload = (o: { email: string; action?: string; extra?: Record<string, unknown>; user?: Record<string, unknown> }) =>
+  const payload = (o: {
+    email: string;
+    action?: string;
+    extra?: Record<string, unknown>;
+    user?: Record<string, unknown>;
+  }) =>
     JSON.stringify({
       user: { id: '5b8e5f48-0000-4000-8000-000000000001', email: o.email, user_metadata: {}, ...o.user },
       email_data: {
@@ -157,20 +202,43 @@ describe.skipIf(!hasDb)('POST /api/auth/send-email (local Supabase)', () => {
       },
     });
 
-  const send = async (body: string, o: { id?: string; timestamp?: number; signature?: string | null } = {}) => {
+  const send = async (
+    body: string,
+    o: { id?: string; timestamp?: number; signature?: string | null } = {},
+  ) => {
     const id = o.id ?? `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const timestamp = o.timestamp ?? Math.floor(Date.now() / 1000);
-    const headers: Record<string, string> = { 'content-type': 'application/json', 'webhook-id': id, 'webhook-timestamp': String(timestamp) };
-    const signature = o.signature === undefined ? hook.signStandardWebhook({ secret, id, timestamp, body }) : o.signature;
+    const headers: Record<string, string> = {
+      'content-type': 'application/json',
+      'webhook-id': id,
+      'webhook-timestamp': String(timestamp),
+    };
+    const signature =
+      o.signature === undefined ? hook.signStandardWebhook({ secret, id, timestamp, body }) : o.signature;
     if (signature) headers['webhook-signature'] = signature;
-    const res = await route.POST(new NextRequest('http://localhost:3001/api/auth/send-email', { method: 'POST', headers, body }));
+    const res = await route.POST(
+      new NextRequest('http://localhost:3001/api/auth/send-email', { method: 'POST', headers, body }),
+    );
     return { res, id };
   };
   const events = async (id: string) => {
-    const { data } = await db.from('events').select('*').like('dedupe_key', `auth:${id}:%`).order('dedupe_key');
+    const { data } = await db
+      .from('events')
+      .select('*')
+      .like('dedupe_key', `auth:${id}:%`)
+      .order('dedupe_key');
     return data ?? [];
   };
-  const body = (e: { payload: unknown }) => e.payload as { template: string; locale: string; subject: string; html: string; text: string; to: { email: string }; category: string };
+  const body = (e: { payload: unknown }) =>
+    e.payload as {
+      template: string;
+      locale: string;
+      subject: string;
+      html: string;
+      text: string;
+      to: { email: string };
+      category: string;
+    };
 
   it('rejects a request without a signature, with a bad one, with a tampered body and with a stale timestamp (401)', async () => {
     const good = payload({ email: 'nobody@example.com' });
@@ -211,10 +279,20 @@ describe.skipIf(!hasDb)('POST /api/auth/send-email (local Supabase)', () => {
     keys.push(rows[0]!.dedupe_key!);
     expect(rows[0]).toMatchObject({ type: 'email.send', channel: 'email', status: 'pending', lead_id: null });
     const p = body(rows[0]!);
-    expect(p).toMatchObject({ template: 'password-reset', locale: 'en', category: 'transactional', to: { email }, subject: 'Set a new password' });
+    expect(p).toMatchObject({
+      template: 'password-reset',
+      locale: 'en',
+      category: 'transactional',
+      to: { email },
+      subject: 'Set a new password',
+    });
     // the link goes to our own callback with the token hash, the type and a safe `next`
-    expect(p.html).toContain('http://localhost:3001/auth/callback?token_hash=hash-abc&amp;type=recovery&amp;next=%2Fcreate-password%3Fmode%3Dreset');
-    expect(p.text).toContain('http://localhost:3001/auth/callback?token_hash=hash-abc&type=recovery&next=%2Fcreate-password%3Fmode%3Dreset');
+    expect(p.html).toContain(
+      'http://localhost:3001/auth/callback?token_hash=hash-abc&amp;type=recovery&amp;next=%2Fcreate-password%3Fmode%3Dreset',
+    );
+    expect(p.text).toContain(
+      'http://localhost:3001/auth/callback?token_hash=hash-abc&type=recovery&next=%2Fcreate-password%3Fmode%3Dreset',
+    );
     expect(p.html).not.toMatch(/unsubscribe/i);
   });
 
@@ -240,7 +318,9 @@ describe.skipIf(!hasDb)('POST /api/auth/send-email (local Supabase)', () => {
 
   it('turns magic links, signup confirmations and codes into the auth-link email', async () => {
     const email = `hook-test+${Date.now()}-m@example.com`;
-    const magic = await send(payload({ email, action: 'magiclink', extra: { redirect_to: 'http://localhost:3001/' } }));
+    const magic = await send(
+      payload({ email, action: 'magiclink', extra: { redirect_to: 'http://localhost:3001/' } }),
+    );
     const confirm = await send(payload({ email, action: 'signup' }));
     const code = await send(payload({ email, action: 'reauthentication' }));
     for (const r of [magic, confirm, code]) {
@@ -258,7 +338,9 @@ describe.skipIf(!hasDb)('POST /api/auth/send-email (local Supabase)', () => {
 
   it('refuses a redirect_to that tries to send the person somewhere else', async () => {
     const email = `hook-test+${Date.now()}-r@example.com`;
-    const { res, id } = await send(payload({ email, extra: { redirect_to: 'https://evil.example/x?next=https%3A%2F%2Fevil.example' } }));
+    const { res, id } = await send(
+      payload({ email, extra: { redirect_to: 'https://evil.example/x?next=https%3A%2F%2Fevil.example' } }),
+    );
     expect(res.status).toBe(200);
     const rows = await events(id);
     keys.push(...rows.map((r) => r.dedupe_key!));
@@ -271,7 +353,12 @@ describe.skipIf(!hasDb)('POST /api/auth/send-email (local Supabase)', () => {
     const email = `hook-test+${Date.now()}-c@example.com`;
     const fresh = `hook-test+${Date.now()}-n@example.com`;
     const { res, id } = await send(
-      payload({ email, action: 'email_change', user: { new_email: fresh }, extra: { token_hash: 'hash-for-new', token_hash_new: 'hash-for-current' } }),
+      payload({
+        email,
+        action: 'email_change',
+        user: { new_email: fresh },
+        extra: { token_hash: 'hash-for-new', token_hash_new: 'hash-for-current' },
+      }),
     );
     expect(res.status).toBe(200);
     const rows = await events(id);
@@ -283,7 +370,9 @@ describe.skipIf(!hasDb)('POST /api/auth/send-email (local Supabase)', () => {
   });
 
   it('acknowledges security notifications it has no template for (200, nothing queued)', async () => {
-    const { res, id } = await send(payload({ email: 'nobody@example.com', action: 'password_changed_notification' }));
+    const { res, id } = await send(
+      payload({ email: 'nobody@example.com', action: 'password_changed_notification' }),
+    );
     expect(res.status).toBe(200);
     expect(await events(id)).toHaveLength(0);
   });

@@ -16,7 +16,8 @@ const en = {
   ],
   heroNote: 'No card and no fee. Everything saves as you go.',
   people1: 'Licensed attorneys, not agents.',
-  people2: 'The lawyers and researchers who look at your eligibility are the ones who prepare your case, and one of them signs the filing.',
+  people2:
+    'The lawyers and researchers who look at your eligibility are the ones who prepare your case, and one of them signs the filing.',
   q1: 'I don’t have any documents. Can I still start?',
   a1: [
     'Yes, and most families do.',

@@ -32,15 +32,26 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
     return data ?? [];
   };
   const eventsOf = async (l: LeadRow) => {
-    const { data } = await db.from('events').select('*').like('dedupe_key', `welcome:${l.id}:%`).order('dedupe_key');
+    const { data } = await db
+      .from('events')
+      .select('*')
+      .like('dedupe_key', `welcome:${l.id}:%`)
+      .order('dedupe_key');
     return data ?? [];
   };
   /** the sequence record of an email that already went out `ago` ms before `now` */
   const sent = async (l: LeadRow, number: number, at: Date) => {
-    const { error } = await db.from('email_sequence_state').insert({ lead_id: l.id, number, status: 'sent', scheduled_for: at.toISOString(), created_at: at.toISOString() });
+    const { error } = await db.from('email_sequence_state').insert({
+      lead_id: l.id,
+      number,
+      status: 'sent',
+      scheduled_for: at.toISOString(),
+      created_at: at.toISOString(),
+    });
     expect(error).toBeNull();
   };
-  const run = (l: LeadRow[], now: Date) => drip.scheduleDueEmails(db, now, { onlyLeadIds: l.map((x) => x.id) });
+  const run = (l: LeadRow[], now: Date) =>
+    drip.scheduleDueEmails(db, now, { onlyLeadIds: l.map((x) => x.id) });
 
   describe('startWelcomeSequence', () => {
     it('queues welcome-1 immediately and records it, once', async () => {
@@ -51,9 +62,30 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       const events = await eventsOf(l);
       expect(events).toHaveLength(1);
       const e = events[0]!;
-      expect(e).toMatchObject({ type: 'email.send', channel: 'email', status: 'pending', lead_id: l.id, dedupe_key: `welcome:${l.id}:1` });
-      const p = e.payload as { template: string; category: string; to: { email: string }; subject: string; html: string; text: string; locale: string; replyTo: string; from: { name: string } };
-      expect(p).toMatchObject({ template: 'welcome-1', category: 'nurture', locale: 'en', to: { email: l.email } });
+      expect(e).toMatchObject({
+        type: 'email.send',
+        channel: 'email',
+        status: 'pending',
+        lead_id: l.id,
+        dedupe_key: `welcome:${l.id}:1`,
+      });
+      const p = e.payload as {
+        template: string;
+        category: string;
+        to: { email: string };
+        subject: string;
+        html: string;
+        text: string;
+        locale: string;
+        replyTo: string;
+        from: { name: string };
+      };
+      expect(p).toMatchObject({
+        template: 'welcome-1',
+        category: 'nurture',
+        locale: 'en',
+        to: { email: l.email },
+      });
       expect(p.from.name).toBe('Decker Pex Levi');
       expect(p.subject).toBe('Thank you — your citizenship file is open');
       expect(p.html).toContain('David, thank you for your details.');
@@ -72,7 +104,9 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       const p = (await eventsOf(l))[0]!.payload as { html: string; locale: string; subject: string };
       expect(p.locale).toBe('he');
       expect(p.html).toContain('<html lang="he" dir="rtl">');
-      expect(p.html).toContain('<span dir="auto" style="unicode-bidi:isolate;">דוד</span>, תודה על הפרטים שמסרתם.');
+      expect(p.html).toContain(
+        '<span dir="auto" style="unicode-bidi:isolate;">דוד</span>, תודה על הפרטים שמסרתם.',
+      );
       expect(p.html).toContain('/he/unsubscribe?t=');
     });
 
@@ -96,13 +130,20 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       expect(events.map((e) => e.dedupe_key)).toEqual([`welcome:${l.id}:2`]);
       expect((events[0]!.payload as { template: string }).template).toBe('welcome-2');
       const state = await stateOf(l);
-      expect(state.map((s) => [s.number, s.status])).toEqual([[1, 'sent'], [2, 'queued']]);
+      expect(state.map((s) => [s.number, s.status])).toEqual([
+        [1, 'sent'],
+        [2, 'queued'],
+      ]);
       expect(new Date(state[1]!.scheduled_for).getTime()).toBe(new Date(l.created_at).getTime() + 2 * DAY);
       expect(state[1]!.event_id).toBe(events[0]!.id);
 
       // a second run, and a third a minute later, change nothing
       expect(await run([l], now)).toMatchObject({ scheduled: 0, skipped: 0, errors: 0 });
-      expect(await run([l], new Date(now.getTime() + 60_000))).toMatchObject({ scheduled: 0, skipped: 0, errors: 0 });
+      expect(await run([l], new Date(now.getTime() + 60_000))).toMatchObject({
+        scheduled: 0,
+        skipped: 0,
+        errors: 0,
+      });
       expect(await eventsOf(l)).toHaveLength(1);
       expect(await stateOf(l)).toHaveLength(2);
     });
@@ -121,7 +162,12 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       await sent(l, 1, new Date(l.created_at));
       await sent(l, 2, new Date(now.getTime() - DAY - HOUR)); // 24h ago: clear of the minimum gap
       const starts = new Date(now.getTime() + 2 * DAY);
-      const { error } = await db.from('bookings').insert({ lead_id: l.id, starts_at: starts.toISOString(), ends_at: new Date(starts.getTime() + 20 * 60_000).toISOString(), timezone: 'Asia/Jerusalem' });
+      const { error } = await db.from('bookings').insert({
+        lead_id: l.id,
+        starts_at: starts.toISOString(),
+        ends_at: new Date(starts.getTime() + 20 * 60_000).toISOString(),
+        timezone: 'Asia/Jerusalem',
+      });
       expect(error).toBeNull();
 
       expect(await run([l], now)).toMatchObject({ scheduled: 0, skipped: 1, errors: 0 });
@@ -135,12 +181,26 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       const now = new Date();
       const l = await lead({ createdAt: new Date(now.getTime() - 2 * DAY - HOUR) });
       await sent(l, 1, new Date(l.created_at));
-      const types = ['birth_certificate', 'marriage_certificates', 'emigration_naturalization', 'persecution_proof', 'passport', 'family_tree', 'photo_id', 'other'];
-      const { error } = await db.from('documents').insert(types.map((doc_type) => ({ lead_id: l.id, doc_type, status: 'received' as const })));
+      const types = [
+        'birth_certificate',
+        'marriage_certificates',
+        'emigration_naturalization',
+        'persecution_proof',
+        'passport',
+        'family_tree',
+        'photo_id',
+        'other',
+      ];
+      const { error } = await db
+        .from('documents')
+        .insert(types.map((doc_type) => ({ lead_id: l.id, doc_type, status: 'received' as const })));
       expect(error).toBeNull();
 
       expect(await run([l], now)).toMatchObject({ scheduled: 0, skipped: 1 });
-      expect((await stateOf(l)).find((s) => s.number === 2)).toMatchObject({ status: 'skipped', reason: 'documents_complete' });
+      expect((await stateOf(l)).find((s) => s.number === 2)).toMatchObject({
+        status: 'skipped',
+        reason: 'documents_complete',
+      });
     });
 
     it('does not send a burst after downtime: old emails are skipped, one current email goes out', async () => {
@@ -212,12 +272,21 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       await sent(l, 1, new Date(l.created_at));
       const { data: event } = await db
         .from('events')
-        .insert({ type: 'email.send', channel: 'email', lead_id: l.id, payload: { template: 'welcome-2' }, dedupe_key: `welcome:${l.id}:2` })
+        .insert({
+          type: 'email.send',
+          channel: 'email',
+          lead_id: l.id,
+          payload: { template: 'welcome-2' },
+          dedupe_key: `welcome:${l.id}:2`,
+        })
         .select('*')
         .single();
       expect(await run([l], now)).toMatchObject({ scheduled: 1, errors: 0 });
       expect(await eventsOf(l)).toHaveLength(1); // no second email
-      expect((await stateOf(l)).find((s) => s.number === 2)).toMatchObject({ status: 'queued', event_id: event!.id });
+      expect((await stateOf(l)).find((s) => s.number === 2)).toMatchObject({
+        status: 'queued',
+        event_id: event!.id,
+      });
     });
   });
 
@@ -226,7 +295,10 @@ describe.skipIf(!hasDb)('nurture sequence (local Supabase)', () => {
       const l = await lead({ createdAt: new Date() });
       await drip.startWelcomeSequence(l);
       const [event] = await eventsOf(l);
-      await db.from('events').update({ status: 'sent', delivered_at: new Date().toISOString() }).eq('id', event!.id);
+      await db
+        .from('events')
+        .update({ status: 'sent', delivered_at: new Date().toISOString() })
+        .eq('id', event!.id);
       expect(await drip.syncSequenceDelivery(db)).toBeGreaterThanOrEqual(1);
       expect((await stateOf(l))[0]).toMatchObject({ number: 1, status: 'sent' });
     });

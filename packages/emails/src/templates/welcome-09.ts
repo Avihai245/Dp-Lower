@@ -9,15 +9,31 @@ const en = {
   preheader: 'The stages of a case, and where you can watch them from.',
   kicker: 'From submission to decision',
   h1: '{first}, here is what happens next.',
-  ledes: ['Once your information and records are in, the case moves through four clear stages.', 'You can follow every one of them yourself.'],
+  ledes: [
+    'Once your information and records are in, the case moves through four clear stages.',
+    'You can follow every one of them yourself.',
+  ],
   stagesEyebrow: 'The stages of a case',
   stages: [
-    { title: 'We check what you sent', body: 'A case manager confirms the records are readable and tells you if anything is missing.' },
-    { title: 'A lawyer reviews the case', body: 'You receive a written assessment of your route and the records still needed.' },
-    { title: 'We complete the file', body: 'Archive requests, translations and apostilles are handled by us, and third-party costs are shown at cost.' },
-    { title: 'The filing', body: 'Your case goes to the relevant authority, and we stay with it until there is a decision.' },
+    {
+      title: 'We check what you sent',
+      body: 'A case manager confirms the records are readable and tells you if anything is missing.',
+    },
+    {
+      title: 'A lawyer reviews the case',
+      body: 'You receive a written assessment of your route and the records still needed.',
+    },
+    {
+      title: 'We complete the file',
+      body: 'Archive requests, translations and apostilles are handled by us, and third-party costs are shown at cost.',
+    },
+    {
+      title: 'The filing',
+      body: 'Your case goes to the relevant authority, and we stay with it until there is a decision.',
+    },
   ],
-  area1: 'If a form is still unfinished or a document is missing, your personal area shows exactly what is outstanding.',
+  area1:
+    'If a form is still unfinished or a document is missing, your personal area shows exactly what is outstanding.',
   area2: 'It also shows the current stage of your case, updated as the file moves.',
 };
 
@@ -26,12 +42,21 @@ const he: typeof en = {
   preheader: 'שלבי התיק, והמקום שבו אפשר לעקוב אחריהם.',
   kicker: 'מההגשה ועד להחלטה',
   h1: '{first}, הנה מה שקורה בהמשך.',
-  ledes: ['כשהמידע והרשומות שלכם מגיעים אלינו, התיק עובר ארבעה שלבים ברורים.', 'אתם יכולים לעקוב בעצמכם אחרי כל אחד מהם.'],
+  ledes: [
+    'כשהמידע והרשומות שלכם מגיעים אלינו, התיק עובר ארבעה שלבים ברורים.',
+    'אתם יכולים לעקוב בעצמכם אחרי כל אחד מהם.',
+  ],
   stagesEyebrow: 'שלבי התיק',
   stages: [
     { title: 'אנחנו בודקים את מה ששלחתם', body: 'מנהל תיק מוודא שהרשומות קריאות ומודיע לכם אם משהו חסר.' },
-    { title: 'עורך דין בוחן את התיק', body: 'אתם מקבלים הערכה בכתב של המסלול שלכם ושל הרשומות שעדיין נדרשות.' },
-    { title: 'אנחנו משלימים את התיק', body: 'בקשות לארכיונים, תרגומים ואפוסטיל מטופלים על ידינו, ועלויות צד שלישי מוצגות לפי עלותן.' },
+    {
+      title: 'עורך דין בוחן את התיק',
+      body: 'אתם מקבלים הערכה בכתב של המסלול שלכם ושל הרשומות שעדיין נדרשות.',
+    },
+    {
+      title: 'אנחנו משלימים את התיק',
+      body: 'בקשות לארכיונים, תרגומים ואפוסטיל מטופלים על ידינו, ועלויות צד שלישי מוצגות לפי עלותן.',
+    },
     { title: 'ההגשה', body: 'התיק שלכם מוגש לרשות המוסמכת, ואנחנו ממשיכים ללוות אותו עד שמתקבלת החלטה.' },
   ],
   area1: 'אם טופס עדיין לא הושלם או שחסר מסמך, האזור האישי שלכם מראה בדיוק מה נותר.',
@@ -72,7 +97,12 @@ export const welcome9 = define('welcome', { en, he }, (k, c) => {
     rows: [
       top(k),
       hero(k, { kicker: c.kicker, h1: k.r(c.h1, k.vars), ledes: c.ledes.map((l) => k.r(l)) }),
-      section(k, { bg: 'paper', pad: '34px 44px 32px 44px' }, eyebrow(k, k.r(c.stagesEyebrow), { mb: 22 }), numbered(k, c.stages)),
+      section(
+        k,
+        { bg: 'paper', pad: '34px 44px 32px 44px' },
+        eyebrow(k, k.r(c.stagesEyebrow), { mb: 22 }),
+        numbered(k, c.stages),
+      ),
       personalAreaCta(k, { bg: 'stone', p1: c.area1, p2: c.area2, label: cm.checkStatus }),
       bottom(k),
     ],

@@ -7,7 +7,8 @@ import type { AuthLinkKind, EmailContext } from './types';
  * it through one of these: missing or malformed values fall back to safe defaults instead of throwing, and a value
  * that is not a string never reaches the HTML.
  */
-const rec = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' ? (v as Record<string, unknown>) : {});
+const rec = (v: unknown): Record<string, unknown> =>
+  v && typeof v === 'object' ? (v as Record<string, unknown>) : {};
 const num = (v: unknown, d: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
 const str = (v: unknown, d = ''): string => (typeof v === 'string' ? v : d);
 
@@ -29,7 +30,11 @@ export function fileOpenData(ctx: EmailContext): FileOpenData {
 
 export function bookingData(ctx: EmailContext): { startsAt: string; timezone: string; minutes: number } {
   const d = rec(ctx.data);
-  return { startsAt: str(d.startsAt), timezone: str(d.timezone), minutes: Math.max(1, Math.floor(num(d.minutes, 20))) };
+  return {
+    startsAt: str(d.startsAt),
+    timezone: str(d.timezone),
+    minutes: Math.max(1, Math.floor(num(d.minutes, 20))),
+  };
 }
 
 export function statusData(ctx: EmailContext): { status: LeadStatus } {
@@ -62,7 +67,14 @@ export function contactData(ctx: EmailContext): { name: string } {
   return { name: str(rec(ctx.data).name) || ctx.lead.fullName };
 }
 
-const AUTH_KINDS: readonly AuthLinkKind[] = ['magiclink', 'signup', 'invite', 'email_change', 'email', 'reauthentication'];
+const AUTH_KINDS: readonly AuthLinkKind[] = [
+  'magiclink',
+  'signup',
+  'invite',
+  'email_change',
+  'email',
+  'reauthentication',
+];
 
 export function authLinkData(ctx: EmailContext): { url: string; kind: AuthLinkKind; code: string } {
   const d = rec(ctx.data);

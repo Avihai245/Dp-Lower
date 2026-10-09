@@ -16,7 +16,11 @@ export const DESIGN_DIR =
 export const hasDesignSources = (): boolean => fs.existsSync(`${DESIGN_DIR}/Lead Email.html`);
 
 export const sourceFile = (id: EmailTemplateId): string | null =>
-  id === 'file-open' ? 'Lead Email.html' : id.startsWith('welcome-') ? `Welcome ${id.split('-')[1]}.html` : null;
+  id === 'file-open'
+    ? 'Lead Email.html'
+    : id.startsWith('welcome-')
+      ? `Welcome ${id.split('-')[1]}.html`
+      : null;
 
 /**
  * The source file with the two intended substitutions applied: the merge placeholder `{{unsubscribe_link}}` becomes the
@@ -26,13 +30,18 @@ export const sourceFile = (id: EmailTemplateId): string | null =>
 export function readSource(id: EmailTemplateId): string {
   const html = fs.readFileSync(`${DESIGN_DIR}/${sourceFile(id)}`, 'utf8');
   const address = (getContent('en').offices[0]?.address ?? '').replace(/\.$/, '');
-  return html.replace(/\{\{unsubscribe_link\}\}/g, UNSUBSCRIBE_URL).replace('[Street address], Tel Aviv, Israel', address);
+  return html
+    .replace(/\{\{unsubscribe_link\}\}/g, UNSUBSCRIBE_URL)
+    .replace('[Street address], Tel Aviv, Israel', address);
 }
 
 const UNSUBSCRIBE_URL = 'https://euro-passports.com/unsubscribe';
 
 /** A context whose values equal the placeholders hard-coded in the sources ("David", DPL-26-1487, portal URL, ...). */
-export function sourceFixture(id: EmailTemplateId, route: 'germany' | 'austria' | 'both' = 'both'): EmailContext {
+export function sourceFixture(
+  id: EmailTemplateId,
+  route: 'germany' | 'austria' | 'both' = 'both',
+): EmailContext {
   const lead = id === 'file-open';
   return {
     locale: 'en',
@@ -58,7 +67,11 @@ export function sourceFixture(id: EmailTemplateId, route: 'germany' | 'austria' 
 }
 
 /** Classes that carry styling (media queries, the animated frame); the others are dark-mode hooks without CSS. */
-const FUNCTIONAL = new Set('wrap px pt pb h1 h2 lede body quote num cta btn-brass btn-ink frame hide-sm logo stack bignum display'.split(' '));
+const FUNCTIONAL = new Set(
+  'wrap px pt pb h1 h2 lede body quote num cta btn-brass btn-ink frame hide-sm logo stack bignum display'.split(
+    ' ',
+  ),
+);
 
 /** One line per node: tag + sorted attributes (style declarations sorted and normalised) or the collapsed text. */
 export function canonicalize(html: string): string[] {
@@ -90,7 +103,12 @@ export function canonicalize(html: string): string[] {
           .map((d) => d.trim())
           .filter(Boolean)
           .filter((d) => d.replace(/\s+/g, '') !== 'white-space:nowrap')
-          .map((d) => d.replace(/\s*:\s*/, ':').replace(/\s+/g, ' ').replace(/\s*,\s*/g, ','))
+          .map((d) =>
+            d
+              .replace(/\s*:\s*/, ':')
+              .replace(/\s+/g, ' ')
+              .replace(/\s*,\s*/g, ','),
+          )
           .sort()
           .join(';');
       } else if (a.name === 'dir' || a.name === 'lang') {
@@ -116,7 +134,9 @@ export function diffLines(a: string[], b: string[], context = 2): string[] {
   const n = a.length;
   const m = b.length;
   const lcs: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
-  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) lcs[i]![j] = a[i] === b[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--)
+      lcs[i]![j] = a[i] === b[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
   const ops: Array<{ t: ' ' | '-' | '+'; s: string }> = [];
   let i = 0;
   let j = 0;

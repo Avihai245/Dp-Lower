@@ -63,15 +63,29 @@ const en = {
   germany: {
     title: 'Germany',
     sub: 'Article 116 & <ltr>StAG</ltr>',
-    points: ['An ancestor who lost citizenship between 1933 and 1945', 'Open across generations', 'No language test', 'No need to live in Germany'],
+    points: [
+      'An ancestor who lost citizenship between 1933 and 1945',
+      'Open across generations',
+      'No language test',
+      'No need to live in Germany',
+    ],
   } satisfies Card,
   austria: {
     title: 'Austria',
     sub: 'Section 58c',
-    points: ['An ancestor who left because of persecution', 'Reaches direct descendants', 'Turns on when and why they left', 'Archive work matters most here'],
+    points: [
+      'An ancestor who left because of persecution',
+      'Reaches direct descendants',
+      'Turns on when and why they left',
+      'Archive work matters most here',
+    ],
   } satisfies Card,
-  both: ['Some families have a line on each side.', 'When that happens we look at both before recommending one, because the stronger claim is not always the one people expect.'],
-  area1: 'If you started the questionnaire and stopped partway, or a form is still half finished, you can pick it up in your personal area.',
+  both: [
+    'Some families have a line on each side.',
+    'When that happens we look at both before recommending one, because the stronger claim is not always the one people expect.',
+  ],
+  area1:
+    'If you started the questionnaire and stopped partway, or a form is still half finished, you can pick it up in your personal area.',
   area2: 'The current status of your case is shown there as well.',
 };
 
@@ -114,20 +128,35 @@ const he: typeof en = {
   germany: {
     title: 'גרמניה',
     sub: 'סעיף 116 ו‑<ltr>StAG</ltr>',
-    points: ['אב קדמון שאזרחותו נשללה בין 1933 ל‑1945', 'פתוח לאורך דורות', 'אין מבחן שפה', 'אין צורך לגור בגרמניה'],
+    points: [
+      'אב קדמון שאזרחותו נשללה בין 1933 ל‑1945',
+      'פתוח לאורך דורות',
+      'אין מבחן שפה',
+      'אין צורך לגור בגרמניה',
+    ],
   },
   austria: {
     title: 'אוסטריה',
     sub: 'סעיף 58c',
-    points: ['אב קדמון שעזב בשל רדיפה', 'מגיע לצאצאים ישירים', 'תלוי במועד ובסיבת העזיבה', 'העבודה בארכיונים חשובה כאן יותר מכול'],
+    points: [
+      'אב קדמון שעזב בשל רדיפה',
+      'מגיע לצאצאים ישירים',
+      'תלוי במועד ובסיבת העזיבה',
+      'העבודה בארכיונים חשובה כאן יותר מכול',
+    ],
   },
-  both: ['יש משפחות שיש להן קו משפחתי משני הצדדים.', 'במקרה כזה אנחנו בוחנים את שניהם לפני שממליצים על אחד, כי הטענה החזקה יותר אינה תמיד זו שאנשים מצפים לה.'],
-  area1: 'אם התחלתם את השאלון ועצרתם באמצע, או שטופס עדיין מולא רק בחציו, אפשר להמשיך מאותה נקודה באזור האישי שלכם.',
+  both: [
+    'יש משפחות שיש להן קו משפחתי משני הצדדים.',
+    'במקרה כזה אנחנו בוחנים את שניהם לפני שממליצים על אחד, כי הטענה החזקה יותר אינה תמיד זו שאנשים מצפים לה.',
+  ],
+  area1:
+    'אם התחלתם את השאלון ועצרתם באמצע, או שטופס עדיין מולא רק בחציו, אפשר להמשיך מאותה נקודה באזור האישי שלכם.',
   area2: 'גם הסטטוס הנוכחי של התיק שלכם מוצג שם.',
 };
 
 /** Which law(s) the email shows: the lead's chosen route, "both" for both and for not sure. */
-export const variantOf = (route: string | null): Variant => (route === 'germany' || route === 'austria' ? route : 'both');
+export const variantOf = (route: string | null): Variant =>
+  route === 'germany' || route === 'austria' ? route : 'both';
 
 /** One law's card. */
 function lawCard(k: Kit, c: Card): Frag {
@@ -178,7 +207,11 @@ export const welcome15 = define('welcome', { en, he }, (k, c) => {
     rows: [
       top(k),
       hero(k, { kicker: intro.kicker, h1: k.r(intro.h1, k.vars), ledes: intro.ledes.map((l) => k.r(l)) }),
-      section(k, { bg: 'paper', pad: '34px 44px 10px 44px', cls: 'px pt' }, eyebrow(k, k.r(intro.eyebrow), { mb: 18 })),
+      section(
+        k,
+        { bg: 'paper', pad: '34px 44px 10px 44px', cls: 'px pt' },
+        eyebrow(k, k.r(intro.eyebrow), { mb: 18 }),
+      ),
       section(k, { bg: 'paper', pad: '0 44px 10px 44px', cls: 'px' }, cards),
       section(
         k,

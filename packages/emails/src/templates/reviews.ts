@@ -80,7 +80,12 @@ export function reviews(k: Kit): Frag[] {
   };
   return [
     ruleRow(1),
-    section(k, { bg: 'paper', pad: '34px 44px 14px 44px', cls: 'px pt' }, eyebrow(k, k.r(c.eyebrow), { mb: 6 }), stars),
+    section(
+      k,
+      { bg: 'paper', pad: '34px 44px 14px 44px', cls: 'px pt' },
+      eyebrow(k, k.r(c.eyebrow), { mb: 6 }),
+      stars,
+    ),
     section(k, { bg: 'paper', pad: '12px 44px 4px 44px', cls: 'px' }, list),
   ];
 }

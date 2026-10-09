@@ -17,7 +17,8 @@ const en = {
     'Citizenship by descent passes down.<br>Once it is recognised in your generation, it is available to the next.',
     'That is why timing matters more than it appears to.<br>A case completed now sits in the family record permanently.',
   ],
-  quote: '“I began this process because I wanted my grandchildren to have the opportunity to study and build a future in Europe if they choose to.”',
+  quote:
+    '“I began this process because I wanted my grandchildren to have the opportunity to study and build a future in Europe if they choose to.”',
   by: '<ltr>Barbara Levine</ltr> · January 2026',
   area1: 'If your file is part finished, your personal area holds everything you have entered so far.',
   area2: 'Open it to complete a section, add a document, or check your status.',

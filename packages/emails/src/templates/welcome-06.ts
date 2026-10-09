@@ -11,12 +11,27 @@ const en = {
   ledes: ['People expect the paperwork to be the slow part.', 'It is usually the archives.'],
   stagesEyebrow: 'The four stages',
   stages: [
-    { title: 'Your part', body: 'A questionnaire and whatever documents you already hold.<br>Most people finish inside an evening.' },
-    { title: 'Our research', body: 'Locating the birth, marriage and emigration records in European archives.<br>This is the long stretch, and it runs without you.' },
-    { title: 'Translation and legalisation', body: 'Certified translations and apostilles on everything the authority will read.<br>Handled in parallel wherever possible.' },
-    { title: 'Filing and waiting', body: 'The authority sets its own pace once the file is lodged.<br>We chase, you get told what changes.' },
+    {
+      title: 'Your part',
+      body: 'A questionnaire and whatever documents you already hold.<br>Most people finish inside an evening.',
+    },
+    {
+      title: 'Our research',
+      body: 'Locating the birth, marriage and emigration records in European archives.<br>This is the long stretch, and it runs without you.',
+    },
+    {
+      title: 'Translation and legalisation',
+      body: 'Certified translations and apostilles on everything the authority will read.<br>Handled in parallel wherever possible.',
+    },
+    {
+      title: 'Filing and waiting',
+      body: 'The authority sets its own pace once the file is lodged.<br>We chase, you get told what changes.',
+    },
   ],
-  promise: ['We do not quote a total in months, because no honest firm can before reading your records.', 'What we can promise is that the clock only starts once your details are with us.'],
+  promise: [
+    'We do not quote a total in months, because no honest firm can before reading your records.',
+    'What we can promise is that the clock only starts once your details are with us.',
+  ],
   area2: 'The current stage of your case is shown there too.',
 };
 
@@ -29,11 +44,23 @@ const he: typeof en = {
   stagesEyebrow: 'ארבעת השלבים',
   stages: [
     { title: 'החלק שלכם', body: 'שאלון וכל המסמכים שכבר יש בידיכם.<br>רוב האנשים מסיימים תוך ערב אחד.' },
-    { title: 'המחקר שלנו', body: 'איתור רשומות לידה, נישואין והגירה בארכיונים באירופה.<br>זה הקטע הארוך, והוא מתנהל בלעדיכם.' },
-    { title: 'תרגום ואימות', body: 'תרגומים מאושרים ואפוסטיל על כל מה שהרשות תקרא.<br>מטופלים במקביל ככל האפשר.' },
-    { title: 'הגשה והמתנה', body: 'הרשות קובעת את הקצב שלה מרגע שהתיק הוגש.<br>אנחנו עוקבים ומזרזים, ואתם מקבלים עדכון על כל שינוי.' },
+    {
+      title: 'המחקר שלנו',
+      body: 'איתור רשומות לידה, נישואין והגירה בארכיונים באירופה.<br>זה הקטע הארוך, והוא מתנהל בלעדיכם.',
+    },
+    {
+      title: 'תרגום ואימות',
+      body: 'תרגומים מאושרים ואפוסטיל על כל מה שהרשות תקרא.<br>מטופלים במקביל ככל האפשר.',
+    },
+    {
+      title: 'הגשה והמתנה',
+      body: 'הרשות קובעת את הקצב שלה מרגע שהתיק הוגש.<br>אנחנו עוקבים ומזרזים, ואתם מקבלים עדכון על כל שינוי.',
+    },
   ],
-  promise: ['אנחנו לא נותנים הערכה כוללת בחודשים, כי אף משרד הגון לא יכול לעשות זאת לפני שקרא את הרשומות שלכם.', 'מה שאנחנו כן יכולים להבטיח הוא שהשעון מתחיל לרוץ רק כשהפרטים שלכם אצלנו.'],
+  promise: [
+    'אנחנו לא נותנים הערכה כוללת בחודשים, כי אף משרד הגון לא יכול לעשות זאת לפני שקרא את הרשומות שלכם.',
+    'מה שאנחנו כן יכולים להבטיח הוא שהשעון מתחיל לרוץ רק כשהפרטים שלכם אצלנו.',
+  ],
   area2: 'גם השלב הנוכחי של התיק שלכם מוצג שם.',
 };
 
@@ -49,7 +76,10 @@ export const welcome6 = define('welcome', { en, he }, (k, c) => {
         k,
         { bg: 'paper', pad: '34px 44px 32px 44px' },
         eyebrow(k, k.r(c.stagesEyebrow), { mb: 20 }),
-        items(k, c.stages.map((s) => ({ title: k.r(s.title), body: k.r(s.body) }))),
+        items(
+          k,
+          c.stages.map((s) => ({ title: k.r(s.title), body: k.r(s.body) })),
+        ),
       ),
       section(
         k,

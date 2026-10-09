@@ -36,7 +36,12 @@ const list = names.includes('all')
 
 fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: scale, locale: 'en-US', reducedMotion: 'no-preference' });
+const context = await browser.newContext({
+  viewport: { width, height: 900 },
+  deviceScaleFactor: scale,
+  locale: 'en-US',
+  reducedMotion: 'no-preference',
+});
 const page = await context.newPage();
 for (const name of list) {
   await page.goto(`file://${path.join(preview, `${name}.html`)}`, { waitUntil: 'load' });

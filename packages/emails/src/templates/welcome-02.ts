@@ -6,7 +6,8 @@ import { reviews } from './reviews';
 /** Email 2 of 15 · day 2 · your documents are the last piece. */
 const en = {
   subject: 'Your documents are the last piece',
-  preheader: 'Your file is open and waiting on the records. Upload them and a lawyer can review your eligibility.',
+  preheader:
+    'Your file is open and waiting on the records. Upload them and a lawyer can review your eligibility.',
   kicker: 'Waiting on your documents',
   h1: '{first}, your file is still open.',
   ledes: [
@@ -23,7 +24,10 @@ const en = {
     'Anything showing when and why they left',
     'Your own passport or photo ID',
   ],
-  partial: ['Partial is fine, and a phone photograph of a document works.', 'Whatever is missing, we look for in the German and Austrian archives.'],
+  partial: [
+    'Partial is fine, and a phone photograph of a document works.',
+    'Whatever is missing, we look for in the German and Austrian archives.',
+  ],
   q1: 'I only have some of the documents.',
   a1: [
     'Send what you have.',
@@ -54,7 +58,10 @@ const he: typeof en = {
     'כל דבר שמראה מתי ומדוע עזבו',
     'הדרכון שלכם או תעודה מזהה עם תמונה',
   ],
-  partial: ['גם חלקי זה בסדר, ותצלום של מסמך בטלפון מספיק.', 'מה שחסר, אנחנו מחפשים בארכיונים הגרמניים והאוסטריים.'],
+  partial: [
+    'גם חלקי זה בסדר, ותצלום של מסמך בטלפון מספיק.',
+    'מה שחסר, אנחנו מחפשים בארכיונים הגרמניים והאוסטריים.',
+  ],
   q1: 'יש לי רק חלק מהמסמכים.',
   a1: [
     'שלחו את מה שיש לכם.',
@@ -87,7 +94,11 @@ export const welcome2 = define('welcome', { en, he }, (k, c) => {
         eyebrow(k, k.r(cm.peopleEyebrow), { mb: 10 }),
         para(k, k.r(cm.peopleLine), { mb: 26 }),
         eyebrow(k, k.r(c.waitingEyebrow), { mb: 14 }),
-        bullets(k, c.waiting.map((w) => k.r(w)), { mb: 20, gap: 7 }),
+        bullets(
+          k,
+          c.waiting.map((w) => k.r(w)),
+          { mb: 20, gap: 7 },
+        ),
         para(k, k.r(c.partial[0]!), { mb: 8 }),
         para(k, k.r(c.partial[1]!), { margin: '0' }),
       ),

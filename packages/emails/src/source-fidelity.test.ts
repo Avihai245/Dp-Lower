@@ -11,7 +11,10 @@ import { ALL_TEMPLATES } from './types';
 describe.skipIf(!hasDesignSources())('English emails match the design sources', () => {
   for (const id of ALL_TEMPLATES.filter((t) => sourceFile(t))) {
     it(`${id} is identical to ${sourceFile(id)}`, () => {
-      const diff = diffLines(canonicalize(readSource(id)), canonicalize(renderEmail(id, sourceFixture(id)).html));
+      const diff = diffLines(
+        canonicalize(readSource(id)),
+        canonicalize(renderEmail(id, sourceFixture(id)).html),
+      );
       expect(diff.filter((l) => !l.startsWith('  '))).toEqual([]);
     });
   }

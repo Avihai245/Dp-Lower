@@ -63,12 +63,25 @@ function nextPath(redirectTo: string, fallback: string): string {
 }
 
 /** `${campaign}/auth/callback?token_hash=…&type=…&next=…` (the page verifies the token and opens the session). */
-export function authCallbackUrl(o: { locale: Locale; tokenHash: string; type: string; next: string }): string {
+export function authCallbackUrl(o: {
+  locale: Locale;
+  tokenHash: string;
+  type: string;
+  next: string;
+}): string {
   const q = new URLSearchParams({ token_hash: o.tokenHash, type: o.type, next: o.next });
   return `${campaignUrl('/auth/callback', o.locale)}?${q.toString()}`;
 }
 
-const KIND_TYPES = ['magiclink', 'signup', 'invite', 'email_change', 'email', 'reauthentication', 'recovery'] as const;
+const KIND_TYPES = [
+  'magiclink',
+  'signup',
+  'invite',
+  'email_change',
+  'email',
+  'reauthentication',
+  'recovery',
+] as const;
 const isKind = (t: string): t is (typeof KIND_TYPES)[number] => (KIND_TYPES as readonly string[]).includes(t);
 
 interface Outgoing {
@@ -87,38 +100,87 @@ function outgoing(hook: Hook, base: Omit<Recipient, 'email'>): Outgoing[] {
   const next = (fallback: string) => nextPath(d.redirect_to, fallback);
 
   if (type === 'recovery') {
-    const url = authCallbackUrl({ locale: base.locale, tokenHash: d.token_hash, type, next: next('/create-password?mode=reset') });
+    const url = authCallbackUrl({
+      locale: base.locale,
+      tokenHash: d.token_hash,
+      type,
+      next: next('/create-password?mode=reset'),
+    });
     return [{ to: to(current), template: 'password-reset', data: { resetUrl: url }, suffix: 'recovery' }];
   }
   if (type === 'reauthentication') {
-    return [{ to: to(current), template: 'auth-link', data: { kind: 'reauthentication', code: d.token }, suffix: 'reauth' }];
+    return [
+      {
+        to: to(current),
+        template: 'auth-link',
+        data: { kind: 'reauthentication', code: d.token },
+        suffix: 'reauth',
+      },
+    ];
   }
   if (type === 'email_change') {
     const fresh = normalizeEmail(user.new_email ?? '');
-    const link = (tokenHash: string) => authCallbackUrl({ locale: base.locale, tokenHash, type, next: next('/portal') });
+    const link = (tokenHash: string) =>
+      authCallbackUrl({ locale: base.locale, tokenHash, type, next: next('/portal') });
     if (fresh && d.token_hash && d.token_hash_new) {
       // secure email change: both addresses confirm. The names are reversed (token_hash_new belongs to the CURRENT address)
       return [
-        { to: to(current), template: 'auth-link', data: { kind: 'email_change', url: link(d.token_hash_new) }, suffix: 'current' },
-        { to: to(fresh), template: 'auth-link', data: { kind: 'email_change', url: link(d.token_hash) }, suffix: 'new' },
+        {
+          to: to(current),
+          template: 'auth-link',
+          data: { kind: 'email_change', url: link(d.token_hash_new) },
+          suffix: 'current',
+        },
+        {
+          to: to(fresh),
+          template: 'auth-link',
+          data: { kind: 'email_change', url: link(d.token_hash) },
+          suffix: 'new',
+        },
       ];
     }
-    return [{ to: to(fresh || current), template: 'auth-link', data: { kind: 'email_change', url: link(d.token_hash || d.token_hash_new) }, suffix: 'new' }];
+    return [
+      {
+        to: to(fresh || current),
+        template: 'auth-link',
+        data: { kind: 'email_change', url: link(d.token_hash || d.token_hash_new) },
+        suffix: 'new',
+      },
+    ];
   }
   if (type === 'magiclink' || type === 'signup' || type === 'invite' || type === 'email') {
-    const url = authCallbackUrl({ locale: base.locale, tokenHash: d.token_hash, type, next: next('/portal') });
+    const url = authCallbackUrl({
+      locale: base.locale,
+      tokenHash: d.token_hash,
+      type,
+      next: next('/portal'),
+    });
     const kind: AuthLinkKind = type;
-    return [{ to: to(current), template: 'auth-link', data: { kind, url, ...(type === 'email' ? { code: d.token } : {}) }, suffix: type }];
+    return [
+      {
+        to: to(current),
+        template: 'auth-link',
+        data: { kind, url, ...(type === 'email' ? { code: d.token } : {}) },
+        suffix: type,
+      },
+    ];
   }
   return [];
 }
 
 async function recipientBase(db: Db, hook: Hook): Promise<Omit<Recipient, 'email'>> {
   const email = normalizeEmail(hook.user.email ?? '');
-  const { data: lead } = email ? await db.from('leads').select('id, full_name, locale').eq('email', email).maybeSingle() : { data: null };
+  const { data: lead } = email
+    ? await db.from('leads').select('id, full_name, locale').eq('email', email).maybeSingle()
+    : { data: null };
   const metaLocale = metaString(hook.user.user_metadata, 'locale');
   const locale: Locale = lead ? (lead.locale as Locale) : isLocale(metaLocale) ? metaLocale : 'en';
-  const name = lead?.full_name || metaString(hook.user.user_metadata, 'full_name') || metaString(hook.user.user_metadata, 'name') || email.split('@')[0] || '';
+  const name =
+    lead?.full_name ||
+    metaString(hook.user.user_metadata, 'full_name') ||
+    metaString(hook.user.user_metadata, 'name') ||
+    email.split('@')[0] ||
+    '';
   return { name, locale, leadId: lead?.id ?? null };
 }
 
@@ -135,7 +197,13 @@ export async function handleSendEmailHook(req: Request): Promise<Response> {
   }
   const body = await req.text();
   const id = req.headers.get('webhook-id');
-  const verified = verifyStandardWebhook({ secret, id, timestamp: req.headers.get('webhook-timestamp'), signature: req.headers.get('webhook-signature'), body });
+  const verified = verifyStandardWebhook({
+    secret,
+    id,
+    timestamp: req.headers.get('webhook-timestamp'),
+    signature: req.headers.get('webhook-signature'),
+    body,
+  });
   if (!verified || !id) return failure(401, 'invalid_signature');
 
   let parsed: Hook;
@@ -148,7 +216,8 @@ export async function handleSendEmailHook(req: Request): Promise<Response> {
     // security notifications (password changed, identity linked, ...) have no template: acknowledge and move on
     return Response.json({});
   }
-  if (!normalizeEmail(parsed.user.email ?? '') && !normalizeEmail(parsed.user.new_email ?? '')) return Response.json({});
+  if (!normalizeEmail(parsed.user.email ?? '') && !normalizeEmail(parsed.user.new_email ?? ''))
+    return Response.json({});
 
   try {
     const db = createAdminSupabase();

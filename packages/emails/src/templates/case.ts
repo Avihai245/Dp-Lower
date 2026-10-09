@@ -71,7 +71,10 @@ const requestedEn = {
   preheader: 'Upload them from your portal. A phone photograph of a document works.',
   kicker: 'Documents',
   h1: '{first}, we need a few documents.',
-  ledes: ['Your file is open and waiting on the records below.', 'Partial is fine, and a phone photograph of a document works.'],
+  ledes: [
+    'Your file is open and waiting on the records below.',
+    'Partial is fine, and a phone photograph of a document works.',
+  ],
   eyebrow: 'What we are waiting for',
   none: 'Open your portal to see exactly what is outstanding.',
   cta: 'Upload my documents',
@@ -105,7 +108,12 @@ export const documentRequested = define('welcome', { en: requestedEn, he: reques
         k,
         { bg: 'stone', pad: '34px 44px 34px 44px' },
         eyebrow(k, k.r(c.eyebrow), { mb: 20 }),
-        list.length > 0 ? items(k, list.map((d) => ({ title: lit(d.title), body: lit(d.help) }))) : para(k, k.r(c.none), { mb: '0px' }),
+        list.length > 0
+          ? items(
+              k,
+              list.map((d) => ({ title: lit(d.title), body: lit(d.help) })),
+            )
+          : para(k, k.r(c.none), { mb: '0px' }),
       ),
       actionBand(k, { href: k.ctx.links.portal, label: c.cta, note: c.note }),
       txFooter(k, { reason: c.reason, legal: true }),
@@ -119,7 +127,10 @@ const rejectedEn = {
   preheader: 'A new copy is needed: {doc}.',
   kicker: 'Document review',
   h1: '{first}, one document needs another look.',
-  ledes: ['We reviewed the document below and need a new copy of it.', 'Partial is fine, and a phone photograph of a document works.'],
+  ledes: [
+    'We reviewed the document below and need a new copy of it.',
+    'Partial is fine, and a phone photograph of a document works.',
+  ],
   docEyebrow: 'The document',
   noteEyebrow: 'A note from our team',
   cta: 'Upload a new copy',
@@ -132,7 +143,10 @@ const rejectedHe: typeof rejectedEn = {
   preheader: 'נדרש עותק חדש של: {doc}.',
   kicker: 'בדיקת מסמכים',
   h1: '{first}, מסמך אחד דורש בדיקה נוספת.',
-  ledes: ['בדקנו את המסמך שלהלן ואנחנו זקוקים לעותק חדש שלו.', 'גם חלקי זה בסדר, ותצלום של מסמך בטלפון מספיק.'],
+  ledes: [
+    'בדקנו את המסמך שלהלן ואנחנו זקוקים לעותק חדש שלו.',
+    'גם חלקי זה בסדר, ותצלום של מסמך בטלפון מספיק.',
+  ],
   docEyebrow: 'המסמך',
   noteEyebrow: 'הערה מהצוות שלנו',
   cta: 'העלאת עותק חדש',
@@ -151,12 +165,23 @@ export const documentRejected = define('welcome', { en: rejectedEn, he: rejected
       hero(k, { kicker: c.kicker, h1: k.r(c.h1, k.vars), ledes: c.ledes.map((l) => k.r(l)) }),
       section(
         k,
-        { bg: 'stone', pad: reviewNote ? '34px 44px 26px 44px' : '34px 44px 34px 44px', cls: reviewNote ? 'px pt' : 'px pt pb' },
+        {
+          bg: 'stone',
+          pad: reviewNote ? '34px 44px 26px 44px' : '34px 44px 34px 44px',
+          cls: reviewNote ? 'px pt' : 'px pt pb',
+        },
         eyebrow(k, k.r(c.docEyebrow), { mb: 20 }),
         items(k, [{ title: lit(doc.title), body: lit(doc.help) }]),
       ),
       ...(reviewNote
-        ? [section(k, { bg: 'stone', pad: '0px 44px 34px 44px', cls: 'px pb' }, eyebrow(k, k.r(c.noteEyebrow), { mb: 14 }), noteQuote(k, lit(reviewNote)))]
+        ? [
+            section(
+              k,
+              { bg: 'stone', pad: '0px 44px 34px 44px', cls: 'px pb' },
+              eyebrow(k, k.r(c.noteEyebrow), { mb: 14 }),
+              noteQuote(k, lit(reviewNote)),
+            ),
+          ]
         : []),
       actionBand(k, { href: k.ctx.links.portal, label: c.cta, note: c.note }),
       txFooter(k, { reason: c.reason, legal: true }),
@@ -170,7 +195,10 @@ const receivedEn = {
   preheader: 'Here is what happens next, and where you can follow it.',
   kicker: 'Application submitted',
   h1: '{first}, your application is with us.',
-  ledes: ['Case {ref} · Decker Pex Levi is handling your application.', 'You can follow every stage yourself.'],
+  ledes: [
+    'Case {ref} · Decker Pex Levi is handling your application.',
+    'You can follow every stage yourself.',
+  ],
   eyebrow: 'What happens next',
   steps: [
     '<b>We check what you sent.</b> A case manager confirms the records are readable and tells you if anything is missing.',
@@ -213,11 +241,13 @@ export const applicationReceived = define('welcome', { en: receivedEn, he: recei
         k,
         { bg: 'paper', pad: '34px 44px 32px 44px' },
         eyebrow(k, k.r(c.eyebrow), { mb: 22 }),
-        steps(k, c.steps.map((s) => k.r(s))),
+        steps(
+          k,
+          c.steps.map((s) => k.r(s)),
+        ),
       ),
       actionBand(k, { href: k.ctx.links.portal, label: c.cta, note: c.note }),
       txFooter(k, { reason: c.reason, legal: true }),
     ],
   };
 });
-

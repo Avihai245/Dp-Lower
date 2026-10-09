@@ -38,7 +38,8 @@ const ENTITIES: Record<string, string> = {
   '\u{2190}': '&larr;',
   '\u{a0}': '&nbsp;',
 };
-const ENTITY_CHARS = /[\u{2019}\u{2018}\u{201c}\u{201d}\u{201e}\u{b7}\u{2014}\u{2013}\u{2026}\u{fc}\u{2605}\u{25aa}\u{2192}\u{2190}\u{a0}]/gu;
+const ENTITY_CHARS =
+  /[\u{2019}\u{2018}\u{201c}\u{201d}\u{201e}\u{b7}\u{2014}\u{2013}\u{2026}\u{fc}\u{2605}\u{25aa}\u{2192}\u{2190}\u{a0}]/gu;
 
 /** HTML-escapes text for element content and double-quoted attributes; typographic characters become the named entities the sources use. */
 export function esc(s: string): string {

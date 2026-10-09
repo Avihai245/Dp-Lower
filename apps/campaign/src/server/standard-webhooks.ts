@@ -9,7 +9,10 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 /** Supabase shows the secret as `v1,whsec_<base64>`; the key is the base64 part. */
 export function decodeWebhookSecret(secret: string): Buffer | null {
-  const base64 = secret.trim().replace(/^v1,/, '').replace(/^whsec_/, '');
+  const base64 = secret
+    .trim()
+    .replace(/^v1,/, '')
+    .replace(/^whsec_/, '');
   if (!base64) return null;
   const key = Buffer.from(base64, 'base64');
   return key.length > 0 ? key : null;
@@ -46,7 +49,12 @@ export function verifyStandardWebhook(i: WebhookInput): boolean {
 }
 
 /** Signs a body the way Supabase does (used by the tests and by anyone who wants to replay a hook locally). */
-export function signStandardWebhook(o: { secret: string; id: string; timestamp: number; body: string }): string {
+export function signStandardWebhook(o: {
+  secret: string;
+  id: string;
+  timestamp: number;
+  body: string;
+}): string {
   const key = decodeWebhookSecret(o.secret);
   if (!key) throw new Error('invalid webhook secret');
   return `v1,${createHmac('sha256', key).update(`${o.id}.${o.timestamp}.${o.body}`).digest('base64')}`;

@@ -8,7 +8,10 @@ const en = {
   preheader: 'Twenty minutes with a lawyer, at no cost and no obligation.',
   kicker: 'Free consultation',
   h1: '{first}, your call has not been booked yet.',
-  ledes: ['The fastest way to know where you stand is to talk to one of our lawyers.', 'It costs nothing, and it takes twenty minutes.'],
+  ledes: [
+    'The fastest way to know where you stand is to talk to one of our lawyers.',
+    'It costs nothing, and it takes twenty minutes.',
+  ],
   coversEyebrow: 'What the call covers',
   covers: [
     'Which route looks likely for your family',
@@ -28,7 +31,10 @@ const he: typeof en = {
   preheader: 'עשרים דקות עם עורך דין, ללא עלות וללא התחייבות.',
   kicker: 'ייעוץ ללא תשלום',
   h1: '{first}, עדיין לא קבעתם את השיחה.',
-  ledes: ['הדרך המהירה ביותר לדעת היכן אתם עומדים היא לדבר עם אחד מעורכי הדין שלנו.', 'זה לא עולה כלום, וזה לוקח עשרים דקות.'],
+  ledes: [
+    'הדרך המהירה ביותר לדעת היכן אתם עומדים היא לדבר עם אחד מעורכי הדין שלנו.',
+    'זה לא עולה כלום, וזה לוקח עשרים דקות.',
+  ],
   coversEyebrow: 'מה כוללת השיחה',
   covers: [
     'איזה מסלול נראה סביר עבור המשפחה שלכם',
@@ -55,7 +61,11 @@ export const welcome3 = define('welcome', { en, he }, (k, c) => {
         k,
         { bg: 'paper', pad: '34px 44px 32px 44px' },
         eyebrow(k, k.r(c.coversEyebrow), { mb: 20 }),
-        bullets(k, c.covers.map((w) => k.r(w)), { mb: 24, gap: 8 }),
+        bullets(
+          k,
+          c.covers.map((w) => k.r(w)),
+          { mb: 24, gap: 8 },
+        ),
         para(k, k.r(c.free[0]!), { mb: 8 }),
         para(k, k.r(c.free[1]!), { mb: '0px' }),
       ),

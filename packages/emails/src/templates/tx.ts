@@ -39,7 +39,10 @@ export function callCard(k: Kit, o: { eyebrow: string; when: When; lines?: Frag[
   const time = `${o.when.time}${o.when.zone ? ` ${o.when.zone}` : ''}`;
   const timeHtml = k.rtl ? `<span dir="ltr" style="unicode-bidi:isolate;">${esc(time)}</span>` : esc(time);
   const lines = (o.lines ?? [])
-    .map((l) => `\n            <p style="margin:12px 0 0 0; font-family:${k.SANS}; font-size:15px; line-height:24px; color:#3d4650;">${l.html}</p>`)
+    .map(
+      (l) =>
+        `\n            <p style="margin:12px 0 0 0; font-family:${k.SANS}; font-size:15px; line-height:24px; color:#3d4650;">${l.html}</p>`,
+    )
     .join('');
   const ey = eyebrow(k, { html: esc(o.eyebrow), text: o.eyebrow }, { mb: 14, cls: '' });
   return {
@@ -90,4 +93,3 @@ export function fallbackLink(k: Kit, intro: string, url: string): Frag {
     text: `${intro}\n${safeUrl(url)}`,
   };
 }
-

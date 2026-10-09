@@ -12,12 +12,21 @@ import { absoluteUrl } from '@dpl/i18n';
  * site) and no unsubscribe. The email is written to the outbox with the dedupe key `contact-ack:{submissionId}`, so a
  * retried request never sends it twice; the dispatcher in the campaign app delivers it. Never throws.
  */
-export async function queueContactAck(args: { submissionId: string; name: string; email: string | null; locale: 'en' | 'he' }): Promise<void> {
+export async function queueContactAck(args: {
+  submissionId: string;
+  name: string;
+  email: string | null;
+  locale: 'en' | 'he';
+}): Promise<void> {
   const email = args.email?.trim().toLowerCase();
   if (!email) return;
   try {
     const locale: Locale = args.locale;
-    const site = (process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? 'https://www.lawoffice.org.il').replace(/\/$/, '');
+    const site = (
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      process.env.NEXT_PUBLIC_MAIN_SITE_URL ??
+      'https://www.lawoffice.org.il'
+    ).replace(/\/$/, '');
     // the PNG / JPG copies of the logo and the team photograph are hosted by the campaign site
     const images = campaignUrl('', 'en');
     const ctx: EmailContext = {
@@ -47,7 +56,11 @@ export async function queueContactAck(args: { submissionId: string; name: string
       to: { email, name: args.name },
       rendered: renderEmail('contact-received', ctx),
     });
-    await enqueueEmail(createAdminSupabase(), { leadId: null, payload, dedupeKey: `contact-ack:${args.submissionId}` });
+    await enqueueEmail(createAdminSupabase(), {
+      leadId: null,
+      payload,
+      dedupeKey: `contact-ack:${args.submissionId}`,
+    });
   } catch (e) {
     console.error('[contact-ack] failed', e);
   }

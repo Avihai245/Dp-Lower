@@ -9,9 +9,13 @@ const en = {
   preheader: 'Missing papers are the normal starting point, not a dead end.',
   kicker: 'What we do with a thin file',
   h1: '{first}, missing records are the normal starting point.',
-  ledes: ['Families tell us the papers were lost, burned, or left behind in a hurry.', 'That is where the work begins, not where it stops.'],
+  ledes: [
+    'Families tell us the papers were lost, burned, or left behind in a hurry.',
+    'That is where the work begins, not where it stops.',
+  ],
   spellingsEyebrow: 'One family, three spellings',
-  spellingsNote: 'The same family, written three ways across two borders.<br>This is what an archive search has to see through.',
+  spellingsNote:
+    'The same family, written three ways across two borders.<br>This is what an archive search has to see through.',
   whereEyebrow: 'Where the records still are',
   where: [
     'Birth and marriage entries in municipal registries',
@@ -19,8 +23,12 @@ const en = {
     'Community and congregation records',
     'Naturalisation papers from the country the family reached',
   ],
-  digitised: ['Much of this has never been digitised, which is why it feels like nothing exists.', 'Give us the little you know and we follow it from there.'],
-  area1: 'If your application or your documents are only part done, everything you entered is saved in your personal area.',
+  digitised: [
+    'Much of this has never been digitised, which is why it feels like nothing exists.',
+    'Give us the little you know and we follow it from there.',
+  ],
+  area1:
+    'If your application or your documents are only part done, everything you entered is saved in your personal area.',
   area2: 'Open it to finish a section, add a record, or check where your case stands.',
 };
 
@@ -39,7 +47,10 @@ const he: typeof en = {
     'רשומות של קהילות וקהילות דתיות',
     'מסמכי התאזרחות מהמדינה שאליה הגיעה המשפחה',
   ],
-  digitised: ['חלק גדול מזה מעולם לא עבר דיגיטציה, ולכן נדמה שלא קיים דבר.', 'תנו לנו את המעט שאתם יודעים, ואנחנו נמשיך משם.'],
+  digitised: [
+    'חלק גדול מזה מעולם לא עבר דיגיטציה, ולכן נדמה שלא קיים דבר.',
+    'תנו לנו את המעט שאתם יודעים, ואנחנו נמשיך משם.',
+  ],
   area1: 'אם הבקשה או המסמכים שלכם הושלמו רק בחלקם, כל מה שהזנתם שמור באזור האישי שלכם.',
   area2: 'היכנסו אליו כדי להשלים פרק, להוסיף רשומה או לבדוק איפה התיק שלכם עומד.',
 };
@@ -75,7 +86,11 @@ export const welcome14 = define('welcome', { en, he }, (k, c) => {
         k,
         { bg: 'paper', pad: '34px 44px 32px 44px' },
         eyebrow(k, k.r(c.whereEyebrow), { mb: 18 }),
-        bullets(k, c.where.map((w) => k.r(w)), { mb: 22, gap: 8 }),
+        bullets(
+          k,
+          c.where.map((w) => k.r(w)),
+          { mb: 22, gap: 8 },
+        ),
         para(k, k.r(c.digitised[0]!), { mb: 8 }),
         para(k, k.r(c.digitised[1]!), { mb: '0px' }),
       ),

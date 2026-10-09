@@ -25,13 +25,18 @@ const route = (option('route') ?? 'germany') as 'germany' | 'austria' | 'both' |
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 const publicEmail = path.join(here, '..', '..', '..', 'apps', 'campaign', 'public', 'email');
-for (const f of ['dpl-logo.png', 'dpl-team.jpg']) fs.copyFileSync(path.join(publicEmail, f), path.join(out, f));
+for (const f of ['dpl-logo.png', 'dpl-team.jpg'])
+  fs.copyFileSync(path.join(publicEmail, f), path.join(out, f));
 
 const rows: string[] = [];
 for (const id of ALL_TEMPLATES) {
   for (const locale of ['en', 'he'] as const) {
     const name = locale === 'he' && flag('latin-name') ? 'David Cohen' : undefined;
-    const ctx = sampleContext(id, locale, { name, route, images: { logo: 'dpl-logo.png', teamPhoto: 'dpl-team.jpg' } });
+    const ctx = sampleContext(id, locale, {
+      name,
+      route,
+      images: { logo: 'dpl-logo.png', teamPhoto: 'dpl-team.jpg' },
+    });
     const r = renderEmail(id, ctx);
     fs.writeFileSync(path.join(out, `${id}.${locale}.html`), r.html);
     fs.writeFileSync(path.join(out, `${id}.${locale}.txt`), r.text);

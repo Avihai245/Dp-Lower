@@ -1,4 +1,16 @@
-import { cta, eyebrow, footer, h2, letterhead, note, para, ruleRow, section, textLink, type Kit } from '../kit';
+import {
+  cta,
+  eyebrow,
+  footer,
+  h2,
+  letterhead,
+  note,
+  para,
+  ruleRow,
+  section,
+  textLink,
+  type Kit,
+} from '../kit';
 import type { Frag } from '../text';
 
 /** Strings that several emails share (all of it verbatim from the Welcome sources; Hebrew is a translation). */
@@ -34,8 +46,10 @@ export const COMMON = {
       'A licensed attorney of the firm, registered with the Israel Bar Association.',
       'They read your file, tell you which route fits your family, and sign the filing.',
     ],
-    areaSaved: 'If your application or documents are part finished, everything you entered is saved in your personal area.',
-    areaOpen: 'If a section of your application is still open, it is saved and waiting in your personal area.',
+    areaSaved:
+      'If your application or documents are part finished, everything you entered is saved in your personal area.',
+    areaOpen:
+      'If a section of your application is still open, it is saved and waiting in your personal area.',
     areaFile: 'If your file is part finished, your personal area holds everything you have entered so far.',
     areaComplete: 'Open it to complete a section, add a document, or check your status.',
     areaWhenever: 'You can add a document or check your status whenever you like.',
@@ -64,7 +78,7 @@ export const COMMON = {
     faqEyebrow: 'השאלות הראשונות שאנשים שואלים',
     faqCost: [
       'אין עלות כלל.',
-      'בדיקת הזכאות והשיחה עם עורך דין הן ללא תשלום, ואתם רואים את השכר לפני שהעבודה מתחילה.',
+      'בדיקת הזכאות והשיחה עם עורך דין הן ללא תשלום, ואתם רואים את שכר הטרחה לפני שהעבודה מתחילה.',
       'אתם לא משלמים דבר עד שנקבל את התיק שלכם.',
     ],
     faqWho: [

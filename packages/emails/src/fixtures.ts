@@ -8,7 +8,12 @@ import { isNurtureTemplate, type EmailContext, type EmailTemplateId } from './ty
 export function sampleContext(
   id: EmailTemplateId,
   locale: Locale,
-  o: { name?: string; route?: EmailContext['lead']['route']; data?: EmailContext['data']; images?: { logo: string; teamPhoto: string } } = {},
+  o: {
+    name?: string;
+    route?: EmailContext['lead']['route'];
+    data?: EmailContext['data'];
+    images?: { logo: string; teamPhoto: string };
+  } = {},
 ): EmailContext {
   const he = locale === 'he';
   const fullName = o.name ?? (he ? 'דוד כהן' : 'David Cohen');
@@ -16,17 +21,32 @@ export function sampleContext(
   const nurture = isNurtureTemplate(id);
   const defaults: Partial<Record<EmailTemplateId, EmailContext['data']>> = {
     'file-open': { applicationState: 'in_progress', docsReceived: 3, docsTotal: 8 },
-    'booking-confirmation': { startsAt: '2026-10-14T13:30:00.000Z', timezone: he ? 'Asia/Jerusalem' : 'America/New_York', minutes: 20 },
-    'booking-cancelled': { startsAt: '2026-10-14T13:30:00.000Z', timezone: he ? 'Asia/Jerusalem' : 'America/New_York' },
+    'booking-confirmation': {
+      startsAt: '2026-10-14T13:30:00.000Z',
+      timezone: he ? 'Asia/Jerusalem' : 'America/New_York',
+      minutes: 20,
+    },
+    'booking-cancelled': {
+      startsAt: '2026-10-14T13:30:00.000Z',
+      timezone: he ? 'Asia/Jerusalem' : 'America/New_York',
+    },
     'status-update': { status: 'under_review' },
     'document-requested': { docTypes: ['birth_certificate', 'marriage_certificates', 'passport'] },
     'document-rejected': {
       docType: 'passport',
-      note: he ? 'התמונה מטושטשת. נא להעלות סריקה ברורה של העמוד המלא.' : 'The photo is blurred. Please upload a clear scan of the full page.',
+      note: he
+        ? 'התמונה מטושטשת. נא להעלות סריקה ברורה של העמוד המלא.'
+        : 'The photo is blurred. Please upload a clear scan of the full page.',
     },
-    'password-reset': { resetUrl: `${base}/auth/callback?token_hash=3f9c1b7e&type=recovery&next=%2Fcreate-password%3Fmode%3Dreset` },
+    'password-reset': {
+      resetUrl: `${base}/auth/callback?token_hash=3f9c1b7e&type=recovery&next=%2Fcreate-password%3Fmode%3Dreset`,
+    },
     'contact-received': { name: fullName },
-    'auth-link': { kind: 'magiclink', url: `${base}/auth/callback?token_hash=3f9c1b7e&type=magiclink&next=%2Fportal`, code: null },
+    'auth-link': {
+      kind: 'magiclink',
+      url: `${base}/auth/callback?token_hash=3f9c1b7e&type=magiclink&next=%2Fportal`,
+      code: null,
+    },
   };
   return {
     locale,

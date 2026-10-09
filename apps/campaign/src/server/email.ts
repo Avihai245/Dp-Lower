@@ -1,10 +1,23 @@
 import 'server-only';
 import { DOC_TYPES, firstNameOf, type Locale } from '@dpl/core';
 import { createAdminSupabase } from '@dpl/db/admin';
-import { campaignUrl, createPortalLinkToken, createUnsubscribeToken, portalUrl, unsubscribeUrl } from '@dpl/db/links';
+import {
+  campaignUrl,
+  createPortalLinkToken,
+  createUnsubscribeToken,
+  portalUrl,
+  unsubscribeUrl,
+} from '@dpl/db/links';
 import { enqueueEmail } from '@dpl/db/outbox';
 import type { Db, EventRow, LeadRow } from '@dpl/db/types';
-import { buildEmailPayload, isNurtureTemplate, renderEmail, type EmailContext, type EmailLinks, type EmailTemplateId } from '@dpl/emails';
+import {
+  buildEmailPayload,
+  isNurtureTemplate,
+  renderEmail,
+  type EmailContext,
+  type EmailLinks,
+  type EmailTemplateId,
+} from '@dpl/emails';
 
 export interface QueueEmailArgs {
   template: EmailTemplateId;
@@ -60,7 +73,11 @@ async function leadContext(db: Db, a: QueueEmailArgs): Promise<EmailContext> {
       route: a.lead.route,
       phone: a.lead.phone,
     },
-    links: { ...sharedLinks(locale), portal: portalUrl(portalToken, locale), unsubscribe: unsubToken ? unsubscribeUrl(unsubToken, locale) : null },
+    links: {
+      ...sharedLinks(locale),
+      portal: portalUrl(portalToken, locale),
+      unsubscribe: unsubToken ? unsubscribeUrl(unsubToken, locale) : null,
+    },
     data: a.data ?? (a.template === 'file-open' ? await fileOpenData(db, a.lead.id) : undefined),
   };
 }
@@ -82,7 +99,12 @@ export async function queueEmailEvent(a: QueueEmailArgs): Promise<EventRow | nul
     if (isNurtureTemplate(a.template) && a.lead.unsubscribed_at) return null;
     const ctx = await leadContext(db, a);
     const rendered = renderEmail(a.template, ctx);
-    const payload = buildEmailPayload({ template: a.template, locale: ctx.locale, to: { email: a.lead.email, name: a.lead.full_name }, rendered });
+    const payload = buildEmailPayload({
+      template: a.template,
+      locale: ctx.locale,
+      to: { email: a.lead.email, name: a.lead.full_name },
+      rendered,
+    });
     const hour = (a.at ?? new Date()).toISOString().slice(0, 13);
     const dedupeKey = a.dedupeKey ?? `email:${a.template}:${a.lead.id}:${hour}`;
     const row = await enqueueEmail(db, { leadId: a.lead.id, payload, dedupeKey, at: a.at });
@@ -138,8 +160,18 @@ export async function queueEmailToAddress(a: {
     data: a.data,
   };
   const rendered = renderEmail(a.template, ctx);
-  const payload = buildEmailPayload({ template: a.template, locale: to.locale, to: { email: to.email, name: to.name }, rendered });
-  const row = await enqueueEmail(db, { leadId: to.leadId ?? null, payload, dedupeKey: a.dedupeKey, at: a.at });
+  const payload = buildEmailPayload({
+    template: a.template,
+    locale: to.locale,
+    to: { email: to.email, name: to.name },
+    rendered,
+  });
+  const row = await enqueueEmail(db, {
+    leadId: to.leadId ?? null,
+    payload,
+    dedupeKey: a.dedupeKey,
+    at: a.at,
+  });
   const event = row ?? (await eventByDedupeKey(db, a.dedupeKey));
   if (!event) throw new Error(`email ${a.template} could not be queued`);
   return event;

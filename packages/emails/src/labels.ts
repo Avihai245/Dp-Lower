@@ -1,4 +1,11 @@
-import { FIRM_TIMEZONE, isValidTimeZone, type DocType, type LeadRoute, type LeadStatus, type Locale } from '@dpl/core';
+import {
+  FIRM_TIMEZONE,
+  isValidTimeZone,
+  type DocType,
+  type LeadRoute,
+  type LeadStatus,
+  type Locale,
+} from '@dpl/core';
 
 /** Names of the routes ("Family connection" row of the file plate). */
 export const ROUTE_LABELS: Record<Locale, Record<LeadRoute, string>> = {
@@ -6,7 +13,8 @@ export const ROUTE_LABELS: Record<Locale, Record<LeadRoute, string>> = {
   he: { germany: 'גרמניה', austria: 'אוסטריה', both: 'גרמניה ואוסטריה', unsure: 'עדיין לא ברור' },
 };
 
-export const routeLabel = (locale: Locale, route: LeadRoute | null): string => ROUTE_LABELS[locale][route ?? 'unsure'];
+export const routeLabel = (locale: Locale, route: LeadRoute | null): string =>
+  ROUTE_LABELS[locale][route ?? 'unsure'];
 
 /**
  * Applicant-facing status labels. English is the wording of the prototype's status control and portal heading
@@ -41,9 +49,12 @@ export const STATUS_HELP: Record<Locale, Record<LeadStatus, string>> = {
     enquiry: 'We have your details and your answers.',
     account_created: 'Your portal is open.',
     application_incomplete: 'Your application is saved and waiting in your portal.',
-    application_submitted: 'A case manager confirms the records are readable and tells you if anything is missing.',
-    under_review: 'A lawyer reviews the case. You receive a written assessment of your route and the records still needed.',
-    info_required: 'We need something more from you before the review can continue. Your portal shows exactly what is outstanding.',
+    application_submitted:
+      'A case manager confirms the records are readable and tells you if anything is missing.',
+    under_review:
+      'A lawyer reviews the case. You receive a written assessment of your route and the records still needed.',
+    info_required:
+      'We need something more from you before the review can continue. Your portal shows exactly what is outstanding.',
     review_completed: 'The review of your case is complete. Your portal has the details.',
     contacting: 'We are contacting you about your case, by email first, at the address you registered with.',
   },
@@ -74,7 +85,10 @@ export const DOC_TEXT: Record<Locale, Record<DocType, DocText>> = {
       title: 'Ancestor’s birth certificate',
       help: 'Establishes their citizenship at birth. The single most important record in your case.',
     },
-    marriage_certificates: { title: 'Marriage certificates', help: 'Connects surnames across generations where a name changed.' },
+    marriage_certificates: {
+      title: 'Marriage certificates',
+      help: 'Connects surnames across generations where a name changed.',
+    },
     emigration_naturalization: {
       title: 'Emigration or naturalization records',
       help: 'Shows when and how they left, and when they took a new citizenship.',
@@ -84,20 +98,41 @@ export const DOC_TEXT: Record<Locale, Record<DocType, DocText>> = {
       help: 'Any record placing them outside the country after 1933: a ship manifest, a visa, an affidavit.',
     },
     passport: { title: 'Your passport', help: 'Confirms your identity and current citizenship.' },
-    family_tree: { title: 'Family tree or written account', help: 'Your own account of the line. A handwritten note or an email is fine.' },
-    photo_id: { title: 'Photo ID for each applicant', help: 'Required for every family member included in the case.' },
-    other: { title: 'Any other supporting record', help: 'Letters, photographs, property records, school registers.' },
+    family_tree: {
+      title: 'Family tree or written account',
+      help: 'Your own account of the line. A handwritten note or an email is fine.',
+    },
+    photo_id: {
+      title: 'Photo ID for each applicant',
+      help: 'Required for every family member included in the case.',
+    },
+    other: {
+      title: 'Any other supporting record',
+      help: 'Letters, photographs, property records, school registers.',
+    },
   },
   he: {
-    birth_certificate: { title: 'תעודת הלידה של האב הקדמון', help: 'מוכיחה את אזרחותו בלידה. הרשומה החשובה ביותר בתיק שלכם.' },
-    marriage_certificates: { title: 'תעודות נישואין', help: 'מקשרות בין שמות משפחה לאורך הדורות כשהשם השתנה.' },
-    emigration_naturalization: { title: 'רשומות הגירה או התאזרחות', help: 'מראות מתי ואיך עזבו, ומתי קיבלו אזרחות חדשה.' },
+    birth_certificate: {
+      title: 'תעודת הלידה של האב הקדמון',
+      help: 'מוכיחה את אזרחותו בלידה. הרשומה החשובה ביותר בתיק שלכם.',
+    },
+    marriage_certificates: {
+      title: 'תעודות נישואין',
+      help: 'מקשרות בין שמות משפחה לאורך הדורות כשהשם השתנה.',
+    },
+    emigration_naturalization: {
+      title: 'רשומות הגירה או התאזרחות',
+      help: 'מראות מתי ואיך עזבו, ומתי קיבלו אזרחות חדשה.',
+    },
     persecution_proof: {
       title: 'הוכחת רדיפה או תאריך עזיבה',
       help: 'כל רשומה שממקמת אותם מחוץ למדינה אחרי 1933: רשימת נוסעים בספינה, ויזה, תצהיר.',
     },
     passport: { title: 'הדרכון שלכם', help: 'מאשר את זהותכם ואת אזרחותכם הנוכחית.' },
-    family_tree: { title: 'אילן יוחסין או תיאור בכתב', help: 'התיאור שלכם של הקו המשפחתי. פתק בכתב יד או מייל מספיקים.' },
+    family_tree: {
+      title: 'אילן יוחסין או תיאור בכתב',
+      help: 'התיאור שלכם של הקו המשפחתי. פתק בכתב יד או מייל מספיקים.',
+    },
     photo_id: { title: 'תעודה מזהה עם תמונה לכל מבקש', help: 'נדרשת לכל בן משפחה הכלול בתיק.' },
     other: { title: 'כל רשומה תומכת אחרת', help: 'מכתבים, תצלומים, רשומות רכוש, רשומות בית ספר.' },
   },
@@ -125,10 +160,25 @@ export function formatWhen(iso: string, timezone: string | undefined, locale: Lo
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return { date: iso, time: '', zone: '', timezone: tz };
   const tag = locale === 'he' ? 'he-IL' : 'en-US';
-  const date = new Intl.DateTimeFormat(tag, { timeZone: tz, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(at);
-  const timeFmt = new Intl.DateTimeFormat(tag, { timeZone: tz, hour: 'numeric', minute: '2-digit', hourCycle: locale === 'he' ? 'h23' : 'h12', timeZoneName: 'short' });
+  const date = new Intl.DateTimeFormat(tag, {
+    timeZone: tz,
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(at);
+  const timeFmt = new Intl.DateTimeFormat(tag, {
+    timeZone: tz,
+    hour: 'numeric',
+    minute: '2-digit',
+    hourCycle: locale === 'he' ? 'h23' : 'h12',
+    timeZoneName: 'short',
+  });
   const parts = timeFmt.formatToParts(at);
-  const zone = (parts.find((p) => p.type === 'timeZoneName')?.value ?? '').replace(/[\u{200e}\u{200f}]/gu, '');
+  const zone = (parts.find((p) => p.type === 'timeZoneName')?.value ?? '').replace(
+    /[\u{200e}\u{200f}]/gu,
+    '',
+  );
   const time = parts
     .filter((p) => p.type !== 'timeZoneName')
     .map((p) => p.value)
