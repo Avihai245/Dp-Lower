@@ -10,5 +10,6 @@ export type CampaignEntry = 'eligibility' | 'sign-in';
 const DEFAULT_BASE = process.env.NEXT_PUBLIC_CAMPAIGN_URL ?? 'https://euro-passports.com';
 
 export function campaignUrl(locale: Locale, entry: CampaignEntry, base: string = DEFAULT_BASE): string {
-  return `${base.replace(/\/$/, '')}${locale === 'he' ? '/he' : ''}/${entry}?source=main-site`;
+  // an English page passes its language on: a visitor in Israel who chose English here must not be sent to the Hebrew edition
+  return `${base.replace(/\/$/, '')}${locale === 'he' ? '/he' : ''}/${entry}?source=main-site${locale === 'he' ? '' : '&lang=en'}`;
 }

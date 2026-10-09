@@ -28,8 +28,8 @@ export async function ContactPage({ locale }: { locale: Locale }) {
   }));
 
   // the client area lives in the campaign app
-  const signIn = campaignUrl('/sign-in?source=main-site', locale);
-  const eligibility = campaignUrl('/eligibility?source=main-site', locale);
+  const signIn = campaignUrl(`/sign-in?source=main-site${locale === 'he' ? '' : '&lang=en'}`, locale);
+  const eligibility = campaignUrl(`/eligibility?source=main-site${locale === 'he' ? '' : '&lang=en'}`, locale);
 
   return (
     <PageFade>

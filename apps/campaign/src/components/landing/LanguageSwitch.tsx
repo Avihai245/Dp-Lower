@@ -1,4 +1,5 @@
 'use client';
+import { rememberLanguage } from '@dpl/i18n';
 import { x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import NextLink from 'next/link';
@@ -24,6 +25,8 @@ export function LanguageSwitch() {
       prefetch={false}
       lang={other}
       hrefLang={other}
+      // a visitor who picks a language keeps it on the next visit, whatever country they are in
+      onClick={() => rememberLanguage(other)}
       aria-label={t('switchLabel')}
       data-lang-switch
       {...x(

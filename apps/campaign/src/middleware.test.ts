@@ -129,3 +129,42 @@ describe('files at the root', () => {
     }
   });
 });
+
+describe('the language a visitor starts in', () => {
+  const page = (url: string, headers: Record<string, string> = {}) =>
+    middleware(new NextRequest(`http://localhost:3001${url}`, { headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0 Chrome/126', ...headers } }));
+  const IL = { 'x-vercel-ip-country': 'IL' };
+
+  it('a visitor in Israel who opens an English entry page is taken to the Hebrew edition, with the query and the first-touch cookies kept', async () => {
+    const res = (await page('/?utm_source=google&source=ad', IL)) as NextResponse;
+    expect(res.status).toBe(307);
+    expect(location(res)).toBe('/he?utm_source=google&source=ad');
+    expect(cookieNames(res)).toEqual(expect.arrayContaining(['dpl_src', 'dpl_utm']));
+    for (const [from, to] of [['/eligibility', '/he/eligibility'], ['/privacy', '/he/privacy'], ['/sign-in', '/he/sign-in']] as const) {
+      expect(location(await page(from, IL)), from).toBe(to);
+    }
+    // a deep link goes to the Hebrew edition first, and from there to the right screen
+    expect(location(await page('/?entry=eligibility&source=main-site', IL))).toBe('/he?entry=eligibility&source=main-site');
+  });
+
+  it('inside the funnel and the portal the lead keeps its own language: nothing is redirected there', async () => {
+    for (const p of ['/details', '/booking', '/offer', '/portal', '/go/abc.def', '/unsubscribe', '/open-link']) {
+      expect((await page(p, IL)).status === 307 && location(await page(p, IL)).startsWith('/he'), p).toBe(false);
+    }
+  });
+
+  it('anyone else gets English; an explicit choice wins in both directions; the link from the firm site says ?lang=en', async () => {
+    expect((await page('/', { 'x-vercel-ip-country': 'US' })).status).toBe(200);
+    expect((await page('/', { ...IL, cookie: 'dpl_lang=en' })).status).toBe(200);
+    const fromFirmSite = (await page('/eligibility?source=main-site&lang=en', IL)) as NextResponse;
+    expect(fromFirmSite.status).toBe(200);
+    expect(fromFirmSite.cookies.get('dpl_lang')?.value).toBe('en');
+    expect(location(await page('/', { 'x-vercel-ip-country': 'DE', cookie: 'dpl_lang=he' }))).toBe('/he');
+    expect((await page('/he', IL)).status).toBe(200);
+  });
+
+  it('crawlers are never redirected', async () => {
+    expect((await page('/', { ...IL, 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' })).status).toBe(200);
+    expect((await page('/', { ...IL, accept: '*/*' })).status).toBe(200);
+  });
+});

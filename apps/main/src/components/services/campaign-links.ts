@@ -13,5 +13,5 @@ const campaignOrigin = (): string =>
  */
 export function campaignHref(locale: Locale, entry: CampaignEntry): string {
   const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`;
-  return `${campaignOrigin()}${prefix}/${entry}?source=main-site`;
+  return `${campaignOrigin()}${prefix}/${entry}?source=main-site${locale === DEFAULT_LOCALE ? '&lang=en' : ''}`;
 }

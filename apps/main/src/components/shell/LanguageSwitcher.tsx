@@ -1,6 +1,7 @@
 'use client';
 
 import { s } from '@dpl/ui';
+import { rememberLanguage } from '@dpl/i18n';
 import { useLocale, useTranslations } from 'next-intl';
 import { getPathname, usePathname } from '@/i18n/navigation';
 
@@ -25,6 +26,8 @@ const THEME = {
 /**
  * English / עברית switch: the same page in the other language. The language the visitor is reading is bold and not a
  * link. The prototype's Français item is left out: there is no French edition (the approved plan removes the button).
+
+ * Clicking one also remembers the choice (the dpl_lang cookie), which beats the country-based default of the middleware.
  * The links are plain anchors with the exact address of the other edition (no redirect hop, and the same URLs as the hreflang alternates).
  * `dark` sits in the utility bar; `light` closes the burger list on phones, where the utility bar is hidden.
  */
@@ -44,7 +47,7 @@ export function LanguageSwitcher({ variant = 'dark' }: { variant?: keyof typeof 
             {t(`lang.${l}`)}
           </span>
         ) : (
-          <a key={l} href={getPathname({ href: pathname, locale: l })} lang={l} hrefLang={l} {...mark} style={s(`${th.item}; cursor: pointer; ${th.link}`)}>
+          <a key={l} href={getPathname({ href: pathname, locale: l })} lang={l} hrefLang={l} onClick={() => rememberLanguage(l)} {...mark} style={s(`${th.item}; cursor: pointer; ${th.link}`)}>
             {t(`lang.${l}`)}
           </a>
         ),

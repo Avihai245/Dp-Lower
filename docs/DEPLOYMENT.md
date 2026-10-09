@@ -119,6 +119,8 @@ Google Cloud Console, APIs and Services, Credentials, OAuth client ID (Web). Aut
 
 ## 8. Search engines and AI discovery
 
+- Language default: Vercel adds the visitor's country (`x-vercel-ip-country`) to every request, nothing to configure; a visitor in Israel opening an English address is redirected to `/he` (see ARCHITECTURE section 5). Search-engine crawlers are exempt, so the English and Hebrew editions are indexed as before.
+
 - Submit `https://www.lawoffice.org.il/sitemap.xml` and `https://euro-passports.com/sitemap.xml` in Google Search Console and Bing Webmaster Tools (verify both properties).
 - `robots.txt` is open to search engines and the AI answer engines (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended, Applebot-Extended...). Both sites serve `/llms.txt` and `/llms-full.txt`. Pages are server-rendered, so crawlers that do not run JavaScript still read the full content.
 - Create a Google Business Profile for both offices with the same name, address and phone as in the structured data.

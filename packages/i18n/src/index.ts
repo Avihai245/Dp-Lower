@@ -35,3 +35,5 @@ export const DEPARTMENTS: string[] = [...new Set(en.team.map((m) => m.dept))];
 export const departmentOf = (slug: string): string => en.team.find((m) => m.slug === slug)?.dept ?? '';
 
 export * from './urls';
+
+export * from './language-choice';
