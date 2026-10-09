@@ -1,0 +1,47 @@
+/*
+ * Rules of the site shell (header, floating widgets, forms) that need real selectors. The inline styles of the
+ * components are the prototype's values; globals.css already carries the prototype's responsive and accessibility rules.
+ */
+
+/* honeypot field of the enquiry forms: out of sight and out of the tab order, only bots fill it in */
+.dpl-hp {
+  position: absolute;
+  inset-inline-start: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* the floating panels take focus when they open (for screen readers); the ring belongs on their controls */
+.dpl-dialog:focus,
+.dpl-dialog:focus-visible {
+  outline: none;
+}
+
+/* the skip link lands on <main>, which is focusable only so that the jump moves the reading position */
+#dpl-main:focus {
+  outline: none;
+}
+
+/* the burger list belongs to phones: if the window is widened while it is open it must not linger */
+@media (min-width: 721px) {
+  [data-mobile-nav] {
+    display: none !important;
+  }
+}
+
+/* the floating widgets sit outside #dpl-page (zoom and filters must not move them), so "stop animation" and the
+   reduced-motion preference reach them through their own marker */
+html[data-a11y-motion='1'] [data-float],
+html[data-a11y-motion='1'] [data-float] * {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-float],
+  [data-float] * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
