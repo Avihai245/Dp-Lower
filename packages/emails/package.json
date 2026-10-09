@@ -9,9 +9,12 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "preview": "tsx scripts/preview.ts",
+    "compare-sources": "tsx scripts/compare-sources.ts"
   },
   "dependencies": {
-    "@dpl/core": "workspace:*"
+    "@dpl/core": "workspace:*",
+    "@dpl/i18n": "workspace:*"
   }
 }
