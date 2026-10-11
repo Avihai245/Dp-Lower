@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { campaignUrl } from './campaign';
 
 describe('campaignUrl', () => {
@@ -16,8 +16,12 @@ describe('campaignUrl', () => {
       expect(campaignUrl('en', 'sign-in', 'http://localhost:3001/', false)).toBe('http://localhost:3001/sign-in?source=main-site');
     });
 
-    it('is what the default is when NEXT_PUBLIC_CAMPAIGN_LOCALES is not set', () => {
-      const url = campaignUrl('he', 'eligibility');
+    it('is what the default is when NEXT_PUBLIC_CAMPAIGN_LOCALES is not set', async () => {
+      vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', '');
+      vi.resetModules();
+      const { campaignUrl: fresh } = await import('./campaign');
+      const url = fresh('he', 'eligibility');
+      vi.unstubAllEnvs();
       expect(url.endsWith('/eligibility?source=main-site')).toBe(true);
       expect(url).not.toContain('/he/');
       expect(url.startsWith('http')).toBe(true);

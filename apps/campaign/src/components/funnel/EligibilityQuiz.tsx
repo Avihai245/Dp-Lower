@@ -25,7 +25,6 @@ export function EligibilityQuiz({ savedAnswers = null }: { savedAnswers?: QuizAn
   const leaveToSite = useLeaveToSite();
   const answers = useQuizAnswers();
   const [qi, setQi] = useState(0);
-  const [ready, setReady] = useState(false);
   const qiRef = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const title = useRef<HTMLHeadingElement>(null);
@@ -36,7 +35,6 @@ export function EligibilityQuiz({ savedAnswers = null }: { savedAnswers?: QuizAn
     const at = startIndex(getQuizAnswers());
     qiRef.current = at;
     setQi(at);
-    setReady(true);
     return () => clearTimeout(timer.current);
     // seeded once, when the page opens
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -96,7 +94,7 @@ export function EligibilityQuiz({ savedAnswers = null }: { savedAnswers?: QuizAn
       </div>
 
       <main data-pad style={s('flex: 1; display: flex; align-items: center; justify-content: center; padding: 56px 44px 24px')}>
-        {ready && (
+        {(
           <div key={`q${qi}`} data-fx-anim style={s('width: 100%; max-width: 760px; animation: qIn 340ms cubic-bezier(0.2,0,0,1) both')}>
             <div style={s('font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #a07a3c; margin-bottom: 22px')}>{label}</div>
             <h1
