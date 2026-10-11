@@ -182,7 +182,7 @@ Lighthouse 12, mobile preset (simulated 4x CPU slowdown, slow 4G), local product
 | Sign-in (EN) | 98 | 96 | 96 | 58 | 2.3 s | 80 ms | 0 |
 | Sign-in (HE) | 97 | 96 | 96 | 58 | 2.3 s | 150 ms | 0 |
 
-The target of 90 is met on every page except the English landing page (89, inside the noise) and the English quiz (86: first paint is 1.1 s, the 4.3 s LCP is the intro paragraph after its 340 ms entrance animation under the simulated slow phone, which is the design's own animation). SEO 58 on the quiz and sign-in pages is intentional: they are `noindex` by design (a funnel step is not a search result). The scores are measured on a development machine, not on Vercel's network; re-measure after the first deploy.
+The target of 90 is met on every page except the English landing page (89, inside the noise) and the English quiz (86 before the fix: the first question was drawn only after the page had hydrated, so LCP swung between 1.6 s and 4.3 s; it is now part of the server-rendered page and measures 89 to 96, LCP 2.6 to 3.5 s). SEO 58 on the quiz and sign-in pages is intentional: they are `noindex` by design (a funnel step is not a search result). The scores are measured on a development machine, not on Vercel's network; re-measure after the first deploy.
 axe (WCAG 2.0/2.1 A and AA) finds no violation other than colour contrast on any of the pages scanned, in either language.
 
 ## 2. Plan to implementation
