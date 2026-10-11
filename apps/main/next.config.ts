@@ -16,6 +16,13 @@ const securityHeaders = [
 
 const isDev = process.env.NODE_ENV !== 'production';
 
+// The "Client portal" and "Check eligibility" buttons are built from NEXT_PUBLIC_CAMPAIGN_URL when the site is built.
+// Without it they fall back to the old euro-passports.com address, so a production build refuses to continue (set
+// ALLOW_DEFAULT_CAMPAIGN_URL=1 to build on purpose with the default).
+if (!isDev && !process.env.NEXT_PUBLIC_CAMPAIGN_URL && process.env.ALLOW_DEFAULT_CAMPAIGN_URL !== '1') {
+  throw new Error('NEXT_PUBLIC_CAMPAIGN_URL is not set: the Client portal button would point at the old site. Set it to the address of the campaign app.');
+}
+
 /**
  * Content-Security-Policy. Next.js needs inline scripts for hydration, so script-src allows 'unsafe-inline' (all content is
  * escaped by React and there is no user-supplied HTML). Third parties are limited to what the pages really use: YouTube

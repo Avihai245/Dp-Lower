@@ -164,25 +164,25 @@ cron job; staff can mark a call held, no-show or cancelled.
 
 ### 1.3 Measured performance and accessibility
 
-Lighthouse 12, mobile preset (simulated 4x CPU slowdown, slow 4G), local production builds, measured on the final code on 2026-10-09. One run per page; the scores move by about ±5 between runs (English pages are bimodal: first paint at 1.1 s or 2.3 s depending on the run).
+Lighthouse 12, mobile preset (simulated 4x CPU slowdown, slow 4G), local production builds, measured on the final code, re-measured on 2026-10-11 after the language and journey changes. One run per page; the scores move by about ±5 between runs (English pages are bimodal: first paint at 1.1 s or 2.3 s depending on the run).
 
 | Page | Performance | Accessibility | Best practices | SEO | LCP | TBT | CLS |
 |---|---|---|---|---|---|---|---|
-| Firm site home (EN) | 91 | 97 | 96 | 100 | 3.0 s | 120 ms | 0 |
-| Firm site home (HE) | 95 | 97 | 96 | 100 | 2.7 s | 140 ms | 0 |
-| Service page (EN) | 91 | 97 | 100 | 100 | 3.2 s | 90 ms | 0 |
-| Service page (HE) | 96 | 97 | 100 | 100 | 2.7 s | 80 ms | 0 |
-| Team (EN) | 90 | 97 | 100 | 100 | 3.4 s | 40 ms | 0 |
-| Team (HE) | 95 | 97 | 100 | 100 | 3.0 s | 50 ms | 0 |
-| Contact (EN) | 91 | 96 | 100 | 100 | 3.2 s | 100 ms | 0 |
-| Landing page (EN) | 89 | 96 | 96 | 100 | 3.4 s | 60 ms | 0.003 |
-| Landing page (HE) | 93 | 96 | 96 | 100 | 3.2 s | 60 ms | 0 |
-| Quiz (EN) | 90 | 96 | 100 | 58 | 3.6 s | 110 ms | 0.026 |
-| Quiz (HE) | 99 | 96 | 100 | 58 | 1.9 s | 90 ms | 0.004 |
-| Sign-in (EN) | 90 | 96 | 96 | 58 | 3.4 s | 120 ms | 0 |
-| Sign-in (HE) | 97 | 96 | 96 | 58 | 2.6 s | 60 ms | 0 |
+| Firm site home (EN) | 92 | 97 | 96 | 100 | 3.0 s | 100 ms | 0 |
+| Firm site home (HE) | 95 | 97 | 96 | 100 | 2.9 s | 40 ms | 0 |
+| Service page (EN) | 92 | 97 | 100 | 100 | 3.0 s | 80 ms | 0 |
+| Service page (HE) | 93 | 97 | 100 | 100 | 3.2 s | 50 ms | 0 |
+| Team (EN) | 91 | 97 | 100 | 100 | 3.2 s | 40 ms | 0 |
+| Team (HE) | 92 | 97 | 100 | 100 | 3.3 s | 30 ms | 0 |
+| Contact (EN) | 98 | 96 | 100 | 100 | 2.3 s | 80 ms | 0 |
+| Landing page (EN) | 89 | 96 | 96 | 100 | 3.4 s | 70 ms | 0.003 |
+| Landing page (HE) | 93 | 96 | 96 | 100 | 3.0 s | 160 ms | 0 |
+| Quiz (EN) | 86 | 96 | 100 | 58 | 4.3 s | 60 ms | 0.026 |
+| Quiz (HE) | 97 | 96 | 100 | 58 | 2.6 s | 50 ms | 0.004 |
+| Sign-in (EN) | 98 | 96 | 96 | 58 | 2.3 s | 80 ms | 0 |
+| Sign-in (HE) | 97 | 96 | 96 | 58 | 2.3 s | 150 ms | 0 |
 
-The target of 90 is met on every page but the English landing page (89, inside the noise). SEO 58 on the quiz and sign-in pages is intentional: they are `noindex` by design (a funnel step is not a search result). The scores are measured on a development machine, not on Vercel's network; re-measure after the first deploy.
+The target of 90 is met on every page except the English landing page (89, inside the noise) and the English quiz (86: first paint is 1.1 s, the 4.3 s LCP is the intro paragraph after its 340 ms entrance animation under the simulated slow phone, which is the design's own animation). SEO 58 on the quiz and sign-in pages is intentional: they are `noindex` by design (a funnel step is not a search result). The scores are measured on a development machine, not on Vercel's network; re-measure after the first deploy.
 axe (WCAG 2.0/2.1 A and AA) finds no violation other than colour contrast on any of the pages scanned, in either language.
 
 ## 2. Plan to implementation
