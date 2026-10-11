@@ -1,0 +1,52 @@
+# AWS Amplify Hosting build settings for the monorepo. Create TWO Amplify apps from this repository, one per site, and
+# set AMPLIFY_MONOREPO_APP_ROOT on each (apps/main or apps/campaign) with the platform "Web Compute" (Next.js SSR).
+# Each app needs its own environment variables (docs/DEPLOYMENT.md section 3); the NEXT_PUBLIC_* ones are read at BUILD
+# time, so change them and redeploy. Server-side variables are copied into .env.production because Amplify does not
+# pass them to the server runtime by itself.
+version: 1
+applications:
+  - appRoot: apps/main
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            # the "Client portal" and "Check eligibility" buttons go to the campaign site: without its address they would
+            # fall back to the old euro-passports.com site, so stop the build instead of shipping a wrong link
+            - test -n "$NEXT_PUBLIC_CAMPAIGN_URL" || (echo "Set NEXT_PUBLIC_CAMPAIGN_URL to the address of the campaign Amplify app" && exit 1)
+            - cd "$(git rev-parse --show-toplevel)"
+            - corepack enable
+            - pnpm install --frozen-lockfile
+        build:
+          commands:
+            - cd "$(git rev-parse --show-toplevel)"
+            - env | grep -E '^(SUPABASE_|APP_SECRET|CRON_SECRET|ZAPIER_|EMAIL_|TURNSTILE_|SEND_EMAIL_|NEXT_PUBLIC_)' >> apps/main/.env.production || true
+            - pnpm --filter @dpl/main build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - ../../node_modules/.pnpm-store/**/*
+          - .next/cache/**/*
+  - appRoot: apps/campaign
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd "$(git rev-parse --show-toplevel)"
+            - corepack enable
+            - pnpm install --frozen-lockfile
+        build:
+          commands:
+            - cd "$(git rev-parse --show-toplevel)"
+            - env | grep -E '^(SUPABASE_|APP_SECRET|CRON_SECRET|ZAPIER_|EMAIL_|TURNSTILE_|SEND_EMAIL_|NEXT_PUBLIC_)' >> apps/campaign/.env.production || true
+            - pnpm --filter @dpl/campaign build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - ../../node_modules/.pnpm-store/**/*
+          - .next/cache/**/*

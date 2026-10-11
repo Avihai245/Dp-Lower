@@ -96,6 +96,10 @@ Every CRM event carries `data.lead` (id, caseRef, name, email, phone, locale, ro
 
 If you use a single hook, set only `ZAPIER_WEBHOOK_URL` and keep the filter step.
 
+## 4b. AWS Amplify (if the sites are hosted there instead of Vercel)
+
+`amplify.yml` at the root builds both sites. Create two Amplify apps from this repository (platform Web Compute), set `AMPLIFY_MONOREPO_APP_ROOT` to `apps/main` on one and `apps/campaign` on the other, and give each the variables of section 3. The **campaign needs its own address** (an Amplify domain or a custom one, e.g. `app.euro-passports.com`), and the **main site's `NEXT_PUBLIC_CAMPAIGN_URL` must be that address**: the "Client portal" and "Check eligibility" buttons are built from it when the main site is built, and without it they point at the old euro-passports.com site (the main build now stops if it is missing). Also set on the campaign `NEXT_PUBLIC_SITE_URL` (its own address) and `NEXT_PUBLIC_MAIN_SITE_URL` (the firm's site), and in Supabase (Authentication, URL Configuration) the campaign's address as Site URL and in the redirect list. After changing a `NEXT_PUBLIC_*` value, redeploy. The cron call (section 5) must be scheduled outside Amplify: Supabase pg_cron, see `supabase/snippets/dispatch-cron.sql`.
+
 ## 5. Vercel
 
 For each app: New Project, import the repository, set **Root Directory** to the app folder, Framework Preset Next.js, Node 22. Install Command `pnpm install --frozen-lockfile` (run from the repository root: enable "Include source files outside of the Root Directory"). Add the domains and the environment variables above. The apex `lawoffice.org.il` should redirect to `www` (Vercel Domains).
