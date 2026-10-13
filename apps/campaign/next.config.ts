@@ -49,6 +49,10 @@ function contentSecurityPolicy(): string {
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // AWS Amplify Hosting (Web Compute/SSR) deploys only this app's build output, not the pnpm workspace's hoisted
+  // node_modules, so without a self-contained server bundle the deploy fails with "node_modules folder is missing
+  // the 'next' dependency" (see https://github.com/aws-amplify/amplify-hosting/blob/main/FAQ.md#using-a-monorepo-framework).
+  output: 'standalone',
   // crawlers that do not run JavaScript (search and AI answer engines, link previews) get blocking <head> metadata
   htmlLimitedBots: /Googlebot|Google-InspectionTool|Bingbot|DuckDuckBot|Applebot|GPTBot|OAI-SearchBot|ChatGPT-User|ClaudeBot|Claude-SearchBot|Claude-User|PerplexityBot|Perplexity-User|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp/i,
   transpilePackages: ['@dpl/core', '@dpl/ui', '@dpl/i18n', '@dpl/db', '@dpl/emails'],
