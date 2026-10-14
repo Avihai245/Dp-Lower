@@ -25,7 +25,15 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-describe('platform deep links (?entry=): this app has no landing page, so every one leaves at once', () => {
+describe('platform deep links (?entry=): this app has no landing page, so a bare visit and most deep links show the portal itself', () => {
+  it('a bare visit to "/" (no entry at all — the portal\'s own domain) shows sign-in without a session and /portal with one', async () => {
+    expect(location(await get('/'))).toBe('/sign-in');
+    expect(session.calls).toBe(1); // deciding sign-in vs /portal needs a session check
+    session.user = { id: 'u1' };
+    expect(location(await get('/'))).toBe('/portal');
+    expect(location(await get('/he'))).toBe('/he/portal');
+  });
+
   it('sends an entry other than signin/portal (eligibility included) to the firm\'s apply page, and records where the visit came from', async () => {
     const res = (await get('/?entry=eligibility&source=main-site&utm_medium=email')) as NextResponse;
     expect(res.status).toBe(308);
@@ -53,7 +61,7 @@ describe('platform deep links (?entry=): this app has no landing page, so every 
     expect(res.cookies.get('dpl_src')?.value).toBe('direct');
   });
 
-  it('treats an unknown entry the same as none (leaves for the apply page); the entry logic only ever applies at the root', async () => {
+  it('treats an unknown, non-empty entry as an explicit deep link (leaves for the apply page), unlike a bare visit; the entry logic only ever applies at the root', async () => {
     const res = (await get('/?entry=bogus')) as NextResponse;
     expect(res.status).toBe(308);
     expect(location(res)).toBe('https://www.lawoffice.org.il/apply');
@@ -86,13 +94,12 @@ describe('protected pages', () => {
     expect(location(await get('/he/admin'))).toBe('/he/sign-in?next=%2Fhe%2Fadmin');
   });
 
-  it('lets signed-in visitors through, and does not ask Supabase about public pages', async () => {
+  it('lets signed-in visitors through, and does not ask Supabase about public pages other than the root', async () => {
     session.user = { id: 'u1' };
     expect((await get('/portal')).status).toBe(200);
     session.calls = 0;
-    await get('/');
     await get('/privacy');
-    expect(session.calls).toBe(0);
+    expect(session.calls).toBe(0); // '/' itself is session-aware now (it decides sign-in vs /portal), see the deep-links describe above
   });
 });
 
@@ -157,10 +164,10 @@ describe('English only (the setting by default)', () => {
     expect(location(res)).toBe('/he/sign-in?next=%2Fhe%2Fadmin');
   });
 
-  it('a visitor in Israel still leaves "/" for the firm\'s apply page: the no-landing-page redirect is unconditional, unlike the country default, which belongs to the bilingual setting and does not apply here', async () => {
+  it('a visitor in Israel still sees the portal sign-in at "/": the bare-root-shows-the-portal behavior is unconditional, unlike the country default, which belongs to the bilingual setting and does not apply here', async () => {
     const root = (await page('/', { 'x-vercel-ip-country': 'IL' })) as NextResponse;
-    expect(root.status).toBe(308);
-    expect(location(root)).toBe('https://www.lawoffice.org.il/apply');
+    expect(root.status).toBe(307);
+    expect(location(root)).toBe('/sign-in');
     for (const p of ['/eligibility', '/privacy', '/sign-in']) {
       expect((await page(p, { 'x-vercel-ip-country': 'IL' })).status, p).toBe(200);
     }
@@ -189,28 +196,28 @@ describe('the language a visitor starts in (bilingual setting)', () => {
     }
   });
 
-  it('anyone else leaves "/" for the English apply page; an explicit choice wins in both directions; the link from the firm site says ?lang=en', async () => {
+  it('anyone else sees the portal sign-in at "/"; an explicit choice wins in both directions; the link from the firm site says ?lang=en', async () => {
     const fromUS = (await page('/', { 'x-vercel-ip-country': 'US' })) as NextResponse;
-    expect(fromUS.status).toBe(308);
-    expect(location(fromUS)).toBe('https://www.lawoffice.org.il/apply');
+    expect(fromUS.status).toBe(307);
+    expect(location(fromUS)).toBe('/sign-in');
     const fromIlWithEnCookie = (await page('/', { ...IL, cookie: 'dpl_lang=en' })) as NextResponse;
-    expect(fromIlWithEnCookie.status).toBe(308);
-    expect(location(fromIlWithEnCookie)).toBe('https://www.lawoffice.org.il/apply');
+    expect(fromIlWithEnCookie.status).toBe(307);
+    expect(location(fromIlWithEnCookie)).toBe('/sign-in');
     const fromFirmSite = (await page('/sign-in?source=main-site&lang=en', IL)) as NextResponse;
     expect(fromFirmSite.status).toBe(200);
     expect(fromFirmSite.cookies.get('dpl_lang')?.value).toBe('en');
     expect(location(await page('/', { 'x-vercel-ip-country': 'DE', cookie: 'dpl_lang=he' }))).toBe('/he');
     const fromHe = (await page('/he', IL)) as NextResponse;
-    expect(fromHe.status).toBe(308);
-    expect(location(fromHe)).toBe('https://www.lawoffice.org.il/he/apply');
+    expect(fromHe.status).toBe(307);
+    expect(location(fromHe)).toBe('/he/sign-in');
   });
 
-  it('leaves "/" for the English apply page for crawlers too: the language-sniffing that is skipped for them only ever chose between English and Hebrew here, never whether to leave', async () => {
+  it('shows the portal sign-in at "/" for crawlers too: the language-sniffing that is skipped for them only ever chose between English and Hebrew here, never whether to leave', async () => {
     const bot = (await page('/', { ...IL, 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' })) as NextResponse;
-    expect(bot.status).toBe(308);
-    expect(location(bot)).toBe('https://www.lawoffice.org.il/apply');
+    expect(bot.status).toBe(307);
+    expect(location(bot)).toBe('/sign-in');
     const nonHtml = (await page('/', { ...IL, accept: '*/*' })) as NextResponse;
-    expect(nonHtml.status).toBe(308);
-    expect(location(nonHtml)).toBe('https://www.lawoffice.org.il/apply');
+    expect(nonHtml.status).toBe(307);
+    expect(location(nonHtml)).toBe('/sign-in');
   });
 });

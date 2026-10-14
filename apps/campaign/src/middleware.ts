@@ -88,10 +88,11 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  // This app has no landing page of its own any more: a bare visit to '/' and every platform deep link
-  // (/?entry=eligibility|signin|portal&source=<origin>) leaves at once. 'signin' and 'portal' stay here (sign-in, or
-  // the portal itself); everything else, 'eligibility' included, goes to the firm's own site, where the eligibility
-  // funnel and the rest of the landing content now live (see lib/landing-entry.ts).
+  // This app has no landing page of its own any more: a bare visit to '/' (no `entry` at all — this is the portal's
+  // own domain) shows the portal itself, same as an explicit '/?entry=signin' or '/?entry=portal' deep link: sign-in
+  // without a session, /portal with one. Only a deep link naming something else, 'eligibility' included, goes to the
+  // firm's own site, where the eligibility funnel and the rest of the landing content now live (see
+  // lib/landing-entry.ts).
   if (path === '/') {
     const entry = req.nextUrl.searchParams.get('entry');
     const probe = NextResponse.next();
