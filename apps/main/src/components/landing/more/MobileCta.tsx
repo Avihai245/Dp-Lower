@@ -19,7 +19,7 @@ export function MobileCta() {
       style={s('display:none;position:fixed;left:0;right:0;bottom:0;z-index:50;padding:12px 16px;background:rgba(248,245,240,0.96);border-top:1px solid #ece6dc')}
     >
       <Link
-        href="/eligibility"
+        href="/apply/eligibility"
         {...x(
           "width:100%;background:#14202b;color:#f8f5f0;font-family:'Manrope',system-ui,sans-serif;font-weight:600;font-size:15px;letter-spacing:0.06em;text-transform:uppercase;padding:18px;border-radius:12px",
           { className: 'btn lm-btn' },

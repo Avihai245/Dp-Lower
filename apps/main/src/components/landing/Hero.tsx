@@ -92,7 +92,7 @@ export async function Hero() {
             )}
           >
             <Link
-              href="/eligibility"
+              href="/apply/eligibility"
               {...x(
                 "background: #f8f5f0; color: #14202b; font-family: 'Manrope', system-ui, sans-serif; font-weight: 600; font-size: 16.5px; letter-spacing: 0.06em; text-transform: uppercase; height: 64px; padding: 0 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; transition: background 200ms ease, transform 200ms ease",
                 { className: 'btn', hover: 'background: #fff; transform: translateY(-1px)' },

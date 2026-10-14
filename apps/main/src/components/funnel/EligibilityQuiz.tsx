@@ -58,7 +58,7 @@ export function EligibilityQuiz({ savedAnswers = null }: { savedAnswers?: QuizAn
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       moved.current = true;
-      if (qiRef.current === LAST_INDEX) router.push('/details');
+      if (qiRef.current === LAST_INDEX) router.push('/apply/details');
       else setQi((i) => i + 1);
     }, ADVANCE_MS);
   }
@@ -157,7 +157,7 @@ export function EligibilityQuiz({ savedAnswers = null }: { savedAnswers?: QuizAn
           <button
             type="button"
             className="btn"
-            onClick={() => router.push('/details')}
+            onClick={() => router.push('/apply/details')}
             style={s(`background: #14202b; color: #f8f5f0; ${SANS}; font-weight: 600; padding: 17px 34px; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 12px; visibility: ${canSeeResult(qi, answers) ? 'visible' : 'hidden'}`)}
           >
             {t('quiz.seeResult')}

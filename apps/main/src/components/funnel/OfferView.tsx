@@ -30,7 +30,7 @@ export function OfferView() {
     let cancelled = false;
     void api<LeadSummary>('/api/lead').then((me) => {
       if (cancelled) return;
-      if (me.status === 401) router.replace('/details');
+      if (me.status === 401) router.replace('/apply/details');
       else if (me.ok && me.data) setLead(me.data);
     });
     return () => {
@@ -58,7 +58,7 @@ export function OfferView() {
       return;
     }
     setBusy(null);
-    if (res.status === 401) router.replace('/details');
+    if (res.status === 401) router.replace('/apply/details');
     else setError('portal');
   }
 
@@ -69,7 +69,7 @@ export function OfferView() {
     const res = await api('/api/results/email', { method: 'POST' });
     setBusy(null);
     if (res.ok) setEmailed(true);
-    else if (res.status === 401) router.replace('/details');
+    else if (res.status === 401) router.replace('/apply/details');
     else setError('email');
   }
 

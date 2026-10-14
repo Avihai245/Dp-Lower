@@ -80,7 +80,7 @@ export function Header() {
           {t('advisor')}
         </AdvisorButton>
         <Link
-          href="/eligibility"
+          href="/apply/eligibility"
           data-nav-cta
           {...x(
             "background: #14202b; color: #f8f5f0; font-family: 'Manrope', system-ui, sans-serif; font-weight: 600; font-size: 13.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 16px 28px; border-radius: 12px; transition: background 200ms ease",

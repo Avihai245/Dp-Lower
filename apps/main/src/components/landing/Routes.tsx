@@ -39,7 +39,7 @@ export async function Routes() {
         {items.map((r, k) => (
           <Link
             key={r.country}
-            href="/eligibility"
+            href="/apply/eligibility"
             {...x(
               // the prototype's <button> has line-height: normal, which the text spans inherit; a link needs it said
               `text-align: left; cursor: pointer; font-family: 'Manrope', system-ui, sans-serif; line-height: normal; display: flex; flex-direction: column; padding: clamp(38px, 3.6vw, 60px) clamp(30px, 3vw, 52px); border: 1px solid #ece6dc; border-radius: 12px; transition: opacity 900ms cubic-bezier(0.16,1,0.3,1), transform 900ms cubic-bezier(0.16,1,0.3,1), box-shadow 260ms ease, border-color 260ms ease; text-decoration: none; background: ${k === 1 ? '#ece6dc' : '#f8f5f0'}; color: #23292f`,
