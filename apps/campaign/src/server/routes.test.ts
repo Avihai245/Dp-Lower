@@ -2,11 +2,11 @@ import { createAdminSupabase } from '@dpl/db/admin';
 import type { Db } from '@dpl/db/types';
 import { NextRequest } from 'next/server';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanupLeads, loadLocalEnv, makeLead } from './test-env';
+import { cleanupLeads, loadLocalEnv, makeLead } from '@dpl/db/test-env';
 
 vi.mock('server-only', () => ({}));
 // the dispatcher route is tested for who may call it and what it answers; the scheduler and the delivery have their own tests
-vi.mock('./drip', () => ({
+vi.mock('@dpl/db/drip', () => ({
   scheduleDueEmails: vi.fn(async () => ({ leads: 3, scheduled: 2, skipped: 1, stopped: 0, errors: 0 })),
   syncSequenceDelivery: vi.fn(async () => 2),
 }));
@@ -14,7 +14,7 @@ vi.mock('@dpl/db/dispatch', () => ({
   deliverPending: vi.fn(async () => ({ claimed: 5, sent: 4, failed: 1, dead: 0 })),
 }));
 // the clean-up of past calls has its own test (bookings.int.test.ts)
-vi.mock('./bookings', () => ({ completePastBookings: vi.fn(async () => 3) }));
+vi.mock('@dpl/db/bookings', () => ({ completePastBookings: vi.fn(async () => 3) }));
 
 const hasDb = loadLocalEnv();
 
@@ -159,7 +159,7 @@ describe('POST /api/cron/dispatch', () => {
 
   it('answers 500 (with the counts it has) when a step fails, and still runs the others', async () => {
     vi.stubEnv('CRON_SECRET', 'a-long-cron-secret');
-    const drip = await import('./drip');
+    const drip = await import('@dpl/db/drip');
     vi.mocked(drip.scheduleDueEmails).mockRejectedValueOnce(new Error('db down'));
     const res = await call('POST', { authorization: 'Bearer a-long-cron-secret' });
     expect(res.status).toBe(500);
@@ -170,7 +170,7 @@ describe('POST /api/cron/dispatch', () => {
 
   it('a failing clean-up of past calls does not stop the emails', async () => {
     vi.stubEnv('CRON_SECRET', 'a-long-cron-secret');
-    const bookings = await import('./bookings');
+    const bookings = await import('@dpl/db/bookings');
     vi.mocked(bookings.completePastBookings).mockRejectedValueOnce(new Error('rpc down'));
     const res = await call('POST', { authorization: 'Bearer a-long-cron-secret' });
     expect(res.status).toBe(500);

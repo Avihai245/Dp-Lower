@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { localizePath } from '@/components/funnel/logic/paths';
+import { localizePath } from '@/components/auth/logic/paths';
 import { isSameOriginRequest, localeOf, redirectTo } from '@/server/auth';
 import { inspectEmailLink, openFromEmailLink } from '@/server/go';
 

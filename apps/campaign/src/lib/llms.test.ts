@@ -1,45 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import enMore from '../../messages/en/landingMore.json';
-import heMore from '../../messages/he/landingMore.json';
-import { buildLlmsFullTxt, buildLlmsTxt } from './llms';
+import { buildLlmsFullTxt, buildLlmsTxt, type LlmsOptions } from './llms';
 
 const opts = { origin: 'https://euro-passports.com', mainSite: 'https://www.lawoffice.org.il' } as const;
 
-describe('llms.txt of the campaign', () => {
-  it('is a short index in English with absolute links on this site and the firm site', () => {
-    const t = buildLlmsTxt({ ...opts, locale: 'en' });
-    expect(t.startsWith('# Decker Pex Levi: German and Austrian citizenship by descent')).toBe(true);
-    expect(t).toContain('](https://euro-passports.com/eligibility)');
-    expect(t).toContain('](https://euro-passports.com/privacy)');
-    expect(t).toContain('](https://euro-passports.com/he)');
-    expect(t).toContain('https://www.lawoffice.org.il');
-    expect(t).not.toMatch(/undefined|\{\w+\}/);
-    // every question is listed, none of the answers is
-    for (const f of enMore.faq.items) expect(t).toContain(f.q);
-    expect(t).not.toContain(enMore.faq.items[0]!.a);
+describe('llms.txt of the client portal', () => {
+  it('is a short English document pointing at the firm site and the eligibility check, with a sign-in link', () => {
+    const o: LlmsOptions = { ...opts, locale: 'en' };
+    const t = buildLlmsTxt(o);
+    expect(t.startsWith('# Decker Pex Levi — client sign-in')).toBe(true);
+    expect(t).toContain('Key facts:\n- Firm: Decker Pex Levi Law Offices. Website: https://www.lawoffice.org.il\n');
+    expect(t).toContain('- Start a free German/Austrian citizenship eligibility check: https://www.lawoffice.org.il/apply\n');
+    expect(t).toContain('- Languages: English and Hebrew\n');
+    expect(t).toContain('## Client portal\n\n- [Sign in](https://euro-passports.com/sign-in)\n');
+    expect(t).not.toMatch(/undefined|\{\w+\}|\[object/);
+    expect(t.endsWith('\n')).toBe(true);
   });
 
-  it('is Hebrew on the Hebrew edition, with the Hebrew paths', () => {
-    const t = buildLlmsTxt({ ...opts, locale: 'he' });
+  it('is Hebrew on the Hebrew edition, with the /he sign-in link', () => {
+    const o: LlmsOptions = { ...opts, locale: 'he' };
+    const t = buildLlmsTxt(o);
     expect(t).toMatch(/^# דקר פקס לוי/);
-    expect(t).toContain('](https://euro-passports.com/he/eligibility)');
-    expect(t).toContain('](https://euro-passports.com/he/privacy)');
-    expect(t).toContain('](https://euro-passports.com/)');
-    expect(t).not.toMatch(/undefined|\{\w+\}/);
+    expect(t).toContain('](https://euro-passports.com/he/sign-in)');
+    expect(t).not.toMatch(/undefined|\{\w+\}|\[object/);
+    expect(t.endsWith('\n')).toBe(true);
   });
 
-  it('the full text carries every answer, both routes and the fee principles', () => {
-    for (const [locale, more] of [['en', enMore], ['he', heMore]] as const) {
-      const t = buildLlmsFullTxt({ ...opts, locale });
-      for (const f of more.faq.items) {
-        expect(t).toContain(`### ${f.q}`);
-        expect(t).toContain(f.a);
-      }
-      for (const item of more.fees.items) expect(t).toContain(item.body);
-      expect(t).toContain(more.fees.note);
-      expect(t).toMatch(/116\(2\)/);
-      expect(t).toMatch(/58c/);
-      expect(t).not.toMatch(/undefined|\{\w+\}/);
+  it('llms-full.txt is identical to llms.txt: there is too little content here to need two sizes', () => {
+    for (const locale of ['en', 'he'] as const) {
+      const o: LlmsOptions = { ...opts, locale };
+      expect(buildLlmsFullTxt(o)).toBe(buildLlmsTxt(o));
     }
   });
 });

@@ -2,8 +2,8 @@ import 'server-only';
 import { enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
 import type { Db } from '@dpl/db/types';
 import type { ActionResult, CallStatus } from '@/components/admin/types';
-import { firmText, lawyerOf, recordCancellation, toBookingSummary } from './bookings';
-import { loadCallSettings } from './availability';
+import { firmText, lawyerOf, recordCancellation, toBookingSummary } from '@dpl/db/bookings';
+import { loadCallSettings } from '@dpl/db/availability';
 import { done, fail, getLead } from './crm-util';
 import type { StaffSession } from './staff';
 

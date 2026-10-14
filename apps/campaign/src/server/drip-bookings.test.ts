@@ -1,7 +1,7 @@
 import { createAdminSupabase } from '@dpl/db/admin';
 import type { Db, LeadRow } from '@dpl/db/types';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { cleanupLeads, loadLocalEnv, makeLead } from './test-env';
+import { cleanupLeads, loadLocalEnv, makeLead } from '@dpl/db/test-env';
 
 vi.mock('server-only', () => ({}));
 
@@ -15,12 +15,12 @@ const HOUR = 3_600_000;
  */
 describe.skipIf(!hasDb)('nurture email 3 and bookings (local Supabase)', () => {
   let db: Db;
-  let drip: typeof import('./drip');
+  let drip: typeof import('@dpl/db/drip');
   const created: string[] = [];
 
   beforeAll(async () => {
     db = createAdminSupabase();
-    drip = await import('./drip');
+    drip = await import('@dpl/db/drip');
   });
   afterAll(async () => {
     await cleanupLeads(db, created);

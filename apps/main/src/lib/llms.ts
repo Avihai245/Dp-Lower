@@ -39,10 +39,8 @@ export interface LlmsOptions {
   locale: Locale;
   /** site origin without a trailing slash, e.g. https://www.lawoffice.org.il */
   origin: string;
-  /** campaign app origin, for the eligibility check */
-  campaignUrl: string;
   strings: LlmsStrings;
-  /** the questions people ask first on the campaign page (German and Austrian citizenship), in this language */
+  /** the questions people ask first on the eligibility funnel's own landing page (German and Austrian citizenship), in this language */
   faq: ReadonlyArray<{ q: string; a: string }>;
 }
 
@@ -53,7 +51,7 @@ const fill = (template: string, vars: Record<string, string | number>): string =
   template.replace(/\{(\w+)\}/g, (_m, key: string) => String(vars[key] ?? ''));
 
 /** The summary and the link index, shared by both files. */
-function indexLines({ locale, origin, campaignUrl, strings: t }: LlmsOptions): string[] {
+function indexLines({ locale, origin, strings: t }: LlmsOptions): string[] {
   const c = getContent(locale);
   const link = (path: string) => absoluteUrl(origin, locale, path);
   const lines: string[] = [
@@ -63,7 +61,7 @@ function indexLines({ locale, origin, campaignUrl, strings: t }: LlmsOptions): s
     '',
     t.keyFacts,
     `- ${t.facts.firm}`,
-    `- ${fill(t.facts.website, { site: origin, campaign: campaignUrl })}`,
+    `- ${fill(t.facts.website, { site: origin, eligibility: link('/apply') })}`,
     `- ${t.facts.contact}`,
     `- ${t.facts.languages}`,
     ...c.offices.map((o) => `- ${fill(t.office, { city: o.city, address: o.address, tel: o.tel })}`),

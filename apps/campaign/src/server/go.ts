@@ -4,7 +4,7 @@ import { createAdminSupabase } from '@dpl/db/admin';
 import { readPortalLinkToken } from '@dpl/db/links';
 import { isSameBrowser, markEmailVerified, openPortalSession } from '@dpl/db/portal-session';
 import type { NextResponse } from 'next/server';
-import { localizePath } from '@/components/funnel/logic/paths';
+import { localizePath } from '@/components/auth/logic/paths';
 import { redirectTo } from '@/server/auth';
 
 /**

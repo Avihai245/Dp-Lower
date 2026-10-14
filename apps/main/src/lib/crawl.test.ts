@@ -5,8 +5,8 @@ import { CONTENT_UPDATED, robotsConfig, sitemapEntries, sitePages, WELCOMED_CRAW
 
 const ORIGIN = 'https://www.lawoffice.org.il';
 
-/** home, about, services, team, testimonials, insights, media, contact, privacy, terms, accessibility */
-const STATIC_PAGES = 11;
+/** home, about, services, team, testimonials, insights, media, contact, privacy, terms, accessibility, apply, apply/privacy */
+const STATIC_PAGES = 13;
 const PAGES = STATIC_PAGES + SERVICE_SLUGS.length + TEAM_SLUGS.length + ARTICLE_SLUGS.length;
 
 describe('sitePages', () => {
@@ -17,7 +17,7 @@ describe('sitePages', () => {
     expect(TEAM_SLUGS).toHaveLength(37);
     expect(ARTICLE_SLUGS).toHaveLength(8);
     expect(pages).toHaveLength(PAGES);
-    expect(pages).toHaveLength(78);
+    expect(pages).toHaveLength(80);
     expect(new Set(pages.map((p) => p.path)).size).toBe(pages.length);
     for (const path of [
       '/',
@@ -31,6 +31,8 @@ describe('sitePages', () => {
       '/privacy',
       '/terms',
       '/accessibility',
+      '/apply',
+      '/apply/privacy',
     ]) {
       expect(
         pages.map((p) => p.path),
@@ -61,7 +63,7 @@ describe('sitemapEntries', () => {
 
   it('lists every page in both languages', () => {
     expect(entries).toHaveLength(PAGES * 2);
-    expect(entries).toHaveLength(156);
+    expect(entries).toHaveLength(160);
   });
 
   it('has only absolute, clean, unique URLs under the site origin (nothing from the campaign app)', () => {

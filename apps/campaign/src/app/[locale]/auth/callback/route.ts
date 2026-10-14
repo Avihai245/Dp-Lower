@@ -6,7 +6,7 @@ import { createServerSupabase } from '@dpl/db/server';
 import type { Locale } from '@dpl/core';
 import type { User } from '@supabase/supabase-js';
 import type { NextRequest } from 'next/server';
-import { localizePath } from '@/components/funnel/logic/paths';
+import { localizePath } from '@/components/auth/logic/paths';
 import { isSameOriginRequest, isStaffUser, leadExistsForUser, localeOf, redirectTo } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';

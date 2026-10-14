@@ -6,7 +6,7 @@ import { campaignUrl, safeNext } from '@dpl/db/links';
 import type { Db } from '@dpl/db/types';
 import type { AuthLinkKind } from '@dpl/emails';
 import { z } from 'zod';
-import { queueEmailToAddress, type Recipient } from './email';
+import { queueEmailToAddress, type Recipient } from '@dpl/db/email';
 import { verifyStandardWebhook } from './standard-webhooks';
 
 /**

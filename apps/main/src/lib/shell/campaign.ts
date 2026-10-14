@@ -2,10 +2,11 @@ import type { Locale } from '@dpl/core';
 import { campaignIsBilingual } from '@dpl/i18n';
 
 /**
- * Links from the law firm's site into the citizenship campaign app (eligibility check, client portal sign-in).
- * The campaign has its own domain; Hebrew pages go to its /he edition. `source=main-site` tells it where the visitor came from.
+ * Links from the law firm's site into the client-portal app (sign-in, and the portal itself once signed in). The
+ * eligibility check used to live there too; it is now this site's own /apply, an internal link that needs no helper.
+ * The portal has its own domain; Hebrew pages go to its /he edition. `source=main-site` tells it where the visitor came from.
  */
-export type CampaignEntry = 'eligibility' | 'sign-in';
+export type CampaignEntry = 'sign-in' | 'portal';
 
 // NEXT_PUBLIC_* values are inlined at build time, so the variable has to be spelled out here.
 const DEFAULT_BASE = process.env.NEXT_PUBLIC_CAMPAIGN_URL ?? 'https://euro-passports.com';

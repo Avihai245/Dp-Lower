@@ -3,7 +3,7 @@ import { readUnsubscribeToken } from '@dpl/db/links';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { ClientMessages } from '@/components/ClientMessages';
-import { UnsubscribeConfirm } from '@/components/funnel/UnsubscribeConfirm';
+import { UnsubscribeConfirm } from '@/components/auth/UnsubscribeConfirm';
 import { pageMetadata } from '@/lib/seo';
 import '@/styles/funnel.css';
 

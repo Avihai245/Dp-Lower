@@ -220,6 +220,9 @@ importers:
       '@dpl/core':
         specifier: workspace:*
         version: link:../core
+      '@dpl/emails':
+        specifier: workspace:*
+        version: link:../emails
       '@supabase/ssr':
         specifier: ^0.12.7
         version: 0.12.7(@supabase/supabase-js@2.117.3)

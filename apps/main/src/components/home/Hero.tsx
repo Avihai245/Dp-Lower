@@ -1,10 +1,8 @@
-import type { Locale } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import { preconnect } from 'react-dom';
 import { Link } from '@/i18n/navigation';
-import { campaignUrl } from '@/lib/shell/campaign';
 import { HeroVideo } from './HeroVideo';
 
 /** The film's thumbnail is the poster: the page is complete without the video, which only starts later on desktop. */
@@ -17,7 +15,7 @@ interface Fact {
 }
 
 /** Opening block: eyebrow, headline, lede, two calls to action, rating and the four facts about the firm. */
-export async function Hero({ locale }: { locale: Locale }) {
+export async function Hero() {
   preconnect(POSTER_ORIGIN);
   const t = await getTranslations('home');
   const facts = t.raw('hero.facts') as Fact[];
@@ -78,15 +76,15 @@ export async function Hero({ locale }: { locale: Locale }) {
               >
                 {t('hero.ctaAssess')}
               </Link>
-              <a
-                href={campaignUrl(locale, 'eligibility')}
+              <Link
+                href="/apply"
                 {...x(
                   "background: transparent; color: #f8f5f0; text-decoration: none; border: 1px solid rgba(248,245,240,0.35); font-family: 'Manrope', system-ui, sans-serif; font-size: 15.5px; font-weight: 600; letter-spacing: 0.05em; padding: 18px 30px; display: inline-block; transition: border-color 180ms ease, background 180ms ease; border-radius: 999px",
                   { hover: 'border-color: #f8f5f0; background: rgba(248,245,240,0.06)' },
                 )}
               >
                 {t('hero.ctaEligibility')}
-              </a>
+              </Link>
             </div>
             <div
               style={s('display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-top: 26px; animation: fadeUp 520ms 220ms cubic-bezier(0.2,0,0,1) both')}
