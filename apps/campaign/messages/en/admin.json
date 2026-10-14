@@ -507,7 +507,20 @@
       "lawyer": "Lawyer",
       "case_manager": "Case manager"
     },
-    "addHint": "To add a team member, create the account with the bootstrap script (pnpm bootstrap:admin) and set their role here."
+    "addHint": "Invite a new team member below, or create one with the bootstrap script (pnpm bootstrap:admin) and set their role here.",
+    "invite": {
+      "button": "Add team member",
+      "title": "Add team member",
+      "name": "Full name",
+      "nameError": "Enter their full name.",
+      "email": "Email",
+      "emailError": "Enter a valid email address.",
+      "alreadyStaff": "This person is already on the team.",
+      "cancel": "Cancel",
+      "send": "Send invite",
+      "sending": "Sending…",
+      "sentLine": "Invited {email}. They'll get an email to set their password and sign in."
+    }
   },
   "toast": {
     "dismiss": "Dismiss",

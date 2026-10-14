@@ -1,7 +1,14 @@
 import 'server-only';
+import type { Locale } from '@dpl/core';
+import { campaignUrl } from '@dpl/db/links';
 import type { Db } from '@dpl/db/types';
+import { randomBytes, randomUUID } from 'node:crypto';
 import type { ActionResult, StaffView } from '@/components/admin/types';
+import { queueStaffReset } from './auth';
+import { buildResetUrl } from './crm-links';
 import { done, fail } from './crm-util';
+
+const randomPassword = () => randomBytes(24).toString('base64url');
 
 export async function loadTeam(db: Db): Promise<StaffView[]> {
   const { data, error } = await db.from('staff').select('*').order('created_at');
@@ -36,4 +43,61 @@ export async function updateStaff(
   }
   const { error } = await db.from('staff').update({ role: a.role, active: a.active }).eq('user_id', a.userId);
   return error ? fail('internal') : done();
+}
+
+/**
+ * Admins only: invites a new staff member by email. Creates their Supabase account if none exists yet; for an
+ * existing non-staff account (say, a former applicant's) the password is reset and its sessions revoked first, the
+ * same safeguard the bootstrap script uses, so staff access can never be claimed by whoever merely guesses an email
+ * address that already has an account. A "set your password" link is emailed to them; nobody here ever sees or sets
+ * their password. The account and the staff row are saved even if the invite email itself fails to send.
+ */
+export async function inviteStaff(
+  db: Db,
+  a: { email: string; fullName: string; role: 'admin' | 'lawyer' | 'case_manager'; locale: Locale },
+): Promise<ActionResult> {
+  const email = a.email.toLowerCase();
+  const fullName = a.fullName.trim();
+
+  let userId = ((await db.rpc('auth_user_id_by_email', { p_email: email })).data as string | null) ?? null;
+
+  if (userId) {
+    const { data: already } = await db.from('staff').select('user_id').eq('user_id', userId).maybeSingle();
+    if (already) return fail('duplicate');
+    const { error } = await db.auth.admin.updateUserById(userId, { password: randomPassword(), email_confirm: true });
+    if (error) return fail('internal');
+    await db.rpc('revoke_user_sessions', { p_user: userId });
+  } else {
+    const { data } = await db.auth.admin.createUser({
+      email,
+      password: randomPassword(),
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+    });
+    if (data?.user) {
+      userId = data.user.id;
+    } else {
+      // a concurrent invite created it a moment ago: that one is the account to use
+      userId = ((await db.rpc('auth_user_id_by_email', { p_email: email })).data as string | null) ?? null;
+      if (!userId) return fail('internal');
+    }
+  }
+
+  const { error: upsertError } = await db
+    .from('staff')
+    .upsert({ user_id: userId, full_name: fullName, email, role: a.role, active: true }, { onConflict: 'user_id' });
+  if (upsertError) return fail('internal');
+
+  try {
+    const { data, error } = await db.auth.admin.generateLink({ type: 'recovery', email });
+    const tokenHash = data?.properties?.hashed_token;
+    if (error || !tokenHash) throw new Error(`generateLink failed: ${error?.message ?? 'no token'}`);
+    const resetUrl = buildResetUrl(campaignUrl('/auth/callback', a.locale), tokenHash);
+    await queueStaffReset(db, { email, userId, locale: a.locale, resetUrl, dedupeKey: `staff-invite:${userId}:${randomUUID()}` });
+  } catch (e) {
+    // the account and the role are saved either way; only the invite email failed to go out
+    console.error('[crm-team] inviteStaff: sending the invite email failed', e);
+  }
+
+  return done();
 }

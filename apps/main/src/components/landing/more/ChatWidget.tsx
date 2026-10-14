@@ -284,7 +284,7 @@ function ChatPanel({
           <>
             <div style={s(`${SERIF};font-size:20px;line-height:1.35;color:#14202b`)}>{t('finished')}</div>
             <Link
-              href="/details"
+              href="/apply/details"
               {...x(
                 `${SANS};background:#14202b;color:#f8f5f0;font-weight:600;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;padding:17px;border-radius:12px;width:100%`,
                 { className: 'btn lm-btn' },
@@ -313,7 +313,7 @@ function ChatPanel({
         </button>
         {/* a link now, but sized like the prototype's <button> (its default padding and line-height) so nothing moves */}
         <Link
-          href="/eligibility"
+          href="/apply/eligibility"
           style={s(`background:transparent;border:0;color:#736d64;${SANS};font-size:13px;line-height:normal;padding:1px 6px;cursor:pointer;margin-left:auto;text-decoration:underline;text-underline-offset:3px`)}
         >
           {t('continueForm')}

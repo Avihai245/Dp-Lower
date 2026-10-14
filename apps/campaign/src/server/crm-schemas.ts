@@ -101,3 +101,8 @@ export const updateStaffInput = z.object({
   role: z.enum(['admin', 'lawyer', 'case_manager']),
   active: z.boolean(),
 });
+export const inviteStaffInput = z.object({
+  email: emailSchema,
+  fullName: nameSchema,
+  role: z.enum(['admin', 'lawyer', 'case_manager']),
+});
