@@ -27,6 +27,7 @@ import {
   deleteNoteInput,
   docActionInput,
   inboxStatusInput,
+  inviteStaffInput,
   leadOnlyInput,
   moveStageInput,
   nextActionInput,
@@ -35,7 +36,7 @@ import {
   updateRuleInput,
   updateStaffInput,
 } from '@/server/crm-schemas';
-import { updateStaff } from '@/server/crm-team';
+import { inviteStaff, updateStaff } from '@/server/crm-team';
 import { addNote, assignOwner, deleteNote, docAction, moveStage, runNextAction, setStatus } from '@/server/crm-write';
 import { errorCode, requireAdmin, requireCalendarEditor, requireStaff, type StaffSession } from '@/server/staff';
 
@@ -165,6 +166,13 @@ export async function deleteExceptionAction(input: z.input<typeof deleteByIdInpu
 
 export async function updateStaffAction(input: z.input<typeof updateStaffInput>) {
   return run(requireAdmin, updateStaffInput, input, (db, _s, a) => updateStaff(db, a));
+}
+
+/** "Add team member": creates the account (or claims an existing non-staff one) and emails a set-password link. */
+export async function inviteStaffAction(input: z.input<typeof inviteStaffInput>) {
+  const raw = await getLocale();
+  const locale = isLocale(raw) ? raw : 'en';
+  return run(requireAdmin, inviteStaffInput, input, (db, _s, a) => inviteStaff(db, { ...a, locale }));
 }
 
 // -- session -------------------------------------------------------------------------------------------------------
