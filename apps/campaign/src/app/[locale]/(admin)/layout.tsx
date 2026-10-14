@@ -26,7 +26,6 @@ export const dynamic = 'force-dynamic';
 export default async function AdminLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const session = await requireStaffPage(locale as Locale);
 
   const db = await createServerSupabase();
   const funnel = await getTranslations({ locale, namespace: 'funnel' });
@@ -34,7 +33,15 @@ export default async function AdminLayout({ children, params }: { children: Reac
     const path = `quiz.questions.residence.options.${key}`;
     return funnel.has(path) ? funnel(path) : null;
   };
-  const [rows, staff, inbox] = await Promise.all([loadLeadRows(db, { residence }), loadStaffOptions(db), loadInboxCounts(db)]);
+  // the access check and the three data queries all read the same request's cookies but don't depend on one
+  // another's result, so they run together instead of one after the other (requireStaffPage still redirects/404s
+  // first, via the rejection this throws when it does)
+  const [session, rows, staff, inbox] = await Promise.all([
+    requireStaffPage(locale as Locale),
+    loadLeadRows(db, { residence }),
+    loadStaffOptions(db),
+    loadInboxCounts(db),
+  ]);
 
   return (
     <ClientMessages namespaces={['admin']}>
