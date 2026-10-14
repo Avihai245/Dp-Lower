@@ -64,9 +64,12 @@ export async function inviteStaff(
   if (userId) {
     const { data: already } = await db.from('staff').select('user_id').eq('user_id', userId).maybeSingle();
     if (already) return fail('duplicate');
-    const { error } = await db.auth.admin.updateUserById(userId, { password: randomPassword(), email_confirm: true });
+    // independent of each other: both only need the existing user id, so they go together, not one after the other
+    const [{ error }] = await Promise.all([
+      db.auth.admin.updateUserById(userId, { password: randomPassword(), email_confirm: true }),
+      db.rpc('revoke_user_sessions', { p_user: userId }),
+    ]);
     if (error) return fail('internal');
-    await db.rpc('revoke_user_sessions', { p_user: userId });
   } else {
     const { data } = await db.auth.admin.createUser({
       email,
@@ -83,21 +86,26 @@ export async function inviteStaff(
     }
   }
 
-  const { error: upsertError } = await db
-    .from('staff')
-    .upsert({ user_id: userId, full_name: fullName, email, role: a.role, active: true }, { onConflict: 'user_id' });
+  const uid = userId;
+  // the staff row and the invite email are independent of each other too: run them together
+  const [{ error: upsertError }] = await Promise.all([
+    db.from('staff').upsert({ user_id: uid, full_name: fullName, email, role: a.role, active: true }, { onConflict: 'user_id' }),
+    sendInviteEmail(db, { uid, email, locale: a.locale }),
+  ]);
   if (upsertError) return fail('internal');
 
+  return done();
+}
+
+/** Best-effort: the account and the role above are saved regardless of whether this succeeds. */
+async function sendInviteEmail(db: Db, a: { uid: string; email: string; locale: Locale }): Promise<void> {
   try {
-    const { data, error } = await db.auth.admin.generateLink({ type: 'recovery', email });
+    const { data, error } = await db.auth.admin.generateLink({ type: 'recovery', email: a.email });
     const tokenHash = data?.properties?.hashed_token;
     if (error || !tokenHash) throw new Error(`generateLink failed: ${error?.message ?? 'no token'}`);
     const resetUrl = buildResetUrl(campaignUrl('/auth/callback', a.locale), tokenHash);
-    await queueStaffReset(db, { email, userId, locale: a.locale, resetUrl, dedupeKey: `staff-invite:${userId}:${randomUUID()}` });
+    await queueStaffReset(db, { email: a.email, userId: a.uid, locale: a.locale, resetUrl, dedupeKey: `staff-invite:${a.uid}:${randomUUID()}` });
   } catch (e) {
-    // the account and the role are saved either way; only the invite email failed to go out
     console.error('[crm-team] inviteStaff: sending the invite email failed', e);
   }
-
-  return done();
 }
