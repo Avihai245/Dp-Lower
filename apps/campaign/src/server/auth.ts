@@ -109,7 +109,7 @@ export async function sendPasswordReset(email: string, locale: Locale): Promise<
 }
 
 /** Staff have no lead row, so the reset email is rendered here instead of through queueEmail (which needs a lead). */
-async function queueStaffReset(
+export async function queueStaffReset(
   db: Db,
   a: { email: string; userId: string; locale: Locale; resetUrl: string; dedupeKey: string },
 ): Promise<void> {
