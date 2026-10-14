@@ -41,7 +41,7 @@ export function Eyebrow({ tone = 'gold', children }: { tone?: Tone; children: Re
 /** "Check your eligibility": a real link (crawlable, middle-clickable) that looks like the prototype's button. */
 export function EligibilityLink({ css, hover, children }: { css: string; hover?: string; children: ReactNode }) {
   return (
-    <Link href="/eligibility" {...x(css, { hover, className: 'btn lm-btn' })}>
+    <Link href="/apply/eligibility" {...x(css, { hover, className: 'btn lm-btn' })}>
       {children}
     </Link>
   );

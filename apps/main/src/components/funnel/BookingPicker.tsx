@@ -62,7 +62,7 @@ export function BookingPicker() {
       if (cancelled) return;
       if (me.status === 401) {
         // no details yet, so nobody to book for
-        router.replace('/details');
+        router.replace('/apply/details');
         return;
       }
       if (me.ok && me.data) {
@@ -103,7 +103,7 @@ export function BookingPicker() {
       setSlot(null);
       await loadAvailability();
     } else if (res.status === 401) {
-      router.replace('/details');
+      router.replace('/apply/details');
     } else {
       setNotice(res.error === 'rate_limited' ? 'rateLimited' : res.error === 'network' ? 'network' : 'failed');
     }
@@ -150,7 +150,7 @@ export function BookingPicker() {
       window.scrollTo({ top: 0 });
       void loadAvailability();
     } else if (res.status === 401) {
-      router.replace('/details');
+      router.replace('/apply/details');
     } else {
       setCancelFailed(true);
     }
@@ -300,7 +300,7 @@ export function BookingPicker() {
                 {selected && day ? t('booking.bookFor', { time: slotLabel(selected.startsAt, day.date, tz, locale) }) : t('booking.chooseAbove')}
               </button>
               <div style={s('display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 16px')}>
-                <button type="button" onClick={() => router.push('/offer')} {...x(LINK_BUTTON, { hover: 'color: #14202b' })}>
+                <button type="button" onClick={() => router.push('/apply/offer')} {...x(LINK_BUTTON, { hover: 'color: #14202b' })}>
                   {t('booking.skip')}
                 </button>
                 <span style={s('font-size: 13px; color: #9a948a')}>{t('booking.timeZone', { timezone: tz })}</span>
@@ -335,7 +335,7 @@ export function BookingPicker() {
               <p style={s('font-size: 14.5px; line-height: 1.6; color: #736d64; margin: 0 0 30px')}>
                 {lead ? t.rich('booking.done.confirm', { name: firstName, email: lead.email, bdi: (c) => <bdi dir="ltr">{c}</bdi> }) : ''}
               </p>
-              <button type="button" onClick={() => router.push('/offer')} {...x(PRIMARY_BUTTON, { hover: 'background: #1e2f3f', className: 'btn' })}>
+              <button type="button" onClick={() => router.push('/apply/offer')} {...x(PRIMARY_BUTTON, { hover: 'background: #1e2f3f', className: 'btn' })}>
                 {t('booking.seeResult')}
               </button>
               {confirming ? (

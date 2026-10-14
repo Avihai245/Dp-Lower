@@ -54,7 +54,7 @@ export function LeadForm({ initialLead, emailLocked = false }: { initialLead: Le
     if (!initialLead && !isQuizComplete(getQuizAnswers())) {
       // Back from the booking restores this page as it was before the lead existed (the router cache): if the browser
       // does hold a lead by now, fetch the page again instead of sending it back to the questions
-      const goBack = () => router.replace('/eligibility');
+      const goBack = () => router.replace('/apply/eligibility');
       if (refreshed.current) goBack();
       else {
         refreshed.current = true;
@@ -118,7 +118,7 @@ export function LeadForm({ initialLead, emailLocked = false }: { initialLead: Le
     // the answers are on the file now; nothing about this person stays in the browser for the next one to find
     clearDraft();
     resetQuiz();
-    router.push('/booking');
+    router.push('/apply/booking');
   }
 
   async function sendAgain() {
