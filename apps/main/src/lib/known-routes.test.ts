@@ -3,9 +3,11 @@ import path from 'node:path';
 import { ARTICLE_SLUGS, SERVICE_SLUGS, TEAM_SLUGS } from '@dpl/i18n/slugs';
 import { describe, expect, it } from 'vitest';
 import { sitePages } from './crawl';
-import { isKnownPath, isRootFile, looksLikeRootFile, missingPageLocale, ROOT_FILES, SLUG_COLLECTIONS, STATIC_PATHS } from './known-routes';
+import { FUNNEL_ONLY_PATHS, isKnownPath, isRootFile, looksLikeRootFile, missingPageLocale, ROOT_FILES, SLUG_COLLECTIONS, STATIC_PATHS } from './known-routes';
 
-const SITE_DIR = path.join(import.meta.dirname, '../app/[locale]/(site)');
+// the whole locale directory, not just (site): the eligibility funnel under apply/ is a real, slugless part of the
+// site too, just not one the sitemap lists (see FUNNEL_ONLY_PATHS)
+const SITE_DIR = path.join(import.meta.dirname, '../app/[locale]');
 
 /** Every page.tsx under (site) as a route: route groups removed, [slug] kept, catch-alls and the 404 page left out. */
 function routes(dir = SITE_DIR, prefix = ''): string[] {
@@ -35,12 +37,16 @@ describe('known routes', () => {
     expect(Object.keys(SLUG_COLLECTIONS).sort()).toEqual(found.sort());
   });
 
-  it('every page of the sitemap is known, and nothing else is', () => {
+  it('every page of the sitemap is known, and nothing else is (except the funnel steps, deliberately unlisted)', () => {
     const sitemap = sitePages().map((p) => p.path);
     expect(sitemap.length).toBe(
-      STATIC_PATHS.length + SERVICE_SLUGS.length + TEAM_SLUGS.length + ARTICLE_SLUGS.length,
+      STATIC_PATHS.length - FUNNEL_ONLY_PATHS.length + SERVICE_SLUGS.length + TEAM_SLUGS.length + ARTICLE_SLUGS.length,
     );
     for (const p of sitemap) expect(isKnownPath(p), p).toBe(true);
+    for (const p of FUNNEL_ONLY_PATHS) {
+      expect(isKnownPath(p), p).toBe(true);
+      expect(sitemap, p).not.toContain(p);
+    }
   });
 
   it('answers for mistyped slugs, other folders and look-alikes', () => {
@@ -77,7 +83,7 @@ describe('known routes', () => {
   });
 
   it('missingPageLocale lets every real page through, with or without a prefix', () => {
-    for (const p of sitePages().map((x) => x.path)) {
+    for (const p of [...sitePages().map((x) => x.path), ...FUNNEL_ONLY_PATHS]) {
       expect(missingPageLocale(p), p).toBeNull();
       expect(missingPageLocale(p === '/' ? '/he' : `/he${p}`), `/he${p}`).toBeNull();
       expect(missingPageLocale(p === '/' ? '/en' : `/en${p}`), `/en${p}`).toBeNull();

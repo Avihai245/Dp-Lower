@@ -48,6 +48,8 @@ describe('Hebrew citations are isolated', () => {
 
   it('the guard sees the citations it exists for', () => {
     const all = sources.flatMap(([, list]) => list).filter(([, text]) => text.includes(`${LRI}116(2)${PDI}`));
-    expect(all.length).toBeGreaterThanOrEqual(8);
+    // apps/campaign/messages/he no longer carries one of its own: the eligibility funnel and its legal citations moved
+    // to apps/main's seo.json, under /apply, and the client-portal domain's own llms.txt no longer discusses the routes.
+    expect(all.length).toBeGreaterThanOrEqual(7);
   });
 });

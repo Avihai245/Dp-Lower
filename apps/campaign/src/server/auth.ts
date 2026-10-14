@@ -9,8 +9,8 @@ import { rateLimit } from '@dpl/db/rate-limit';
 import type { Db } from '@dpl/db/types';
 import { renderEmail, type EmailContext } from '@dpl/emails';
 import { NextResponse } from 'next/server';
-import { queueEmail } from '@/server/email';
-import { findLeadByEmail, sendFileLink } from '@/server/leads';
+import { queueEmail } from '@dpl/db/email';
+import { findLeadByEmail, sendFileLink } from '@dpl/db/leads';
 
 export const localeOf = (raw: string | null | undefined): Locale => (isLocale(raw) ? raw : DEFAULT_LOCALE);
 

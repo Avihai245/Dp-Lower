@@ -1,24 +1,21 @@
 import { ARTICLE_SLUGS, getContent, SERVICE_SLUGS, TEAM_SLUGS } from '@dpl/i18n';
 import { describe, expect, it } from 'vitest';
-import enFaq from '../../../campaign/messages/en/landingMore.json';
-import heFaq from '../../../campaign/messages/he/landingMore.json';
+import enFaq from '../../messages/en/landingMore.json';
+import heFaq from '../../messages/he/landingMore.json';
 import enSeo from '../../messages/en/seo.json';
 import heSeo from '../../messages/he/seo.json';
 import { buildLlmsFullTxt, buildLlmsTxt, type LlmsOptions } from './llms';
 
 const ORIGIN = 'https://www.lawoffice.org.il';
-const CAMPAIGN = 'https://euro-passports.com';
 const en: LlmsOptions = {
   locale: 'en',
   origin: ORIGIN,
-  campaignUrl: CAMPAIGN,
   strings: enSeo.llms,
   faq: enFaq.faq.items,
 };
 const he: LlmsOptions = {
   locale: 'he',
   origin: ORIGIN,
-  campaignUrl: CAMPAIGN,
   strings: heSeo.llms,
   faq: heFaq.faq.items,
 };
@@ -38,7 +35,7 @@ describe('llms.txt', () => {
     expect(txt).toContain(
       '\nKey facts:\n- Firm: Decker Pex Levi Law Offices (founding partners Joshua Pex and Michael Decker; managing partner Anat Levi)\n',
     );
-    expect(txt).toContain(`- Website: ${ORIGIN}  ·  German/Austrian eligibility check: ${CAMPAIGN}\n`);
+    expect(txt).toContain(`- Website: ${ORIGIN}  ·  German/Austrian eligibility check: ${ORIGIN}/apply\n`);
     expect(txt).toContain('- Contact: office@lawoffice.org.il · +972-3-372-4722\n');
     expect(txt).toContain('- Tel Aviv: 11 Menachem Begin Road, Ramat Gan.');
     expect(txt).toContain('- Jerusalem: 10 Yad Harutzim Street');

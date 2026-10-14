@@ -11,7 +11,7 @@ import { ApiError } from '@dpl/db/http';
 import { cancelPendingNurture, enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
 import { asJson, type Db, type LeadRow } from '@dpl/db/types';
 import { cleanApplicationData } from '@/components/portal/model/state';
-import { queueEmail } from './email';
+import { queueEmail } from '@dpl/db/email';
 
 const MAX_MERGE_ATTEMPTS = 8;
 /** PostgreSQL unique_violation */

@@ -9,7 +9,7 @@ import { capitalizeName, firstNameOf } from '@dpl/core';
 import type { NextRequest } from 'next/server';
 import { cache } from 'react';
 import { redirect } from '@/i18n/navigation';
-import { announceUpdate } from '@/server/lead-events';
+import { announceUpdate } from '@dpl/db/lead-events';
 import { APPLICANT_ACTIVITY_CODES, type PortalState } from '@/components/portal/model/types';
 import { buildPortalState } from '@/components/portal/model/state';
 import type { DetailsInput } from '@/components/portal/model/schemas';

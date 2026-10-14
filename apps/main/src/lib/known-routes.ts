@@ -21,7 +21,19 @@ export const STATIC_PATHS = [
   '/privacy',
   '/terms',
   '/accessibility',
+  '/apply',
+  '/apply/privacy',
+  '/apply/eligibility',
+  '/apply/booking',
+  '/apply/offer',
+  '/apply/details',
 ] as const;
+
+/**
+ * Steps of the eligibility funnel: real pages (so the 404 middleware must let them through, hence STATIC_PATHS
+ * above), but not content anyone should land on from a search result, so sitemap.ts leaves them out. See crawl.ts.
+ */
+export const FUNNEL_ONLY_PATHS = ['/apply/eligibility', '/apply/booking', '/apply/offer', '/apply/details'] as const;
 
 /** Folders whose pages take a slug: /services/german-citizenship, /team/michael-decker, /insights/... */
 export const SLUG_COLLECTIONS: Record<string, readonly string[]> = {

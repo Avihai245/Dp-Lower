@@ -63,7 +63,7 @@
     "keyFacts": "Key facts:",
     "facts": {
       "firm": "Firm: Decker Pex Levi Law Offices (founding partners Joshua Pex and Michael Decker; managing partner Anat Levi)",
-      "website": "Website: {site}  ·  German/Austrian eligibility check: {campaign}",
+      "website": "Website: {site}  ·  German/Austrian eligibility check: {eligibility}",
       "contact": "Contact: office@lawoffice.org.il · +972-3-372-4722",
       "languages": "Languages served: English, Hebrew"
     },

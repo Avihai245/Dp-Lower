@@ -32,7 +32,7 @@ export default async function HomePage({ params }: Params) {
     <>
       <LegacyHash />
       <div style={s('animation: fadeIn 280ms ease both')}>
-        <Hero locale={locale} />
+        <Hero />
         <AuthorityStrip />
         <Intro />
         <Countries locale={locale} />

@@ -11,3 +11,7 @@ export * from './slots';
 export * from './drip';
 export * from './token';
 export * from './events';
+export * from './answers';
+export * from './api-types';
+export * from './first-touch';
+export * from './attribution';

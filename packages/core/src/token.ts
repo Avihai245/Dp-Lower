@@ -27,7 +27,7 @@ export async function hmacSha256Hex(secret: string, message: string): Promise<st
  * What a token may be used for. Every token names its purpose (`p`) and is only accepted for that purpose: the
  * unsubscribe link in an email, which never expires, must not also work as the cookie that signs a browser in.
  */
-export type TokenPurpose = 'lead' | 'portal' | 'unsub';
+export type TokenPurpose = 'lead' | 'portal' | 'unsub' | 'enter';
 
 export async function signToken(
   payload: { p: TokenPurpose } & Record<string, unknown>,

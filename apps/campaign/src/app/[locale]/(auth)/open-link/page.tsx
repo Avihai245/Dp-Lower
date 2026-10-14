@@ -3,8 +3,8 @@ import { safeNext } from '@dpl/db/links';
 import { s } from '@dpl/ui';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { AUTH_BUTTON, AUTH_H1, AUTH_KICKER, AuthShell } from '@/components/funnel/AuthShell';
-import { localizePath } from '@/components/funnel/logic/paths';
+import { AUTH_BUTTON, AUTH_H1, AUTH_KICKER, AuthShell } from '@/components/auth/AuthShell';
+import { localizePath } from '@/components/auth/logic/paths';
 import { redirect } from '@/i18n/navigation';
 import { pageMetadata } from '@/lib/seo';
 

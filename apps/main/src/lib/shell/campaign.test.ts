@@ -4,11 +4,11 @@ import { campaignUrl } from './campaign';
 describe('campaignUrl', () => {
   const base = 'https://euro-passports.com';
 
-  describe('English only (the campaign setting by default)', () => {
+  describe('English only (the portal setting by default)', () => {
     it('sends every page, in either language, to the English edition with the main-site source', () => {
       for (const locale of ['en', 'he'] as const) {
-        expect(campaignUrl(locale, 'eligibility', base, false)).toBe('https://euro-passports.com/eligibility?source=main-site');
         expect(campaignUrl(locale, 'sign-in', base, false)).toBe('https://euro-passports.com/sign-in?source=main-site');
+        expect(campaignUrl(locale, 'portal', base, false)).toBe('https://euro-passports.com/portal?source=main-site');
       }
     });
 
@@ -20,23 +20,23 @@ describe('campaignUrl', () => {
       vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', '');
       vi.resetModules();
       const { campaignUrl: fresh } = await import('./campaign');
-      const url = fresh('he', 'eligibility');
+      const url = fresh('he', 'sign-in');
       vi.unstubAllEnvs();
-      expect(url.endsWith('/eligibility?source=main-site')).toBe(true);
+      expect(url.endsWith('/sign-in?source=main-site')).toBe(true);
       expect(url).not.toContain('/he/');
       expect(url.startsWith('http')).toBe(true);
     });
   });
 
-  describe('bilingual campaign (NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he)', () => {
-    it('links English pages to the campaign root and tells it the language the visitor reads', () => {
-      expect(campaignUrl('en', 'eligibility', base, true)).toBe('https://euro-passports.com/eligibility?source=main-site&lang=en');
+  describe('bilingual portal (NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he)', () => {
+    it('links English pages to the portal root and tells it the language the visitor reads', () => {
       expect(campaignUrl('en', 'sign-in', base, true)).toBe('https://euro-passports.com/sign-in?source=main-site&lang=en');
+      expect(campaignUrl('en', 'portal', base, true)).toBe('https://euro-passports.com/portal?source=main-site&lang=en');
     });
 
-    it('links Hebrew pages to the campaign /he edition', () => {
-      expect(campaignUrl('he', 'eligibility', base, true)).toBe('https://euro-passports.com/he/eligibility?source=main-site');
+    it('links Hebrew pages to the portal /he edition', () => {
       expect(campaignUrl('he', 'sign-in', base, true)).toBe('https://euro-passports.com/he/sign-in?source=main-site');
+      expect(campaignUrl('he', 'portal', base, true)).toBe('https://euro-passports.com/he/portal?source=main-site');
     });
   });
 });

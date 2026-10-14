@@ -12,7 +12,7 @@ import {
 import { cancelPendingEmails, enqueueEvent, leadSnapshot, logActivity } from '@dpl/db/outbox';
 import type { Db, LeadRow } from '@dpl/db/types';
 import type { ActionResult } from '@/components/admin/types';
-import { queueEmail } from './email';
+import { queueEmail } from '@dpl/db/email';
 import { DOC_EN, STAGE_EN, STATUS_EN } from './crm-labels';
 import { asStringMap, done, fail, getLead, missingDocTypes, receivedDocTypes } from './crm-util';
 import type { StaffSession } from './staff';

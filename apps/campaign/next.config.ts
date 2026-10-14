@@ -80,11 +80,25 @@ const config: NextConfig = {
     ];
   },
   async redirects() {
+    // the eligibility funnel and the rest of the landing content used to live here; they now live on the firm's own
+    // site, under /apply (this app is the client portal and sign-in only, from here on)
+    const mainSite = (process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? 'https://www.lawoffice.org.il').replace(/\/$/, '');
+    const moved: Array<[string, string]> = [
+      ['/eligibility', '/apply/eligibility'],
+      ['/booking', '/apply/booking'],
+      ['/offer', '/apply/offer'],
+      ['/details', '/apply/details'],
+      ['/privacy', '/apply/privacy'],
+    ];
     return [
       // the campaign path used in the email footers
-      { source: '/ger-aus', destination: '/', permanent: true },
-      { source: '/ger-aus/', destination: '/', permanent: true },
-      { source: '/he/ger-aus', destination: '/he', permanent: true },
+      { source: '/ger-aus', destination: `${mainSite}/apply`, permanent: true },
+      { source: '/ger-aus/', destination: `${mainSite}/apply`, permanent: true },
+      { source: '/he/ger-aus', destination: `${mainSite}/he/apply`, permanent: true },
+      ...moved.flatMap(([from, to]) => [
+        { source: from, destination: `${mainSite}${to}`, permanent: true },
+        { source: `/he${from}`, destination: `${mainSite}/he${to}`, permanent: true },
+      ]),
     ];
   },
 };
