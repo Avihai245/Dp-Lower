@@ -44,6 +44,10 @@ export function sitePages(): SitePage[] {
     page('/privacy', 0.2),
     page('/terms', 0.2),
     page('/accessibility', 0.2),
+    // the eligibility funnel itself: its steps (eligibility/booking/offer/details) are not content for a search
+    // result to land on, so only the entry page and its privacy page are listed (see known-routes.ts's FUNNEL_ONLY_PATHS)
+    page('/apply', 0.9),
+    page('/apply/privacy', 0.2),
   ];
 }
 

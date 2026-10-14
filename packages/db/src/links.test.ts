@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createPortalLinkToken, createUnsubscribeToken, readPortalLinkToken, readUnsubscribeToken, safeNext } from './links';
+import { createEnterToken, createPortalLinkToken, createUnsubscribeToken, readEnterToken, readPortalLinkToken, readUnsubscribeToken, safeNext } from './links';
 
 beforeAll(() => {
   process.env.APP_SECRET = 'unit-test-secret-unit-test-secret-1234';
@@ -44,5 +44,26 @@ describe('link tokens', () => {
   it('rejects tampered tokens', async () => {
     const t = await createPortalLinkToken(lead);
     expect(await readPortalLinkToken(t.slice(0, -2) + 'xx')).toBeNull();
+  });
+});
+
+describe('enter token ("Go to my portal" from the firm\'s own site)', () => {
+  const lead = { id: 'lead-1', session_epoch: 3 };
+  it('round-trips the lead id and epoch', async () => {
+    const t = await createEnterToken(lead);
+    expect(await readEnterToken(t)).toEqual({ leadId: 'lead-1', epoch: 3 });
+  });
+  it('is a distinct purpose from every other token, in both directions', async () => {
+    const enter = await createEnterToken(lead);
+    const portal = await createPortalLinkToken(lead);
+    const unsub = await createUnsubscribeToken('lead-1');
+    expect(await readPortalLinkToken(enter)).toBeNull();
+    expect(await readUnsubscribeToken(enter)).toBeNull();
+    expect(await readEnterToken(portal)).toBeNull();
+    expect(await readEnterToken(unsub)).toBeNull();
+  });
+  it('rejects tampered tokens', async () => {
+    const t = await createEnterToken(lead);
+    expect(await readEnterToken(t.slice(0, -2) + 'xx')).toBeNull();
   });
 });

@@ -3,7 +3,7 @@ import { safeNext } from '@dpl/db/links';
 import { createServerSupabase } from '@dpl/db/server';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { SetPasswordForm } from '@/components/funnel/SetPasswordForm';
+import { SetPasswordForm } from '@/components/auth/SetPasswordForm';
 import { redirect } from '@/i18n/navigation';
 import { pageMetadata } from '@/lib/seo';
 

@@ -3,7 +3,7 @@ import { createAdminSupabase } from '@dpl/db/admin';
 import { ApiError } from '@dpl/db/http';
 import type { BookingRow, Db, LeadRow } from '@dpl/db/types';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { cleanupLeads, loadLocalEnv, makeLead } from './test-env';
+import { cleanupLeads, loadLocalEnv, makeLead } from '@dpl/db/test-env';
 
 vi.mock('server-only', () => ({}));
 
@@ -20,7 +20,7 @@ const HOUR = 3_600_000;
  */
 describe.skipIf(!hasDb)('booking with lawyers (local Supabase)', () => {
   let db: Db;
-  let bookings: typeof import('./bookings');
+  let bookings: typeof import('@dpl/db/bookings');
   let crm: typeof import('./crm-bookings');
   const run = Date.now().toString(36);
   const leads: string[] = [];
@@ -79,7 +79,7 @@ describe.skipIf(!hasDb)('booking with lawyers (local Supabase)', () => {
 
   beforeAll(async () => {
     db = createAdminSupabase();
-    bookings = await import('./bookings');
+    bookings = await import('@dpl/db/bookings');
     crm = await import('./crm-bookings');
     lawyer.a.id = await staffUser('a');
     lawyer.b.id = await staffUser('b');

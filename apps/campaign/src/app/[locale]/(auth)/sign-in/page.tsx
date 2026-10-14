@@ -6,8 +6,8 @@ import { createServerSupabase } from '@dpl/db/server';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cookies } from 'next/headers';
-import { SignInForm } from '@/components/funnel/SignInForm';
-import { parseSource, SRC_COOKIE } from '@/components/funnel/logic/first-touch';
+import { SignInForm } from '@/components/auth/SignInForm';
+import { parseSource, SRC_COOKIE } from '@dpl/core';
 import { redirect } from '@/i18n/navigation';
 import { pageMetadata } from '@/lib/seo';
 import { isStaffUser } from '@/server/auth';
@@ -27,7 +27,9 @@ export default async function SignInPage({ params, searchParams }: { params: Pro
   const sp = await searchParams;
   const rawNext = first(sp.next);
   const next = rawNext ? safeNext(rawNext) : null;
-  const error = first(sp.error) === 'link' || first(sp.error) === 'oauth' ? (first(sp.error) as 'link' | 'oauth') : null;
+  const errorRaw = first(sp.error);
+  const error =
+    errorRaw === 'link' || errorRaw === 'oauth' || errorRaw === 'accountExists' || errorRaw === 'generic' ? (errorRaw as 'link' | 'oauth' | 'accountExists' | 'generic') : null;
 
   // already signed in: nothing to ask, carry on (unless we were sent back here with an error to show)
   if (!error) {
@@ -40,8 +42,10 @@ export default async function SignInPage({ params, searchParams }: { params: Pro
     }
   }
 
-  // somebody who came from the firm's own website goes back there, everybody else to this campaign's landing page
-  const source = parseSource((await cookies()).get(SRC_COOKIE)?.value);
+  // somebody who came from the firm's own website goes back there. The funnel now lives there too, so this is the
+  // only remaining way in that still carries a first-touch cookie on this domain (the `?source=` on the link itself,
+  // read straight off this request; the dpl_src cookie is a fallback for the rare case a redirect dropped the query).
+  const source = parseSource(first(sp.source)) ?? parseSource((await cookies()).get(SRC_COOKIE)?.value);
   const mainSiteUrl = source === 'main-site' ? (process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? 'http://localhost:3000') : null;
   // a browser that holds a lead (somebody who just finished the funnel) starts with its own email filled in
   const lead = await getCookieLead(createAdminSupabase());

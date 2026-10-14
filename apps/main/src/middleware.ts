@@ -1,3 +1,4 @@
+import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies, returnCookie } from '@dpl/core';
 import createMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { LANG_COOKIE, LANG_COOKIE_OPTIONS, chosenLanguage, countryOf, shouldGoHebrew } from '@dpl/i18n';
@@ -6,6 +7,21 @@ import { isRootFile, missingPageLocale } from './lib/known-routes';
 import { legacyPath } from './lib/legacy-urls';
 
 const intl = createMiddleware(routing);
+
+/**
+ * First-touch attribution (source + utm_*) for the lead API (the eligibility funnel, under /apply); never overwrites
+ * an earlier touch. Also the return-to-site cookie, which every deep link overwrites. See @dpl/core's attribution.ts.
+ * A visitor may land anywhere on the site (a display ad pointing at the homepage, say) before reaching /apply, so
+ * this runs for every page, not only /apply itself.
+ */
+function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
+  const from = returnCookie(req.nextUrl.searchParams);
+  const cookies = [...firstTouchCookies(req.nextUrl.searchParams, (name) => req.cookies.has(name)), ...(from ? [from] : [])];
+  for (const c of cookies) {
+    res.cookies.set(c.name, c.value, { maxAge: COOKIE_MAX_AGE_SECONDS, path: '/', sameSite: 'lax', secure: req.nextUrl.protocol === 'https:' });
+  }
+  return res;
+}
 
 /**
  * The prototype addressed pages as ?p=service/german-citizenship&lang=he. Those URLs are in the old sitemap and
@@ -66,12 +82,12 @@ export default function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = pathname === '/' ? '/he' : `/he${pathname}`;
     url.searchParams.delete('lang');
-    const res = NextResponse.redirect(url, 307);
+    const res = withAttribution(req, NextResponse.redirect(url, 307));
     // only a stated preference is remembered, not the country the visit happens to come from
     if (langParam === 'he') res.cookies.set(LANG_COOKIE, 'he', LANG_COOKIE_OPTIONS);
     return res;
   }
-  const res = intl(req);
+  const res = withAttribution(req, intl(req));
   // ?lang=en on an English address is a choice too (the campaign passes it on); remember it so the next page agrees
   if (chosenLanguage({ cookie: null, langParam }) === 'en' && req.cookies.get(LANG_COOKIE)?.value !== 'en') res.cookies.set(LANG_COOKIE, 'en', LANG_COOKIE_OPTIONS);
   return res;

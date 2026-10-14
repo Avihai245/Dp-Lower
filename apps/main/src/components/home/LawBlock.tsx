@@ -54,15 +54,15 @@ export async function LawBlock({ locale }: { locale: Locale }) {
           <p style={s('font-size: 17.5px; line-height: 1.75; color: #55606b; margin: 20px 0 16px; max-width: 52ch')}>{t('law.p1')}</p>
           <p style={s('font-size: 17.5px; line-height: 1.75; color: #55606b; margin: 0 0 30px; max-width: 52ch')}>{t('law.p2')}</p>
           <div style={s('display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 26px')}>
-            <a
-              href={campaignUrl(locale, 'eligibility')}
+            <Link
+              href="/apply"
               {...x(
                 'background: #14202b; color: #f8f5f0; text-decoration: none; font-size: 15.5px; font-weight: 700; letter-spacing: 0.05em; padding: 18px 30px; display: inline-block; transition: background 180ms ease; border-radius: 999px',
                 { hover: 'background: #22323f' },
               )}
             >
               {t('law.check')}
-            </a>
+            </Link>
             <a
               href={campaignUrl(locale, 'sign-in')}
               {...x(

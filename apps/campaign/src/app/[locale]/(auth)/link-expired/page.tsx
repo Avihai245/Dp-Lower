@@ -1,7 +1,7 @@
 import type { Locale } from '@dpl/core';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { LinkExpiredForm } from '@/components/funnel/LinkExpiredForm';
+import { LinkExpiredForm } from '@/components/auth/LinkExpiredForm';
 import { pageMetadata } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {

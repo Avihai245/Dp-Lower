@@ -1,10 +1,12 @@
 /**
- * Platform deep links into the campaign system. Other sites (the firm's corporate site, future campaigns) send
- * visitors to `/?entry=eligibility|signin|portal&source=<origin>` so they never see this landing page. The middleware
- * performs the redirect (so the landing page itself stays static) and records the origin of the visit.
+ * Platform deep links: other sites (the firm's corporate site, future campaigns) send visitors to
+ * `/?entry=eligibility|signin|portal&source=<origin>`. This app has no landing page of its own any more (the
+ * eligibility funnel and the rest of the landing content live on the firm's own site, under /apply) — every one of
+ * these now means "leave": 'signin' and 'portal' stay on this app (sign-in / the portal itself, decided below), and
+ * everything else, 'eligibility' included, leaves for the firm's site.
  * (From the prototype's `ENTRY` map: signin and portal both go to the portal when the visitor is already known.)
  */
-export type EntryTarget = '/eligibility' | '/sign-in' | '/portal';
+export type EntryTarget = { kind: 'internal'; path: '/sign-in' | '/portal' } | { kind: 'external'; path: '/apply' };
 
 const normalise = (entry: string | null | undefined): string => (entry ?? '').trim().toLowerCase();
 
@@ -14,15 +16,13 @@ export function entryNeedsSession(entry: string | null | undefined): boolean {
   return e === 'signin' || e === 'portal';
 }
 
-/** Unprefixed destination for a deep link, or null when `entry` is missing or unknown (the landing page renders). */
-export function entryTarget(entry: string | null | undefined, hasSession: boolean): EntryTarget | null {
+/** Where a deep link (or a bare visit with no `entry` at all) should end up. */
+export function entryTarget(entry: string | null | undefined, hasSession: boolean): EntryTarget {
   switch (normalise(entry)) {
-    case 'eligibility':
-      return '/eligibility';
     case 'signin':
     case 'portal':
-      return hasSession ? '/portal' : '/sign-in';
+      return { kind: 'internal', path: hasSession ? '/portal' : '/sign-in' };
     default:
-      return null;
+      return { kind: 'external', path: '/apply' };
   }
 }

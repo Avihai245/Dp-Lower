@@ -1,9 +1,9 @@
+import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies, returnCookie } from '@dpl/core';
 import { refreshSession } from '@dpl/db/middleware';
 import { LANG_COOKIE, LANG_COOKIE_OPTIONS, chosenLanguage, countryOf, shouldGoHebrew } from '@dpl/i18n';
 import createMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
-import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies, returnCookie } from './lib/attribution';
 import { entryNeedsSession, entryTarget } from './lib/landing-entry';
 import { isBilingual } from './lib/bilingual';
 import { isRootFile, looksLikeRootFile } from './lib/root-files';
@@ -16,14 +16,14 @@ const PROTECTED = ['/portal', '/admin'];
 const SESSION_AWARE = [...PROTECTED, '/sign-in', '/create-password', '/auth'];
 
 /** The English entry pages where the language default applies (see below). */
-const LANGUAGE_ENTRY = ['/', '/privacy', '/eligibility', '/sign-in'];
+const LANGUAGE_ENTRY = ['/', '/sign-in'];
 
 const stripLocale = (p: string) => p.replace(/^\/he(?=\/|$)/, '') || '/';
 const matches = (path: string, roots: string[]) => roots.some((r) => path === r || path.startsWith(`${r}/`));
 
 /**
  * First-touch attribution (source + utm_*) for the lead API; never overwrites an earlier touch. Also the return-to-site
- * cookie, which every deep link overwrites. See lib/attribution.ts.
+ * cookie, which every deep link overwrites. See @dpl/core's attribution.ts.
  */
 function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
   const from = returnCookie(req.nextUrl.searchParams);
@@ -88,16 +88,31 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  // Platform deep links: /?entry=eligibility|signin|portal&source=<origin> (other sites send visitors straight into
-  // the system). Handled here so the landing page itself stays a static page.
-  const entry = req.nextUrl.searchParams.get('entry');
-  if (path === '/' && entryTarget(entry, false) !== null) {
+  // This app has no landing page of its own any more: a bare visit to '/' and every platform deep link
+  // (/?entry=eligibility|signin|portal&source=<origin>) leaves at once. 'signin' and 'portal' stay here (sign-in, or
+  // the portal itself); everything else, 'eligibility' included, goes to the firm's own site, where the eligibility
+  // funnel and the rest of the landing content now live (see lib/landing-entry.ts).
+  if (path === '/') {
+    const entry = req.nextUrl.searchParams.get('entry');
     const probe = NextResponse.next();
     const hasSession = entryNeedsSession(entry) ? Boolean((await refreshSession(req, probe)).user) : false;
-    const url = req.nextUrl.clone();
-    url.pathname = `${prefix}${entryTarget(entry, hasSession)}`;
-    url.search = '';
-    const redirect = NextResponse.redirect(url);
+    const target = entryTarget(entry, hasSession);
+    let redirect: NextResponse;
+    if (target.kind === 'internal') {
+      const url = req.nextUrl.clone();
+      url.pathname = `${prefix}${target.path}`;
+      url.search = '';
+      redirect = NextResponse.redirect(url);
+    } else {
+      const mainSite = (process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? 'https://www.lawoffice.org.il').replace(/\/$/, '');
+      const url = new URL(`${mainSite}${prefix}${target.path}`);
+      // everything but `entry` itself (source, utm_*, ...) must survive the hop: it is this visit's attribution,
+      // which the firm's site needs to capture for itself now that the funnel lives there
+      const params = new URLSearchParams(req.nextUrl.searchParams);
+      params.delete('entry');
+      url.search = params.toString();
+      redirect = NextResponse.redirect(url, 308);
+    }
     for (const c of probe.cookies.getAll()) redirect.cookies.set(c);
     return withAttribution(req, redirect);
   }
@@ -119,6 +134,7 @@ export default async function middleware(req: NextRequest) {
 }
 
 // Not the API, the build output and files in folders (/images/logo.webp). A single segment with a dot (/favicon.ico,
-// /wp-login.php) is included: it is either a file of ROOT_FILES or a 404. Emailed /go/<payload>.<signature> links contain
-// a dot too and need the locale rewrite, so they are listed on their own.
-export const config = { matcher: ['/((?!api|_next|_vercel|.*/.*\\..*).*)', '/go/:path*', '/he/go/:path*'] };
+// /wp-login.php) is included: it is either a file of ROOT_FILES or a 404. Emailed /go/<payload>.<signature> links, and
+// the /enter/<payload>.<signature> links "Go to my portal" follows in from the firm's own site, contain a dot too and
+// need the locale rewrite, so they are listed on their own.
+export const config = { matcher: ['/((?!api|_next|_vercel|.*/.*\\..*).*)', '/go/:path*', '/he/go/:path*', '/enter/:path*', '/he/enter/:path*'] };

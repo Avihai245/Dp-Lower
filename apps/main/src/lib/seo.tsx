@@ -5,6 +5,12 @@ import type { Metadata } from 'next';
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 /** The team photo cropped to the 1.91:1 of link previews (1200x630 JPEG, about 100 KB). The original is a 2560x1707 WebP, which some networks cannot show. */
 export const DEFAULT_SHARE_IMAGE = { path: '/images/og-default.jpg', width: 1200, height: 630 } as const;
+/** The /apply funnel's own link-preview image (1200x630 JPEG, about 100 KB). */
+export const LANDING_SHARE_IMAGE = '/images/og-landing.jpg';
+const SHARE_IMAGE_SIZE: Record<string, { width: number; height: number }> = {
+  [DEFAULT_SHARE_IMAGE.path]: { width: 1200, height: 630 },
+  [LANDING_SHARE_IMAGE]: { width: 1200, height: 630 },
+};
 export const OG_LOCALE: Record<Locale, string> = { en: 'en_US', he: 'he_IL' };
 
 interface PageMeta {
@@ -23,9 +29,10 @@ interface PageMeta {
 /** Title, description, canonical, hreflang alternates (en, he, x-default), Open Graph and Twitter card for one page. */
 export function pageMetadata(p: PageMeta): Metadata {
   const url = absoluteUrl(SITE_URL, p.locale, p.path);
-  const image = p.image ? (p.image.startsWith('http') ? p.image : `${SITE_URL}${p.image}`) : `${SITE_URL}${DEFAULT_SHARE_IMAGE.path}`;
-  // the size is only known for the default image; a page that brings its own (a portrait) leaves it out
-  const size = !p.image || p.image === DEFAULT_SHARE_IMAGE.path ? { width: DEFAULT_SHARE_IMAGE.width, height: DEFAULT_SHARE_IMAGE.height } : {};
+  const path = p.image ?? DEFAULT_SHARE_IMAGE.path;
+  const image = path.startsWith('http') ? path : `${SITE_URL}${path}`;
+  // the size is known for the images prepared for link previews; any other image leaves it out
+  const size = SHARE_IMAGE_SIZE[path] ?? {};
   const other: Locale = p.locale === 'en' ? 'he' : 'en';
   return {
     title: p.title,
