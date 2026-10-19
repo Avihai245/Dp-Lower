@@ -161,6 +161,8 @@ Another contributor moved the landing pages and the funnel to the firm's site (`
 | R-11 | The Hebrew edition of `/apply` and the country-based Hebrew start applied to the English-only landing pages | `/he/apply` redirects while the campaign setting is English only; no sitemap or hreflang entries for it |
 | R-12 | Behind Amplify a visitor could pick their own rate-limit bucket with `x-real-ip` | `CLIENT_IP_SOURCE=xff` (or `cloudfront`) with `TRUSTED_PROXY_HOPS`; documented for Amplify |
 | R-13 | `enter` / `resume` hand-over tokens could be replayed inside their two minutes | Single use |
+| R-14 | GitHub started no job on any push since 2026-10-09: `.github/workflows/ci.yml` was invalid YAML (an unquoted step name containing a colon), so the whole pipeline had never run | Quoted; the build job also sets the portal address the firm's site now refuses to build without; the e2e job runs the whole suite on both builds. First real run: verify, build, database and end-to-end all green |
+| R-15 | The committed `supabase/config.toml` carried a temporary local database port (54332), so the CI database job could not connect | Back to 54322 |
 
 Remaining, accepted: the hand-over tokens appear in one redirect URL (single use, two minutes); MFA enrolment is off in the hosted project (the advisor notes it) and the app has no enrolment screen yet, so staff accounts rely on strong passwords until it is built.
 
