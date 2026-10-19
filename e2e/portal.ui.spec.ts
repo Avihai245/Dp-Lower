@@ -8,6 +8,7 @@
  */
 import { expect as baseExpect, test, type Browser, type Page } from '@playwright/test';
 import { adminDb, BASE_URL, createApplicant, FULL_APPLICATION, storedObjects, tinyPdf, type Applicant } from './portal.helpers';
+import { campaignIsBilingual } from './support/funnel';
 
 /* The app usually runs in development mode here, where the first visit to a page compiles it, on a busy machine: allow for that. */
 const expect = baseExpect.configure({ timeout: 20_000 });
@@ -273,6 +274,7 @@ test.describe('Hebrew', () => {
   });
 
   test('is mirrored, translated and keeps its own arrow keys in the tour', async ({ browser }) => {
+    test.skip(!(await campaignIsBilingual()), 'the portal is English only (default setting): see english-only.spec.ts');
     const { page, errors, close } = await signedIn(browser, a);
     await page.goto('/he/portal');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');

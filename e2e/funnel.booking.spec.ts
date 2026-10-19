@@ -12,11 +12,13 @@ import {
   decodeAppToken,
   eventsOf,
   eventually,
+  hebrewIsOn,
   leadBody,
   leadByEmail,
   linkIn,
   newEmail,
   newIp,
+  NO_HEBREW,
   rest,
 } from './support/funnel';
 import { applyPath, isolatedFunnelUrl, onFunnel, originOf, watchProblems } from './support/funnel-ui';
@@ -82,6 +84,7 @@ for (const L of LOCALES) {
   test(`${L.locale}: book, find the call again after a reload, change it and cancel it from the booking step @mobile`, async ({
     browser,
   }, info) => {
+    test.skip(L.locale === 'he' && !(await hebrewIsOn()), NO_HEBREW);
     const phone = info.project.name === 'mobile';
     // (on the phone the page must not be wider than the screen: see the test "the booking step does not scroll sideways" below)
     const { context, page, problems } = await visitor(browser, L, phone);
@@ -199,6 +202,7 @@ test('the booking step does not scroll sideways at phone width, with times and w
   browser,
 }) => {
   for (const L of LOCALES) {
+    if (L.locale === 'he' && !(await hebrewIsOn())) continue;
     const { context, page } = await visitor(browser, L, true);
     expect(
       (await context.request.post(onFunnel('/api/leads'), { data: leadBody(newEmail(`narrow-${L.locale}`), { locale: L.locale }) })).status(),
@@ -260,6 +264,7 @@ const HE = LOCALES[1]!;
 test('the confirmation email’s "Change or cancel" is a link into the portal’s site; in another browser it asks for a click first', async ({
   browser,
 }) => {
+  test.skip(!(await hebrewIsOn()), NO_HEBREW);
   const { href } = await confirmationLink(browser, HE, 'manage-link');
   expect(href).toMatch(new RegExp(`^${escapeRe(BASE_URL)}/he/go/[\\w.-]+$`));
 
@@ -285,6 +290,7 @@ test('the confirmation email’s "Change or cancel" is a link into the portal’
 test('the confirmation email’s "Change or cancel": pressing the button on the confirmation page opens the booking step with the call, in another browser', async ({
   browser,
 }) => {
+  test.skip(!(await hebrewIsOn()), NO_HEBREW);
   const { lead, href } = await confirmationLink(browser, HE, 'manage-press');
   const other = await visitor(browser, HE);
   await other.page.goto(href);
@@ -306,6 +312,7 @@ test('the confirmation email’s "Change or cancel": pressing the button on the 
 test('the confirmation email’s "Change or cancel" with a proven mailbox opens the booking step on the firm’s site, in the same language, and cancelling works there', async ({
   browser,
 }) => {
+  test.skip(!(await hebrewIsOn()), NO_HEBREW);
   const { lead, booking, href } = await confirmationLink(browser, HE, 'manage-open');
   await verifyMailbox(lead.id);
 
@@ -340,6 +347,7 @@ test('the confirmation email’s "Change or cancel" with a proven mailbox opens 
 test('the confirmation email\u2019s "Change or cancel" shows the call even though the firm\u2019s site shares no cookies with the portal\u2019s site', async ({
   browser,
 }) => {
+  test.skip(!(await hebrewIsOn()), NO_HEBREW);
   const funnel = isolatedFunnelUrl();
   test.skip(!funnel, 'needs the firm\u2019s site on localhost, to address it under a second host name');
   const { lead, href } = await confirmationLink(browser, HE, 'manage-apart');

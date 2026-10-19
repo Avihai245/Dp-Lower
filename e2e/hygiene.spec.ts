@@ -17,9 +17,13 @@ const APPLY = '/apply';
 
 /** Is the Hebrew edition of the funnel (/he/apply) switched on? Without it that address redirects to /apply. */
 let hebrewFunnel = true;
+/** The same for the client portal (/he/sign-in redirects to /sign-in without it). */
+let hebrewCampaign = true;
 test.beforeAll(async () => {
   const res = await fetch(`${MAIN}/he${APPLY}`, { redirect: 'manual', headers: { accept: 'text/html' } });
   hebrewFunnel = res.status !== 307 && res.status !== 308;
+  const portal = await fetch(`${CAMPAIGN}/he/sign-in`, { redirect: 'manual', headers: { accept: 'text/html' } });
+  hebrewCampaign = portal.status !== 307 && portal.status !== 308;
 });
 
 interface Watch {
@@ -78,6 +82,7 @@ test.describe('fonts', () => {
   ] as const) {
     test(`${name} ${path}: the Hebrew page asks for its four font files with the page, the English one for none`, async ({ request }) => {
       test.skip(path.startsWith(APPLY) && !hebrewFunnel, 'the Hebrew edition of /apply is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
+      test.skip(origin === CAMPAIGN && !hebrewCampaign, 'the Hebrew edition of the portal is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
       // a page rendered ahead of time carries the hints in its HTML, one rendered per request in a `Link` response header
       const preloaded = async (url: string) => {
         const res = await request.get(url);
@@ -239,6 +244,8 @@ interface PageCase {
   lang: 'en' | 'he';
   dir: 'ltr' | 'rtl';
   indexable: boolean;
+  /** false: this page has no Hebrew edition in this build (the /apply funnel with NEXT_PUBLIC_CAMPAIGN_LOCALES=en) */
+  alternates?: boolean;
 }
 
 /** The checks every page gets: a clean console, no CSP violation, the right lang/dir, the SEO tags (or noindex). */
@@ -257,7 +264,8 @@ async function checkPage(page: Page, origin: string, p: PageCase) {
     // the canonical is built from the configured site URL, which for these servers is their own origin
     expect(strip(await meta(page, 'link[rel=canonical]', 'href'))).toBe(strip(origin + p.path));
     const hreflangs = await page.locator('link[rel=alternate][hreflang]').evaluateAll((els) => els.map((e) => e.getAttribute('hreflang')));
-    expect(hreflangs).toEqual(expect.arrayContaining(['en', 'he']));
+    if (p.alternates === false) expect(hreflangs).not.toContain('he');
+    else expect(hreflangs).toEqual(expect.arrayContaining(['en', 'he']));
   } else {
     expect(robots).toContain('noindex');
   }
@@ -276,12 +284,14 @@ const campaignPages: PageCase[] = [
 test.describe('campaign pages', () => {
   for (const p of campaignPages) {
     test(`${p.path}: clean console, no CSP violation, lang/dir, noindex`, async ({ page }) => {
+      test.skip(p.lang === 'he' && !hebrewCampaign, 'the Hebrew edition of the portal is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
       await checkPage(page, CAMPAIGN, p);
     });
   }
 
   test('its bare address is the sign-in page, in either language', async ({ page }) => {
-    for (const [from, to] of [['/', '/sign-in'], ['/he', '/he/sign-in']] as const) {
+    // (without the Hebrew edition /he is the English sign-in too)
+    for (const [from, to] of [['/', '/sign-in'], ['/he', hebrewCampaign ? '/he/sign-in' : '/sign-in']] as const) {
       await page.goto(CAMPAIGN + from);
       expect(new URL(page.url()).pathname, from).toBe(to);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -303,7 +313,7 @@ test.describe('landing page and funnel (the firm site, /apply)', () => {
   for (const p of funnelPages) {
     test(`${p.path}: clean console, no CSP violation, lang/dir, ${p.indexable ? 'indexable with alternates' : 'noindex'}`, async ({ page }) => {
       test.skip(p.lang === 'he' && !hebrewFunnel, 'the Hebrew edition of /apply is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
-      await checkPage(page, MAIN, p);
+      await checkPage(page, MAIN, { ...p, alternates: p.path.startsWith(APPLY) && !hebrewFunnel ? false : undefined });
     });
   }
 

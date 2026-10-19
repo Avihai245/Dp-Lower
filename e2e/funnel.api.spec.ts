@@ -912,11 +912,18 @@ test.describe('passwords and emailed links', () => {
     expect(await passwordSignIn(lead.email, 'second-password-2')).toBe(true);
 
     // a Hebrew link keeps the language prefix; a tampered or unknown token goes back to sign-in with a message
-    const heGet = await scanner.get('/he/auth/callback?token_hash=garbage&type=recovery', { maxRedirects: 0 });
-    expect(redirectUrl(heGet).pathname).toBe('/he/open-link');
-    const he = await scanner.post('/he/auth/callback', { form: { token_hash: 'garbage', type: 'recovery' }, maxRedirects: 0 });
-    expect(he.status()).toBe(303);
-    expect(redirectPath(he)).toBe('/he/sign-in?error=link');
+    // (in the English-only setting a /he address is only redirected to the English one)
+    if (await campaignIsBilingual()) {
+      const heGet = await scanner.get('/he/auth/callback?token_hash=garbage&type=recovery', { maxRedirects: 0 });
+      expect(redirectUrl(heGet).pathname).toBe('/he/open-link');
+      const he = await scanner.post('/he/auth/callback', { form: { token_hash: 'garbage', type: 'recovery' }, maxRedirects: 0 });
+      expect(he.status()).toBe(303);
+      expect(redirectPath(he)).toBe('/he/sign-in?error=link');
+    } else {
+      const heGet = await scanner.get('/he/auth/callback?token_hash=garbage&type=recovery', { maxRedirects: 0 });
+      expect([307, 308]).toContain(heGet.status());
+      expect(redirectUrl(heGet).pathname).toBe('/auth/callback');
+    }
     const oauthDenied = await scanner.get('/auth/callback?error=access_denied', { maxRedirects: 0 });
     expect(redirectPath(oauthDenied)).toBe('/sign-in?error=oauth');
     await scanner.dispose();
@@ -1046,9 +1053,11 @@ test.describe('passwords and emailed links', () => {
 
   test('bad /go tokens go to the link-expired page, never to the portal', async ({ playwright }) => {
     const client = await newPortalClient(playwright);
+    // (without the Hebrew edition of the portal a /he address is only redirected to the English one)
+    const hebrew = await campaignIsBilingual();
     for (const [path, expected] of [
       ['/go/not-a-token', '/link-expired'],
-      ['/he/go/not-a-token', '/he/link-expired'],
+      ...(hebrew ? [['/he/go/not-a-token', '/he/link-expired'] as const] : []),
       [`/go/${signAppToken({ lid: uuid(), ep: 0, p: 'portal', n: '/portal' }, 3600)}`, '/link-expired'],
       [`/go/${signAppToken({ lid: uuid(), ep: 0, p: 'unsub' }, 3600)}`, '/link-expired'],
       [`/go/${signAppToken({ lid: uuid(), ep: 0, p: 'enter' }, 3600)}`, '/link-expired'],

@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
+import { campaignIsBilingual, funnelIsBilingual } from './support/funnel';
 
 /**
  * Walks the whole sitemap of the firm's site with plain HTTP requests (no browser, so it is fast) and checks what search
@@ -276,13 +277,15 @@ test.describe('campaign site (the client portal)', () => {
 
   test('robots.txt keeps the private areas out for every crawler and points at the sitemap', async ({ request }) => {
     const robots = await (await request.get(`${CAMPAIGN}/robots.txt`)).text();
+    const hebrew = await campaignIsBilingual();
     expect(robots).toContain(`Sitemap: ${CAMPAIGN}/sitemap.xml`);
     expect(robots).not.toMatch(/Disallow:\s*\/\s*$/m);
     for (const group of robots.split(/\n\s*\n/).filter((g) => /User-Agent:/i.test(g))) {
       const agent = /User-Agent:\s*(.+)/i.exec(group)![1]!;
       for (const path of ['/api/', '/portal', '/admin', '/sign-in', '/create-password', '/go/', '/enter/', '/auth/', '/unsubscribe']) {
         expect(group, `${agent}: ${path}`).toContain(`Disallow: ${path}`);
-        expect(group, `${agent}: /he${path}`).toContain(`Disallow: /he${path}`);
+        // (the Hebrew edition of the portal is off by default: there is no /he to keep out then)
+        if (hebrew) expect(group, `${agent}: /he${path}`).toContain(`Disallow: /he${path}`);
       }
     }
   });
@@ -325,8 +328,9 @@ test.describe('campaign site (the client portal)', () => {
       expect(location.pathname, from).toBe(to);
       expect(Object.fromEntries(location.searchParams), `${from}: the campaign parameters survive`).toEqual({ utm_source: 'google', utm_campaign: 'spring' });
     }
-    // and following them ends on a page of the firm's site
-    for (const [from, to] of [['/eligibility', '/apply/eligibility'], ['/he/privacy', '/he/apply/privacy'], ['/ger-aus', '/apply'], ['/ger-aus/', '/apply']] as const) {
+    // and following them ends on a page of the firm's site (without the Hebrew edition of the funnel: its English page)
+    const funnelHe = await funnelIsBilingual();
+    for (const [from, to] of [['/eligibility', '/apply/eligibility'], ['/he/privacy', funnelHe ? '/he/apply/privacy' : '/apply/privacy'], ['/ger-aus', '/apply'], ['/ger-aus/', '/apply']] as const) {
       const res = await request.get(`${CAMPAIGN}${from}`);
       expect(res.status(), from).toBe(200);
       expect(new URL(res.url()).origin, from).toBe(target.origin);
@@ -335,12 +339,15 @@ test.describe('campaign site (the client portal)', () => {
   });
 
   test('its bare address is the sign-in page; a deep link that asks for the eligibility check goes to the firm\'s site with its tracking', async ({ request }) => {
-    for (const [from, to] of [['/', '/sign-in'], ['/he', '/he/sign-in'], ['/?entry=signin', '/sign-in']] as const) {
+    // (without the Hebrew edition of the portal /he is only a hop to the English root, which is the sign-in)
+    const portalHe = await campaignIsBilingual();
+    for (const [from, to] of [['/', '/sign-in'], ['/he', portalHe ? '/he/sign-in' : '/'], ['/?entry=signin', '/sign-in']] as const) {
       const res = await request.get(CAMPAIGN + from, { maxRedirects: 0 });
       expect([307, 308], from).toContain(res.status());
       expect(new URL(res.headers().location!, CAMPAIGN).pathname, from).toBe(to);
     }
     for (const [from, path] of [['/', '/apply'], ['/he', '/he/apply']] as const) {
+      if (from === '/he' && !portalHe) continue;
       const res = await request.get(`${CAMPAIGN}${from}?entry=eligibility&source=google-ads&utm_campaign=spring`, { maxRedirects: 0 });
       expect([307, 308], from).toContain(res.status());
       const location = new URL(res.headers().location!, CAMPAIGN);
@@ -354,9 +361,10 @@ test.describe('campaign site (the client portal)', () => {
 
 test.describe('landing page and funnel (the firm site, /apply)', () => {
   test('the landing page carries the structured data it promises (FAQ, organization) and valid JSON-LD', async ({ request }) => {
+    const funnelHe = await funnelIsBilingual();
     for (const path of ['/apply', '/he/apply']) {
+      if (path.startsWith('/he') && !funnelHe) continue;
       const p = await read(request, MAIN + path);
-      if (path.startsWith('/he') && p.status !== 200) continue;
       const types = ldTypes(p.ld);
       expect(types, path).toEqual(expect.arrayContaining(['FAQPage']));
       expect(types.some((t) => /LegalService|Organization/.test(t)), path).toBe(true);
@@ -383,9 +391,10 @@ test.describe('landing page and funnel (the firm site, /apply)', () => {
 
   test('every internal link and image on the landing page and its privacy page resolves', async ({ request }) => {
     const broken: string[] = [];
+    const funnelHe = await funnelIsBilingual();
     for (const page of ['/apply', '/he/apply', '/apply/privacy', '/he/apply/privacy']) {
+      if (page.startsWith('/he') && !funnelHe) continue;
       const p = await read(request, MAIN + page);
-      if (page.startsWith('/he') && p.status !== 200) continue;
       // (internal links only: the sign-in links are absolute links to the portal and are checked on their own below. The privacy
       // page has exactly three: the logo and the way back, both to the home page, and the firm's privacy policy)
       expect(p.links.length, page).toBeGreaterThanOrEqual(page.endsWith('/privacy') ? 3 : 4);
@@ -402,9 +411,11 @@ test.describe('landing page and funnel (the firm site, /apply)', () => {
   test('the "Track my application" links of the landing page lead to the portal\'s sign-in, in the visitor language', async ({ request }) => {
     // Both links (header and footer) are absolute links to the portal (campaignUrl in lib/shell/campaign.ts): they used to be
     // relative /sign-in links, which are a 404 on the firm's site.
+    const funnelHe = await funnelIsBilingual();
+    const portalHe = await campaignIsBilingual();
     for (const [path, prefix] of [['/apply', ''], ['/he/apply', '/he']] as const) {
+      if (prefix && !funnelHe) continue;
       const p = await read(request, MAIN + path);
-      if (prefix && p.status !== 200) continue;
       const hrefs = [...p.html.matchAll(/<a\b[^>]*\bhref="([^"]*sign-in[^"]*)"/g)].map((m) => unescape(m[1]!));
       expect(hrefs.length, `${path}: the sign-in links (header and footer)`).toBeGreaterThanOrEqual(2);
       for (const href of hrefs) {
@@ -415,15 +426,16 @@ test.describe('landing page and funnel (the firm site, /apply)', () => {
         const res = await request.get(new URL(href, MAIN).toString());
         expect(res.status(), `${path}: ${href}`).toBe(200);
         expect(new URL(res.url()).origin, `${path}: ${href} opens the portal`).toBe(new URL(CAMPAIGN).origin);
-        expect(new URL(res.url()).pathname, href).toBe(`${prefix}/sign-in`);
+        expect(new URL(res.url()).pathname, href).toBe(`${portalHe ? prefix : ''}/sign-in`);
       }
     }
   });
 
   test('the calls to action lead into the funnel on this same site, in the visitor language', async ({ request }) => {
+    const funnelHe = await funnelIsBilingual();
     for (const [path, prefix] of [['/apply', ''], ['/he/apply', '/he']] as const) {
+      if (prefix && !funnelHe) continue;
       const p = await read(request, MAIN + path);
-      if (prefix && p.status !== 200) continue;
       expect(p.links.filter((l) => l === `${prefix}/apply/eligibility`).length, `${path}: links to the quiz`).toBeGreaterThan(2);
       // none back to the old campaign addresses (those are redirects now)
       for (const l of p.links) expect(l, path).not.toMatch(/^\/(he\/)?(eligibility|booking|offer|details)(\/|$)/);

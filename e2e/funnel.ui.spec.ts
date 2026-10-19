@@ -1,5 +1,5 @@
 import { expect as baseExpect, test, type Browser, type Page } from '@playwright/test';
-import { BASE_URL, cleanup, createAuthUser, eventually, eventsOf, FUNNEL_URL, leadBody, leadByEmail, makeStaff, newEmail, rest, signAppToken } from './support/funnel';
+import { activeLocales, BASE_URL, cleanup, createAuthUser, eventually, eventsOf, FUNNEL_URL, hebrewIsOn, leadBody, leadByEmail, makeStaff, newEmail, NO_HEBREW, rest, signAppToken } from './support/funnel';
 import { applyPath, enterPortal, isolatedFunnelUrl, newVisitor, onFunnel, onPortal, originOf, prefixOf, type UiLocale } from './support/funnel-ui';
 
 /**
@@ -143,6 +143,7 @@ test('the whole English journey: six questions, details, booking, result, portal
 });
 
 test('Hebrew: the funnel is right-to-left, translated, and the Hebrew path is kept', async ({ browser }) => {
+  test.skip(!(await hebrewIsOn()), NO_HEBREW);
   const { context, page, problems } = await visitor(browser, { locale: 'he', answers: COMPLETE, timezone: 'Asia/Jerusalem' });
   await page.goto(onFunnel('/he/apply/eligibility'));
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -313,7 +314,7 @@ test('no answers are left in the browser once the details are saved; the quiz re
 });
 
 test('signing out of the portal ends the session and returns to sign-in, in the person\'s language, by way of the firm\'s site; the portal asks for a sign-in again', async ({ browser }) => {
-  for (const locale of ['en', 'he'] as const) {
+  for (const locale of await activeLocales()) {
     const { context, page, problems } = await visitor(browser, { locale });
     const email = newEmail(`ui-signout-${locale}`);
     expect((await context.request.post(onFunnel('/api/leads'), { data: leadBody(email, { locale }) })).status()).toBe(201);
@@ -414,9 +415,9 @@ test('the entry address of "Go to my portal" is checked: garbage, expired, anoth
   }
   // somebody who came from the firm's site gets a way back to it
   await expect(page.getByRole('link', { name: 'Back to site' })).toHaveAttribute('href', new RegExp(`^${escapeRe(FUNNEL_URL)}/?$`));
-  // in Hebrew too (the language prefix is kept)
+  // in Hebrew too (the language prefix is kept; with the Hebrew edition off every /he address is the English one)
   await page.goto(onPortal('/he/enter/garbage'));
-  await expect(page).toHaveURL(urlOf(BASE_URL, '/he/sign-in'));
+  await expect(page).toHaveURL(urlOf(BASE_URL, (await hebrewIsOn()) ? '/he/sign-in' : '/sign-in'));
   expect(problems).toEqual([]);
   await context.close();
   // a valid token still works, and does not sign anybody in until it is followed with a GET
@@ -450,7 +451,7 @@ test('the portal\'s bare address is its sign-in (or the portal), and the old fun
   await expect(page).toHaveURL(urlOf(BASE_URL, '/sign-in'));
   await expect(heading(page)).toHaveText('Follow your case.');
   await page.goto(onPortal('/he'));
-  await expect(page).toHaveURL(urlOf(BASE_URL, '/he/sign-in'));
+  await expect(page).toHaveURL(urlOf(BASE_URL, (await hebrewIsOn()) ? '/he/sign-in' : '/sign-in'));
 
   // the pages that used to be here are permanent redirects to the firm's site, with the language prefix kept
   for (const sub of ['/eligibility', '/details', '/booking', '/offer', '/privacy']) {
@@ -647,7 +648,8 @@ test('the "free calls left this week" line tells the real number, in both langua
     { locale: 'en' as const, timezone: 'America/New_York', lines: { 3: '3 free calls left this week', 1: 'One free call left this week', 40: '40 free calls left this week' } },
     { locale: 'he' as const, timezone: 'Asia/Jerusalem', lines: { 3: 'נותרו 3 שיחות ייעוץ חינם השבוע', 2: 'נותרו שתי שיחות ייעוץ חינם השבוע', 1: 'נותרה שיחת ייעוץ חינם אחת השבוע' } },
   ];
-  for (const c of cases) {
+  const on = await activeLocales();
+  for (const c of cases.filter((x) => on.includes(x.locale))) {
     const { context, page, problems } = await visitor(browser, { locale: c.locale, timezone: c.timezone });
     await context.request.post(onFunnel('/api/leads'), { data: leadBody(newEmail(`ui-left-${c.locale}`)) });
     let seatsLeft = 0;
@@ -726,7 +728,7 @@ test('staff sign in with their password and land on /admin', async ({ browser })
 /** Opens each screen at phone width (390 px) with a lead and a full set of answers, and measures how far the page scrolls sideways. */
 async function sidewaysOverflow(browser: Browser, screens: (locale: UiLocale) => Array<{ site: 'funnel' | 'portal'; path: string }>) {
   const found: Record<string, number> = {};
-  for (const locale of ['en', 'he'] as const) {
+  for (const locale of await activeLocales()) {
     const { context, page } = await visitor(browser, { locale, answers: COMPLETE, viewport: { width: 390, height: 844 } });
     await context.request.post(onFunnel('/api/leads'), { data: leadBody(newEmail(`ui-narrow-${locale}`), { locale }) });
     for (const { site, path } of screens(locale)) {
@@ -761,7 +763,7 @@ test('no landing or funnel screen with the four-step header scrolls sideways at 
 
 /** Same rules as above: with `[data-q-foot] > span { flex-basis: 100% }` the reassurance text has a row of its own (without it, it is a 62 px sliver beside the buttons). */
 test('the quiz footer keeps its reassurance on a row of its own at phone width, in English and Hebrew', async ({ browser }) => {
-  for (const locale of ['en', 'he'] as const) {
+  for (const locale of await activeLocales()) {
     const { context, page } = await visitor(browser, { locale, viewport: { width: 390, height: 844 } });
     await page.goto(onFunnel(applyPath(locale, '/eligibility')));
     await page.waitForTimeout(700);

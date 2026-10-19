@@ -317,3 +317,17 @@ export async function funnelIsBilingual(): Promise<boolean> {
   const res = await fetch(`${FUNNEL_URL}/he/apply`, { redirect: 'manual', headers: { accept: 'text/html' } });
   return res.status !== 307 && res.status !== 308;
 }
+
+/** The Hebrew edition is on in both apps (the funnel on the firm's site and the portal). Hebrew tests skip themselves otherwise. */
+export async function hebrewIsOn(): Promise<boolean> {
+  return (await funnelIsBilingual()) && (await campaignIsBilingual());
+}
+
+/** The message of a skipped Hebrew test. */
+export const NO_HEBREW =
+  'the Hebrew edition is switched off in this build (NEXT_PUBLIC_CAMPAIGN_LOCALES): see english-only.spec.ts';
+
+/** The languages the apps serve in this build: ['en', 'he'] when the Hebrew edition is on, else ['en']. */
+export async function activeLocales(): Promise<Array<'en' | 'he'>> {
+  return (await hebrewIsOn()) ? ['en', 'he'] : ['en'];
+}

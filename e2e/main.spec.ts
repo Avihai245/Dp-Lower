@@ -4,7 +4,7 @@ import enA11y from '../apps/main/messages/en/a11y.json';
 import enSite from '../apps/main/messages/en/site.json';
 import he from '../apps/main/messages/he/forms.json';
 import heSite from '../apps/main/messages/he/site.json';
-import { RUN, SERVICE_KEY, SUPABASE_URL, eventually, newIp, rest } from './support/funnel';
+import { RUN, SERVICE_KEY, SUPABASE_URL, campaignIsBilingual, eventually, funnelIsBilingual, newIp, rest } from './support/funnel';
 
 /**
  * The firm's website in a browser, in English and Hebrew: the three enquiry forms (contact page, lead band, chat) all
@@ -271,6 +271,10 @@ test.describe('navigation', () => {
 
   test('every link that names where the visitor came from is either the firm\'s own eligibility check or a link into the portal, in the visitor language', async ({ browser }) => {
     const { context, page } = await visitor(browser);
+    // (the campaign's public pages are English only unless NEXT_PUBLIC_CAMPAIGN_LOCALES says otherwise: then every link
+    // names the English edition, without a language prefix and without `lang`)
+    const portalHe = await campaignIsBilingual();
+    const funnelHe = await funnelIsBilingual();
     for (const [path, lang] of [['/', 'en'], ['/he', 'he'], ['/services/german-citizenship', 'en'], ['/he/contact', 'he']] as const) {
       await page.goto(path);
       const hrefs = await page.locator('a[href*="source=main-site"]').evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href));
@@ -281,7 +285,7 @@ test.describe('navigation', () => {
         expect(url.searchParams.get('source'), href).toBe('main-site');
         if (url.origin === new URL(MAIN).origin) {
           // the eligibility check is this site's own /apply (it moved here from the portal): an internal link of the page's language
-          expect(url.pathname, href).toBe(lang === 'he' ? '/he/apply/eligibility' : '/apply/eligibility');
+          expect(url.pathname, href).toBe(lang === 'he' && funnelHe ? '/he/apply/eligibility' : '/apply/eligibility');
           continue;
         }
         // everything else leaves for the portal's own pages
@@ -289,9 +293,9 @@ test.describe('navigation', () => {
         expect(url.origin, href).toBe(new URL(CAMPAIGN).origin);
         const bare = url.pathname.replace(/^\/he(?=\/|$)/, '') || '/';
         expect(['/sign-in', '/portal'], href).toContain(bare);
-        expect(url.pathname.startsWith('/he'), href).toBe(lang === 'he');
+        expect(url.pathname.startsWith('/he'), href).toBe(lang === 'he' && portalHe);
         // an English page names its language so that an Israeli visitor who chose English is not sent to the Hebrew edition
-        expect(url.searchParams.get('lang'), href).toBe(lang === 'en' ? 'en' : null);
+        expect(url.searchParams.get('lang'), href).toBe(lang === 'en' && portalHe ? 'en' : null);
       }
       expect(intoPortal, `${path}: links into the portal`).toBeGreaterThan(0);
     }
@@ -300,6 +304,7 @@ test.describe('navigation', () => {
 
   test('the eligibility check is the firm\'s own /apply: the home page links straight to it, and the old campaign links still end there with their tracking', async ({ browser, request }) => {
     const { context, page } = await visitor(browser);
+    const funnelHe = await funnelIsBilingual();
     for (const [path, prefix] of [['/', ''], ['/he', '/he']] as const) {
       await page.goto(path);
       // same site, no campaign parameters needed: the funnel is part of this site now
@@ -316,7 +321,8 @@ test.describe('navigation', () => {
         expect(res.status(), href).toBe(200);
         const end = new URL(res.url());
         expect(end.origin, href).toBe(new URL(MAIN).origin);
-        expect(end.pathname, href).toBe(`${prefix}/apply/eligibility`);
+        // (without the Hebrew edition of the funnel every address ends on the English quiz)
+        expect(end.pathname, href).toBe(`${funnelHe ? prefix : ''}/apply/eligibility`);
         expect(end.searchParams.get('source'), href).toBe('main-site');
       }
     }
@@ -327,6 +333,7 @@ test.describe('navigation', () => {
     // (they used to link to the portal's old /eligibility address, which redirects to /apply/eligibility: a click worked but left
     // the firm's domain and came back through a redirect; now they are internal links like the home page's)
     const { context, page } = await visitor(browser);
+    const funnelHe = await funnelIsBilingual();
     for (const [path, prefix] of [['/services/german-citizenship', ''], ['/contact', ''], ['/he/contact', '/he']] as const) {
       await page.goto(path);
       const links = await page.locator('a[href*="/eligibility"]').evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href));
@@ -334,7 +341,7 @@ test.describe('navigation', () => {
       for (const href of links) {
         const url = new URL(href);
         expect(url.origin, href).toBe(new URL(MAIN).origin);
-        expect(url.pathname, href).toBe(`${prefix}/apply/eligibility`);
+        expect(url.pathname, href).toBe(`${funnelHe ? prefix : ''}/apply/eligibility`);
       }
     }
     await context.close();
