@@ -1,6 +1,6 @@
 import 'server-only';
 import { DEFAULT_LOCALE, signToken, verifyToken, type Locale } from '@dpl/core';
-import { appSecret, campaignSiteUrl } from './env';
+import { appSecret, campaignSiteUrl, mainSiteUrl } from './env';
 import type { LeadRow } from './types';
 
 /**
@@ -44,6 +44,32 @@ export async function readEnterToken(token: string): Promise<{ leadId: string; e
   if (!p || !p.lid) return null;
   return { leadId: p.lid, epoch: p.ep ?? 0 };
 }
+
+/**
+ * Where a hand-over may end: a funnel page on the firm's site (/apply/...), or the portal's own /portal on the way back
+ * (see the route that reads the token), each with or without the Hebrew prefix.
+ */
+const RESUME_TARGET = /^(\/he)?(\/apply\/(booking|offer|details|eligibility)|\/portal)$/;
+
+/**
+ * The other direction of the hand-over: someone who opened an emailed link on the portal's domain (which proved the
+ * mailbox) and whose destination is a step of the funnel on the firm's site ("Book my free call", "Change or cancel").
+ * The firm's site has no cookie for this browser, so the portal mints this 2-minute token and the firm's site turns it
+ * into its own lead cookie and goes to the step. The destination is inside the token and must be one of RESUME_TARGET.
+ */
+export async function createResumeToken(lead: Pick<LeadRow, 'id' | 'session_epoch'>, target: string): Promise<string | null> {
+  if (!RESUME_TARGET.test(target)) return null;
+  return signToken({ lid: lead.id, ep: lead.session_epoch, p: 'resume', n: target }, appSecret(), ENTER_TTL);
+}
+
+export async function readResumeToken(token: string): Promise<{ leadId: string; epoch: number; target: string } | null> {
+  const p = await verifyToken<{ lid?: string; ep?: number; n?: string }>(token, appSecret(), 'resume');
+  if (!p || !p.lid || !p.n || !RESUME_TARGET.test(p.n)) return null;
+  return { leadId: p.lid, epoch: p.ep ?? 0, target: p.n };
+}
+
+/** Where the firm's site turns a resume token into its own lead cookie. */
+export const resumeUrl = (token: string) => `${mainSiteUrl()}/api/lead/resume?t=${encodeURIComponent(token)}`;
 
 /** Never expires, never grants access: it can only stop the nurture emails (it is not accepted as a lead cookie or a portal link). */
 export async function createUnsubscribeToken(leadId: string): Promise<string> {

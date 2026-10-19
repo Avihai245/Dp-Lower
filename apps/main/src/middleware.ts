@@ -1,4 +1,4 @@
-import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies, returnCookie } from '@dpl/core';
+import { COOKIE_MAX_AGE_SECONDS, DEFAULT_SOURCE, firstTouchCookies, returnCookie } from '@dpl/core';
 import createMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { LANG_COOKIE, LANG_COOKIE_OPTIONS, chosenLanguage, countryOf, shouldGoHebrew } from '@dpl/i18n';
@@ -17,7 +17,13 @@ const intl = createMiddleware(routing);
  */
 function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
   const from = returnCookie(req.nextUrl.searchParams);
-  const cookies = [...firstTouchCookies(req.nextUrl.searchParams, (name) => req.cookies.has(name)), ...(from ? [from] : [])];
+  // a visit that names no source: on the landing pages (/apply) it is the campaign's own traffic, anywhere else on the
+  // site it is the firm's website that brought the visitor
+  const onLanding = /^(\/he)?\/apply(\/|$)/.test(req.nextUrl.pathname);
+  const cookies = [
+    ...firstTouchCookies(req.nextUrl.searchParams, (name) => req.cookies.has(name), onLanding ? DEFAULT_SOURCE : 'main-site'),
+    ...(from ? [from] : []),
+  ];
   for (const c of cookies) {
     res.cookies.set(c.name, c.value, { maxAge: COOKIE_MAX_AGE_SECONDS, path: '/', sameSite: 'lax', secure: req.nextUrl.protocol === 'https:' });
   }

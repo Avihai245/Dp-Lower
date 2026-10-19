@@ -22,6 +22,7 @@ import {
   uploadToStorage,
   type Applicant,
 } from './portal.helpers';
+import { FUNNEL_ORIGIN } from './support/funnel';
 
 const DOC_TYPES = [
   'birth_certificate',
@@ -741,7 +742,10 @@ test.describe('sign-out', () => {
 
       const res = await a.api.post('/api/portal/sign-out');
       expect(res.status()).toBe(200);
-      expect(await res.json()).toEqual({ ok: true });
+      // The lead cookie of the firm's site belongs to another domain, which the portal cannot clear: the answer names the firm's
+      // /api/lead/forget, where the browser goes next (the portal's button navigates to it, see funnel.ui.spec.ts)
+      const answer = (await res.json()) as { ok: boolean; forgetUrl: string };
+      expect(answer).toEqual({ ok: true, forgetUrl: `${FUNNEL_ORIGIN}/api/lead/forget` });
       // nothing is left in the browser that could open the portal again ...
       const left = (await a.api.storageState()).cookies.map((c) => c.name).filter((n) => n.startsWith('sb-') || n === 'dpl_lead');
       expect(left).toEqual([]);
@@ -752,7 +756,13 @@ test.describe('sign-out', () => {
       // signing out again, or without ever having signed in, is fine
       expect((await a.api.post('/api/portal/sign-out')).status()).toBe(200);
       const nobody = await anonymousApi();
-      expect((await nobody.post('/api/portal/sign-out')).status()).toBe(200);
+      const nothing = await nobody.post('/api/portal/sign-out');
+      expect(nothing.status()).toBe(200);
+      // (somebody whose portal session has expired still has a lead cookie to forget on the firm's site)
+      expect(await nothing.json()).toEqual({ ok: true, forgetUrl: `${FUNNEL_ORIGIN}/api/lead/forget` });
+      // the address comes from the server's own setting: a request cannot name another one
+      const spoofed = await nobody.post('/api/portal/sign-out', { headers: { 'x-forwarded-host': 'evil.example', 'x-forwarded-proto': 'https' } });
+      expect((await spoofed.json()).forgetUrl).toBe(`${FUNNEL_ORIGIN}/api/lead/forget`);
       await nobody.dispose();
     } finally {
       await copy.dispose();

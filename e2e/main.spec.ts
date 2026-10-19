@@ -9,7 +9,8 @@ import { RUN, SERVICE_KEY, SUPABASE_URL, eventually, newIp, rest } from './suppo
 /**
  * The firm's website in a browser, in English and Hebrew: the three enquiry forms (contact page, lead band, chat) all
  * the way into the database and the outbox, validation, the honeypot and the rate limit, the language switch, the
- * links into the campaign, the mega menu, the team filter, the accessibility widget and the sticky call to action.
+ * links into the eligibility check (the firm's own /apply) and into the client portal (the campaign app, another
+ * domain), the mega menu, the team filter, the accessibility widget and the sticky call to action.
  *
  *   MAIN_URL=http://localhost:3000 CAMPAIGN_URL=http://localhost:3001 pnpm exec playwright test e2e/main.spec.ts
  * (needs the local Supabase; everything it creates uses addresses e2e-main-<run>-*@example.com and is deleted again)
@@ -268,21 +269,72 @@ test.describe('navigation', () => {
     await context.close();
   });
 
-  test('every call to the campaign carries where it came from, in the visitor language', async ({ browser }) => {
+  test('every link that names where the visitor came from is either the firm\'s own eligibility check or a link into the portal, in the visitor language', async ({ browser }) => {
     const { context, page } = await visitor(browser);
     for (const [path, lang] of [['/', 'en'], ['/he', 'he'], ['/services/german-citizenship', 'en'], ['/he/contact', 'he']] as const) {
       await page.goto(path);
       const hrefs = await page.locator('a[href*="source=main-site"]').evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href));
       expect(hrefs.length, path).toBeGreaterThan(0);
+      let intoPortal = 0;
       for (const href of hrefs) {
         const url = new URL(href);
-        expect(url.origin, href).toBe(new URL(CAMPAIGN).origin);
         expect(url.searchParams.get('source'), href).toBe('main-site');
-        // either a direct page of the funnel or the landing page with an entry parameter
+        if (url.origin === new URL(MAIN).origin) {
+          // the eligibility check is this site's own /apply (it moved here from the portal): an internal link of the page's language
+          expect(url.pathname, href).toBe(lang === 'he' ? '/he/apply/eligibility' : '/apply/eligibility');
+          continue;
+        }
+        // everything else leaves for the portal's own pages
+        intoPortal++;
+        expect(url.origin, href).toBe(new URL(CAMPAIGN).origin);
         const bare = url.pathname.replace(/^\/he(?=\/|$)/, '') || '/';
-        const ok = ['/eligibility', '/sign-in', '/portal'].includes(bare) || ['eligibility', 'signin', 'portal'].includes(url.searchParams.get('entry') ?? '');
-        expect(ok, href).toBe(true);
+        expect(['/sign-in', '/portal'], href).toContain(bare);
         expect(url.pathname.startsWith('/he'), href).toBe(lang === 'he');
+        // an English page names its language so that an Israeli visitor who chose English is not sent to the Hebrew edition
+        expect(url.searchParams.get('lang'), href).toBe(lang === 'en' ? 'en' : null);
+      }
+      expect(intoPortal, `${path}: links into the portal`).toBeGreaterThan(0);
+    }
+    await context.close();
+  });
+
+  test('the eligibility check is the firm\'s own /apply: the home page links straight to it, and the old campaign links still end there with their tracking', async ({ browser, request }) => {
+    const { context, page } = await visitor(browser);
+    for (const [path, prefix] of [['/', ''], ['/he', '/he']] as const) {
+      await page.goto(path);
+      // same site, no campaign parameters needed: the funnel is part of this site now
+      const direct = await page.locator(`a[href="${prefix}/apply"]`).count();
+      expect(direct, `${path}: links to ${prefix}/apply`).toBeGreaterThan(0);
+    }
+    for (const [path, prefix] of [['/services/german-citizenship', ''], ['/contact', ''], ['/he/contact', '/he']] as const) {
+      await page.goto(path);
+      const links = await page.locator('a[href*="/eligibility"]').evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href));
+      expect(links.length, path).toBeGreaterThan(0);
+      for (const href of links) {
+        // whatever the link is, following it ends on the quiz of this site, in the page's language, with the source kept
+        const res = await request.get(href, { headers: { 'x-forwarded-for': newIp() } });
+        expect(res.status(), href).toBe(200);
+        const end = new URL(res.url());
+        expect(end.origin, href).toBe(new URL(MAIN).origin);
+        expect(end.pathname, href).toBe(`${prefix}/apply/eligibility`);
+        expect(end.searchParams.get('source'), href).toBe('main-site');
+      }
+    }
+    await context.close();
+  });
+
+  test('the "check your eligibility" buttons of the service and contact pages are plain /apply/eligibility links on this site', async ({ browser }) => {
+    // (they used to link to the portal's old /eligibility address, which redirects to /apply/eligibility: a click worked but left
+    // the firm's domain and came back through a redirect; now they are internal links like the home page's)
+    const { context, page } = await visitor(browser);
+    for (const [path, prefix] of [['/services/german-citizenship', ''], ['/contact', ''], ['/he/contact', '/he']] as const) {
+      await page.goto(path);
+      const links = await page.locator('a[href*="/eligibility"]').evaluateAll((els) => els.map((e) => (e as HTMLAnchorElement).href));
+      expect(links.length, path).toBeGreaterThan(0);
+      for (const href of links) {
+        const url = new URL(href);
+        expect(url.origin, href).toBe(new URL(MAIN).origin);
+        expect(url.pathname, href).toBe(`${prefix}/apply/eligibility`);
       }
     }
     await context.close();

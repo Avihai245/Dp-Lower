@@ -1,11 +1,20 @@
 import 'server-only';
 import type { Locale } from '@dpl/core';
 import { createAdminSupabase } from '@dpl/db/admin';
-import { readPortalLinkToken } from '@dpl/db/links';
+import { createResumeToken, readPortalLinkToken, resumeUrl } from '@dpl/db/links';
 import { isSameBrowser, markEmailVerified, openPortalSession } from '@dpl/db/portal-session';
-import type { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { isBilingual as bilingual } from '@/lib/bilingual';
 import { localizePath } from '@/components/auth/logic/paths';
 import { redirectTo } from '@/server/auth';
+
+/** Portal-side names of the funnel steps an emailed link can lead to, and where they live on the firm's site. */
+const FUNNEL_STEPS: Record<string, string> = {
+  '/booking': '/apply/booking',
+  '/offer': '/apply/offer',
+  '/details': '/apply/details',
+  '/eligibility': '/apply/eligibility',
+};
 
 /**
  * The link in every email: /go/[token]. A signed, 60-day token bound to the lead's session epoch. It proves control
@@ -28,6 +37,19 @@ export async function openFromEmailLink(req: Request, locale: Locale, token: str
     const verified = await markEmailVerified(db, lead, { sameBrowser });
     // the link was received at this address: the mailbox is proven (a staff account is still never taken over)
     await openPortalSession(db, verified, { mailboxProven: true });
+    // a funnel step ("Book my free call", "Change or cancel") lives on the firm's site, which has no cookie for this
+    // browser: hand the verified lead over with a short-lived token instead of redirecting into a page that cannot know us
+    const prefix = bilingual() && locale === 'he' ? '/he' : '';
+    // Proving the mailbox from a browser that did not create the lead replaces the lead's session epoch (the defence
+    // against somebody who registered the address first), which also ends the cookie the firm's site gave THIS owner
+    // when they filled in the form: so a plain /portal visit passes through the firm's site once to get a fresh one.
+    const renewed = verified.session_epoch !== lead.session_epoch && link.next === '/portal';
+    const step = FUNNEL_STEPS[link.next] ?? (renewed ? '/portal' : undefined);
+    if (step) {
+      const target = `${prefix}${step}`;
+      const token = await createResumeToken(verified, target);
+      if (token) return NextResponse.redirect(resumeUrl(token), 303);
+    }
     return redirectTo(req, localizePath(link.next, locale));
   } catch (e) {
     console.error('[go] could not open the portal from an emailed link', e);

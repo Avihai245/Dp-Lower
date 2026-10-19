@@ -19,7 +19,6 @@ test.describe('lead list and board', () => {
     await expect(row).toContainText('1/8'); // one document received
     await expect(row).toContainText('Application Incomplete'); // status label
     await expect(row).toContainText('Application in progress'); // stage label
-    await expect(row).toContainText('United States'); // residence from the quiz answer
     await expect(page.locator('[data-stats]')).toContainText('Need attention');
     await expect(page.locator('[data-stats]')).toContainText('Waiting on applicant');
 
@@ -144,6 +143,12 @@ test.describe('lead list and board', () => {
     expect(await activity(world.alpha.id, 'stage_changed')).toHaveLength(before);
     await page.unroute('**/*');
   });
+
+  test('the list row shows the residence from the quiz answer', async ({ managerPage: page, world }) => {
+    // (the CRM reads the quiz copy from its own copy of the funnel's messages, apps/campaign/messages/*/funnel.json)
+    await openList(page);
+    await expect(page.locator(`[data-lead-row="${world.alpha.id}"]`)).toContainText('United States'); // residence: 'us'
+  });
 });
 
 test.describe('lead page', () => {
@@ -165,11 +170,8 @@ test.describe('lead page', () => {
     await expect(page.getByRole('link', { name: world.alpha.email })).toHaveAttribute('href', `mailto:${world.alpha.email}`);
     await expect(page.getByRole('link', { name: world.alpha.phone })).toHaveAttribute('href', /^tel:\+1718555/);
 
-    // eligibility answers use the quiz copy
-    await expect(page.locator('[data-answers-panel]')).toContainText('Which country is your family connection to?');
-    await expect(page.locator('[data-answers-panel]')).toContainText('Germany');
-    await expect(page.locator('[data-answers-panel]')).toContainText('My grandparent');
-    await expect(page.locator('[data-answers-panel]')).toContainText('United States');
+    // the eligibility answers panel is there (its content is checked in the tests below)
+    await expect(page.locator('[data-answers-panel]')).toBeVisible();
 
     // the booked call of beta is shown as a chip on beta's page
     await page.getByRole('button', { name: /^Austria/ }).click();
@@ -615,6 +617,23 @@ test.describe('lead page', () => {
     await update('leads', `id=${eq(world.beta.id)}`, { full_name: world.beta.name, status: 'application_submitted' });
   });
 
+  test('the eligibility answers use the quiz copy: the question, then the answer as the applicant read it', async ({ managerPage: page, world }) => {
+    // (the CRM reads the quiz copy from its own copy of the funnel's messages, apps/campaign/messages/*/funnel.json)
+    await page.goto(`/admin/leads/${world.alpha.id}`);
+    await expect(page.locator('[data-answers-panel]')).toContainText('Which country is your family connection to?');
+    await expect(page.locator('[data-answers-panel]')).toContainText('Germany');
+    await expect(page.locator('[data-answers-panel]')).toContainText('My grandparent');
+    await expect(page.locator('[data-answers-panel]')).toContainText('United States');
+    await expect(page.locator('[data-answers-panel]')).not.toContainText('Not recorded');
+  });
+
+  test('Hebrew: the eligibility answers use the Hebrew quiz copy', async ({ managerPage: page, world }) => {
+    // (the CRM reads the quiz copy from its own copy of the funnel's messages, apps/campaign/messages/*/funnel.json)
+    await page.goto(`/he/admin/leads/${world.alpha.id}`);
+    await expect(page.locator('[data-answers-panel]')).toContainText('עם איזו מדינה יש לכם קשר משפחתי?');
+    await expect(page.locator('[data-answers-panel]')).not.toContainText('לא נרשם');
+  });
+
   test('Hebrew: the CRM is translated and mirrored', async ({ managerPage: page, world }) => {
     await page.goto('/he/admin');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -626,7 +645,7 @@ test.describe('lead page', () => {
     await expect(page.locator('h1')).toHaveText(world.alpha.name);
     await expect(page.getByText('הפעולה הבאה')).toBeVisible();
     await expect(page.locator('[data-docs-panel]')).toContainText('מסמכים');
-    await expect(page.locator('[data-answers-panel]')).toContainText('עם איזו מדינה יש לכם קשר משפחתי?');
+    await expect(page.locator('[data-answers-panel]')).toBeVisible();
     // no horizontal scrolling
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   });

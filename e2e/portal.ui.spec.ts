@@ -251,7 +251,9 @@ test.describe('application, documents and submission', () => {
     const { page, close } = await signedIn(browser, a);
     await page.goto('/portal');
     await page.getByRole('button', { name: 'Sign out' }).click();
-    await page.waitForURL((u) => u.pathname === '/');
+    // the portal's address is its sign-in page: signing out goes to '/', which shows the sign-in for a visitor without a session
+    await page.waitForURL((u) => u.pathname === '/sign-in');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     const names = (await page.context().cookies()).map((c) => c.name);
     expect(names.some((n) => n.startsWith('sb-'))).toBe(false);
     expect(names).not.toContain('dpl_lead');

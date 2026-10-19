@@ -1,7 +1,9 @@
 'use client';
+import type { Locale } from '@dpl/core';
 import { s, useScrolledPast, x } from '@dpl/ui';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { campaignUrl } from '@/lib/shell/campaign';
 import { AdvisorButton } from './AdvisorButton';
 import { LanguageSwitch } from './LanguageSwitch';
 
@@ -14,6 +16,7 @@ const NAV_LINK_HOVER = 'color: #a07a3c';
  */
 export function Header() {
   const t = useTranslations('landing.header');
+  const locale = useLocale() as Locale;
   const scrolled = useScrolledPast(40);
 
   const headerCss =
@@ -60,8 +63,8 @@ export function Header() {
           <a href="#faq" {...x(NAV_LINK, { hover: NAV_LINK_HOVER })}>
             {t('faq')}
           </a>
-          <Link
-            href="/sign-in"
+          <a
+            href={campaignUrl(locale, 'sign-in')}
             {...x(
               // a <button> in the prototype: its label is centred both ways, and line-height is `normal`
               "background: none; border: 0; padding: 0; font-family: 'Manrope', system-ui, sans-serif; font-size: 15px; font-weight: 500; color: #736d64; cursor: pointer; border-bottom: 1px solid #ece6dc; line-height: normal; text-decoration: none; display: flex; align-items: center; justify-content: center; text-align: center",
@@ -69,7 +72,7 @@ export function Header() {
             )}
           >
             {t('track')}
-          </Link>
+          </a>
         </nav>
         <LanguageSwitch />
         <AdvisorButton

@@ -7,7 +7,7 @@ import { sessionCookies } from './support/admin-auth';
 import { activity, emails, eq, events, eventually, insert, remove, select } from './support/admin-db';
 import { expect, openLead, test } from './support/admin-fixtures';
 import { SOURCE } from './support/admin-world';
-import { cleanup as cleanupFunnel, leadBody, newEmail, newIp } from './support/funnel';
+import { FUNNEL_URL, cleanup as cleanupFunnel, leadBody, newEmail, newIp } from './support/funnel';
 
 /**
  * Calendars per lawyer and the call on the lead page.
@@ -248,8 +248,9 @@ test('a booked call goes to the lawyer, shows them on the lead page and in the u
   playwright,
   world,
 }) => {
+  // the applicant books on the firm's site (the funnel and its APIs live there); the CRM under test is the portal's
   const client = await playwright.request.newContext({
-    baseURL: world.baseURL,
+    baseURL: FUNNEL_URL,
     extraHTTPHeaders: { 'x-forwarded-for': newIp() },
   });
   const email = newEmail('crm-call');

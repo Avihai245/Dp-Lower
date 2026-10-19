@@ -56,8 +56,9 @@ export function Dashboard({ initial }: { initial: PortalState }) {
       /* the server call below closes the session too */
     }
     // also clears the httpOnly lead cookie, which could otherwise open the portal again without a password
-    await api('/api/portal/sign-out', { method: 'POST' });
-    window.location.assign(locale === 'he' ? '/he' : '/');
+    const out = await api<{ forgetUrl?: string }>('/api/portal/sign-out', { method: 'POST' });
+    // the firm's site holds a lead cookie of its own: pass through it so a shared computer keeps nothing of this visit
+    window.location.assign(out.data?.forgetUrl ? `${out.data.forgetUrl}?l=${locale}` : locale === 'he' ? '/he' : '/');
   };
 
   return (
