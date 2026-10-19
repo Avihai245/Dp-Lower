@@ -68,7 +68,7 @@ Set them in each Vercel project (Settings, Environment Variables, Production + P
 | `SEND_EMAIL_HOOK_SECRET` | from Supabase step 5 |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET` | optional |
 
-**Main site (`dpl-main`)**: `NEXT_PUBLIC_SITE_URL=https://www.lawoffice.org.il`, `NEXT_PUBLIC_CAMPAIGN_URL=https://euro-passports.com`, `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (its contact forms write to the same database through the server), optional `EMAIL_FROM_*` and Turnstile keys. The main site only queues mail and events in the outbox; the campaign's dispatcher delivers them, so the Zapier URLs and `APP_SECRET` belong in the campaign project only.
+**Main site (`dpl-main`)**: it hosts the firm's website AND the landing pages and eligibility funnel (`/apply`), so it needs: `NEXT_PUBLIC_SITE_URL=https://www.lawoffice.org.il`, `NEXT_PUBLIC_CAMPAIGN_URL` (the address of the **campaign/portal app**; the build stops if it is missing), `NEXT_PUBLIC_CAMPAIGN_LOCALES`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and **the same `APP_SECRET` as the campaign** (it signs the lead cookie, the unsubscribe links and the 2-minute token that carries "Go to my portal" to the other site; with different values every hand-over fails), optional `EMAIL_FROM_*`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET`, `CLIENT_IP_SOURCE`. The main site queues mail and events in the outbox; the campaign's dispatcher delivers them, so the Zapier URLs and `CRON_SECRET` belong in the campaign project only.
 
 ## 4. Zapier
 

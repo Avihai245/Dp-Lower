@@ -8,8 +8,10 @@ Two Next.js 15 apps (App Router, TypeScript, React 19) in a pnpm monorepo, both 
 
 | App | Domain (production) | Port | What it is |
 |---|---|---|---|
-| `apps/main` (`@dpl/main`) | www.lawoffice.org.il | 3000 | The law firm's website: home, about, 22 services, 37 team members, 8 articles, testimonials, media, contact, legal pages |
-| `apps/campaign` (`@dpl/campaign`) | euro-passports.com | 3001 | German/Austrian citizenship campaign: landing page, eligibility quiz, lead capture, free-call booking, personalised offer, client portal (application + documents), firm CRM at `/admin` |
+| `apps/main` (`@dpl/main`) | www.lawoffice.org.il | 3000 | The law firm's website (home, about, 22 services, 37 team members, 8 articles, testimonials, media, contact, legal pages) **and, since 2026-10-14, the campaign's landing pages and eligibility funnel under `/apply`**: landing page, six-question quiz, lead capture, free-call booking, personalised offer, with their APIs (`/api/leads`, `/api/lead`, `/api/availability`, `/api/bookings`, `/api/callbacks`, `/api/results/email`, `/api/portal/enter`, `/api/contact`) |
+| `apps/campaign` (`@dpl/campaign`) | euro-passports.com | 3001 | The client side: sign-in and set-password, the client portal (application + documents), the firm CRM at `/admin`, the emailed `/go/<token>` links, `/enter/<token>`, unsubscribe, the portal APIs (`/api/portal/*`, `/api/auth/*`, `/api/unsubscribe*`) and the dispatcher `/api/cron/dispatch`. Its old landing and funnel paths (`/eligibility`, `/details`, `/booking`, `/offer`, `/privacy`) redirect permanently to `/apply/...` on the firm's site; `/` shows sign-in (or the portal) |
+
+**How a lead crosses from one site to the other.** The lead cookie `dpl_lead` belongs to the firm's site. "Go to my portal" calls `POST /api/portal/enter` there, which mints a 2-minute `enter` token (purpose-bound, tied to the lead's `session_epoch`) and returns the address `…/enter/<token>` on the portal's domain; that route opens the real portal session WITHOUT marking the mailbox as verified (an address that already has someone else's sign-in account is never taken over: the visitor is sent to sign in). The emailed `/go/<token>` links still prove the mailbox. Both apps must therefore share `APP_SECRET` and the same Supabase project.
 
 Backend: Supabase (Postgres + RLS, Auth, Storage, Realtime). Email and CRM sync go through a transactional outbox
 (`events` table) that a dispatcher delivers to Zapier webhooks. There is no other backend service.
@@ -106,7 +108,7 @@ Implemented in `packages/db/src/lead-session.ts`, `portal-session.ts`, `links.ts
 6. Staff are Supabase users with a row in `staff`. `/portal/**` requires a session (middleware); `/admin/**` requires a session **and** `staff` membership (checked in the admin layout and again in every server action/route with `requireStaff()`).
 7. Every state-changing route: `assertSameOrigin(req)`, rate limit (`limitOrThrow`), zod validation (`parseJson`), error codes via `ApiError`, wrapped in `handle()`. Honeypot field `website` on public forms; Turnstile (`verifyTurnstile`) when configured.
 
-## 8. API contract (campaign app, `apps/campaign/src/app/api/**/route.ts`)
+## 8. API contract (`apps/main/src/app/api/**` for the funnel routes, `apps/campaign/src/app/api/**` for the portal routes; each row says nothing about the host unless it differs: `/api/leads`, `/api/lead*`, `/api/availability`, `/api/bookings`, `/api/callbacks`, `/api/results/email`, `/api/portal/enter`, `/api/contact` are on the firm's site, everything else on the campaign)
 
 All JSON. Errors: `{ error: '<code>', details? }` with the right status (400 invalid_body, 401 unauthorized, 403 forbidden/bad_origin, 404 not_found, 409 conflict codes, 429 rate_limited). Success payloads below. Schemas are in `@dpl/core` (`schemas.ts`).
 
