@@ -108,6 +108,17 @@ For each app: New Project, import the repository, set **Root Directory** to the 
 
 **Scheduled work.** `/api/cron/dispatch` (campaign) sends the nurture emails that are due and delivers the outbox. `apps/campaign/vercel.json` schedules it every 5 minutes (Vercel Pro; Vercel sends `Authorization: Bearer $CRON_SECRET` itself). **The Hobby plan only allows daily crons and would fail the deploy:** delete the `crons` block from `vercel.json` and run `supabase/snippets/dispatch-cron.sql` in the Supabase SQL editor instead (a `pg_cron` + `pg_net` job, every minute, that calls the same URL with the same bearer token; the secret is kept in Supabase Vault). Until the first dispatch runs, nothing is lost: events wait in the table.
 
+### After the first deploy: the smoke test
+
+`pnpm smoke:live` checks the DEPLOYED system the way a visitor sees it, and only reads (it creates no lead, booking or account):
+
+```bash
+pnpm smoke:live --main https://www.lawoffice.org.il --portal https://euro-passports.com \
+  --supabase https://<project-ref>.supabase.co --anon-key <publishable key> --rate-limit
+```
+
+It covers: every public page of the firm's site and the landing pages answer; the "Client portal" and sign-in links go to the portal app (not to the old address); the call times come out of the real database; the portal's private pages send a visitor to sign-in; bad emailed links end on "link expired"; the dispatcher refuses a call without the secret; writes from another website are refused; the security headers and the CSP hand-over rule; robots and sitemaps; with `--supabase`/`--anon-key`, that a visitor reads no rows of any table, writes nothing, cannot call the staff helpers, finds the `documents` bucket private and that e-mail sign-ups are not auto-confirmed; with `--rate-limit`, that a visitor cannot choose their own rate-limit address (this is the `CLIENT_IP_SOURCE` check above). It also runs against `localhost` (against the local stack the sign-up check fails by design, because the local config auto-confirms). Exit code 1 when any check fails. What it cannot do for you: sign in as an applicant or as staff, receive an email, use Google, and run the scheduled dispatch; do those by hand once: create a test lead from `/apply`, check the email arrives, sign in at the portal, open `/admin`, enrol the authenticator app (below).
+
 ## 6. First staff user
 
 After the first deploy, create your administrator (service role key in the environment):
