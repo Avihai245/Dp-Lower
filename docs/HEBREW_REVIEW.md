@@ -81,6 +81,8 @@ Change these in one search-and-replace if the firm prefers other words.
 - Calendars per lawyer (`availability.scopes.*`, `help.calendars`): "יומן" (Calendar), "ללא שיוך (כל עורך/ת דין)" (Unassigned, any lawyer), "שעות שבועיות: {name}", "אפשר לשנות רק את השעות שלכם.", "סגור לכולם" (Closed for everyone), "חל על" (Applies to), "{name} בלבד", "עורך/ת דין: {name}", "כל עורך/ת דין"; the help text says "ימי היעדרות" for a lawyer's days off.
 - The call on the lead page (`callPanel.*`, `help.call`, activity codes `booking_completed`, `booking_held`, `booking_no_show`): "שיחת ייעוץ חינם", "נקבעה" / "ממתינה לסימון" / "התקיימה" / "לא נענתה" for booked, waiting to be marked, held and no-show (the no-show is phrased as "the call was not answered", which keeps it gender-neutral), "סימון כהתקיימה", "סימון כלא נענתה", "ביטול השיחה", "לבטל את השיחה? יישלח למבקש/ת מייל שהשיחה לא תתקיים.", "ללא שיוך לעורך/ת דין", "מועד השיחה עבר; היא סומנה כהתקיימה".
 
+- Two-step verification for staff (`auth.mfa.*`, `admin.nav.security`): "אימות דו-שלבי", "הזינו את הקוד.", "קוד בן 6 ספרות", "אפליקציית אימות" (authenticator app), "הגדרת אפליקציית אימות", "סרקו את הקוד", "המשרד מחייב אימות דו-שלבי...", "אבטחה" for the header link. The author's wording, staff-facing only.
+
 ### Emails
 
 - "אימות" for legalisation, "פקיד קבלה" for intake clerk, "בחו״ל" for abroad.

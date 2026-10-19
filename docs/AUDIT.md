@@ -8,12 +8,12 @@ code is organised), `DEPLOYMENT.md` (how to go live) and `HEBREW_REVIEW.md` (the
 
 | Check | Where | What it proves |
 |---|---|---|
-| Unit and integration tests | `pnpm test` (Vitest; 86 files, 1,408 tests) | Business rules (`@dpl/core`), the email templates (every template, both languages, structure, escaping, fidelity against the design's HTML), the nurture schedule and outbox against the real local Supabase, token and cookie handling, message parity (every English key has a Hebrew twin, non-empty values), Hebrew bidi guard, route lists |
-| SQL tests | `pnpm db:test` (`supabase/tests/001..006` and `010`) | Schema, RLS (applicants read only their own rows, the Data API is read-only for signed-in users), booking capacity under concurrency, per-lawyer booking and the clean-up of past calls, outbox claiming, storage policies, case references, the Realtime publication and pinned function paths |
-| End-to-end | `pnpm e2e` (Playwright, production builds, desktop + phone width, English + Hebrew; 247 tests) | The whole journey (landing, quiz, details, booking, offer, password, portal, application, uploads, submit, CRM status change visible in the portal), every API route, the three firm-website forms, CRM actions and permissions, SEO of every sitemap URL, no console or CSP errors, no sideways scroll, axe accessibility scan of 40+ pages |
+| Unit and integration tests | `pnpm test` (Vitest; 91 files, 1,468 tests) | Business rules (`@dpl/core`), the email templates (every template, both languages, structure, escaping, fidelity against the design's HTML), the nurture schedule and outbox against the real local Supabase, token and cookie handling, message parity (every English key has a Hebrew twin, non-empty values), Hebrew bidi guard, route lists |
+| SQL tests | `pnpm db:test` (`supabase/tests/001..006`, `010` and `011`) | Schema, RLS (applicants read only their own rows, the Data API is read-only for signed-in users), booking capacity under concurrency, per-lawyer booking and the clean-up of past calls, outbox claiming, storage policies, case references, the Realtime publication and pinned function paths |
+| End-to-end | `pnpm e2e` (Playwright, production builds, desktop + phone width, English + Hebrew; 355 tests: 348 pass and 7 skip on the bilingual build, the rest pass and 35 skip on the default English-only build, where the Hebrew tests skip themselves; both builds run in CI) | The whole journey (landing, quiz, details, booking, offer, password, portal, application, uploads, submit, CRM status change visible in the portal), every API route, the three firm-website forms, CRM actions and permissions, SEO of every sitemap URL, no console or CSP errors, no sideways scroll, axe accessibility scan of 40+ pages |
 | Visual comparison | `tools/visual` | Screenshots of the prototypes next to the app at 1440 and 390 px; differences listed in section 4 |
 | Independent audits (three agents that did not write the code) | this section | See 1.1 |
-| Dependency audit | `pnpm audit --prod` | Clean after the `postcss` override |
+| Dependency audit | `pnpm audit --prod` | Clean (nothing that ships is affected). The full `pnpm audit` was cleared of the vitest/tinypool findings by moving to vitest 4; one dev-only finding is left, `braces` (stack exhaustion on a hostile glob) behind the lint plugin, which has no patched release and processes only the repository's own file patterns |
 | Database advisors | `pnpm exec supabase db advisors --local` | Security and performance advisors report nothing (migration 14 pinned the `search_path` of five helper functions). Run it again on the hosted project once it exists |
 
 ### 1.1 Independent audits and what became of their findings
@@ -142,6 +142,30 @@ Accepted or left to the firm: a name typed as `Tom <tom@evil.com>` is stored as 
 | J-1 | A visitor who came from an ad to the firm's website and then opened the eligibility check lost the ad: the campaign is another domain and the link carried only `source=main-site` | The website now adds the first-touch `utm_*` parameters to links into the campaign when they are used (click, middle click, copy link); `withCampaignParams` is unit-tested (well-formed keys only, at most eight, values bounded, other sites untouched) |
 | J-2 | The lead page in the CRM did not show where the lead came from | A "Came from" line under Contact shows the source and the campaign parameters (English and Hebrew) |
 
+### 1.1h Fifth round: after the funnel moved to the firm's site (2026-10-14 merge) and before production
+
+Another contributor moved the landing pages and the funnel to the firm's site (`/apply`), the portal and CRM staying on the campaign domain. The whole end-to-end suite was adapted to the two-site layout (341 tests pass on the bilingual build; on the default English-only build 313 pass and the Hebrew ones skip themselves) and doing so found real defects, all fixed and each covered by a test:
+
+| ID | Finding | Resolution |
+|---|---|---|
+| R-1 | A signed-in member of staff (and an invited one after setting a password) was bounced between `/` and `/portal` for ever | Staff go to `/admin`; the sign-in page shows its form for a signed-in user with neither a file nor a staff role |
+| R-2 | The landing page's "Track my application" and footer "Sign in" links went to a 404 on the firm's site | They go to the portal's sign-in |
+| R-3 | The CRM showed raw keys instead of the quiz answers and an empty residence column (the funnel messages had moved away) | The CRM has them again; a test keeps the two copies equal |
+| R-4 | Emailed "Book my free call" / "Change or cancel" could not work in production (the firm's site has no cookie for a browser that came from the email; the portal's CSP also blocked the cross-site redirect) | `/go` hands the verified lead over to the firm's site with a single-use `resume` token; the CSP allows the firm's origin as a form target |
+| R-5 | Opening the first email in the browser that filled in the form ended that browser's firm-site cookie (the mailbox proof renews the lead's epoch) | The same hand-over restores the cookie for the verified owner |
+| R-6 | "Send the link again" on the details form called a route that only existed on the portal | The route exists on the firm's site |
+| R-7 | Signing out of the portal left the firm-site lead cookie behind: the next person at a shared computer could reach the portal without a password | Sign-out passes through `/api/lead/forget`; verified end to end |
+| R-8 | The funnel's phone-width CSS and the "no JavaScript" figures were lost in the move (pages scrolled sideways on a phone; "0+" figures) | Restored |
+| R-9 | The service and contact pages' eligibility buttons made a cross-site hop through the portal's old redirect; the invite dialog hid server refusals | Internal links; the dialog uses the server's address rule |
+| R-10 | Visits to the firm's own pages were labelled with the campaign's source | They are labelled `main-site` |
+| R-11 | The Hebrew edition of `/apply` and the country-based Hebrew start applied to the English-only landing pages | `/he/apply` redirects while the campaign setting is English only; no sitemap or hreflang entries for it |
+| R-12 | Behind Amplify a visitor could pick their own rate-limit bucket with `x-real-ip` | `CLIENT_IP_SOURCE=xff` (or `cloudfront`) with `TRUSTED_PROXY_HOPS`; documented for Amplify |
+| R-13 | `enter` / `resume` hand-over tokens could be replayed inside their two minutes | Single use |
+| R-14 | GitHub started no job on any push since 2026-10-09: `.github/workflows/ci.yml` was invalid YAML (an unquoted step name containing a colon), so the whole pipeline had never run | Quoted; the build job also sets the portal address the firm's site now refuses to build without; the e2e job runs the whole suite on both builds. First real run: verify, build, database and end-to-end all green |
+| R-15 | The committed `supabase/config.toml` carried a temporary local database port (54332), so the CI database job could not connect | Back to 54322 |
+
+Remaining, accepted: the hand-over tokens appear in one redirect URL (single use, two minutes). Staff two-step verification was built after this round (TOTP, optional or compulsory with `STAFF_MFA_REQUIRED`, enforced by the CRM and by the database; `e2e/admin.mfa.spec.ts`, `supabase/tests/011_staff_mfa.sql`): a staff account is as strong as its owner's use of it, so the administrator should enrol first and then switch the requirement on (DEPLOYMENT.md, "Two-step verification").
+
 ### 1.1g The campaign pages are English only (decision of 2026-10-09)
 
 The existing landing pages are English only; bilingual landing pages will come later with their own settings. Implemented as one setting, `NEXT_PUBLIC_CAMPAIGN_LOCALES` (default `en`): with it the Hebrew edition of the campaign's public pages is off (addresses under `/he` redirect to the English page; no switch, hreflang or Hebrew sitemap entries; no country redirect; the firm website's Hebrew pages link to the English campaign) and the team's Hebrew CRM stays. `en,he` brings the whole Hebrew edition back. Both modes are tested: the full suite runs on the bilingual build, `e2e/english-only.spec.ts` and the English journey on the default build (CI does both), plus unit tests of the setting, the middleware and the links. The Hebrew review notes (`docs/HEBREW_REVIEW.md`) still apply to the day the setting is turned on. The firm website is unaffected: it stays bilingual with the country start described in 1.1f.
@@ -175,9 +199,9 @@ Lighthouse 12, mobile preset (simulated 4x CPU slowdown, slow 4G), local product
 | Team (EN) | 91 | 97 | 100 | 100 | 3.2 s | 40 ms | 0 |
 | Team (HE) | 92 | 97 | 100 | 100 | 3.3 s | 30 ms | 0 |
 | Contact (EN) | 98 | 96 | 100 | 100 | 2.3 s | 80 ms | 0 |
-| Landing page (EN) | 89 | 96 | 96 | 100 | 3.4 s | 70 ms | 0.003 |
+| Landing `/apply` (EN) | 96 | 96 | 96 | 100 | 2.6 s | 40 ms | 0.001 |
 | Landing page (HE) | 93 | 96 | 96 | 100 | 3.0 s | 160 ms | 0 |
-| Quiz (EN) | 86 | 96 | 100 | 58 | 4.3 s | 60 ms | 0.026 |
+| Eligibility questions `/apply/eligibility` (EN) | 90 | 96 | 100 | 92 | 3.3 s | 110 ms | 0 |
 | Quiz (HE) | 97 | 96 | 100 | 58 | 2.6 s | 50 ms | 0.004 |
 | Sign-in (EN) | 98 | 96 | 96 | 58 | 2.3 s | 80 ms | 0 |
 | Sign-in (HE) | 97 | 96 | 96 | 58 | 2.3 s | 150 ms | 0 |

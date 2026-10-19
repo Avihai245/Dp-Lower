@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { createAdminSupabase } from '@dpl/db/admin';
 import { readEnterToken } from '@dpl/db/links';
+import { claimOnce } from '@dpl/db/single-use';
 import { AccountEmailInUse, openPortalSession } from '@dpl/db/portal-session';
 import { localizePath } from '@/components/auth/logic/paths';
 import { localeOf, redirectTo } from '@/server/auth';
@@ -29,6 +30,8 @@ export async function GET(req: NextRequest, { params }: Ctx) {
 
   try {
     const db = createAdminSupabase();
+    // one use: the address of this redirect may end up in a log or a history, and must not work a second time
+    if (!(await claimOnce(db, token))) return toSignIn('link');
     const { data: lead } = await db.from('leads').select('*').eq('id', link.leadId).maybeSingle();
     if (!lead || lead.session_epoch !== link.epoch) return toSignIn('link');
 

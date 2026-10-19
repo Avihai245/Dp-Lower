@@ -6,9 +6,25 @@ import { expect, test, type Page } from '@playwright/test';
  * indexable page needs (and that the funnel pages must not have). Run against `next start` servers:
  *
  *   CAMPAIGN_URL=http://localhost:3001 MAIN_URL=http://localhost:3000 pnpm exec playwright test e2e/hygiene.spec.ts
+ *
+ * Two sites: MAIN is the firm's website AND, under /apply, the landing page and the eligibility funnel; CAMPAIGN is the
+ * client portal (sign-in and the pages around it; its bare address is the sign-in, its old landing paths redirect to
+ * MAIN's /apply). The Hebrew edition of /apply (/he/apply) needs NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he on MAIN.
  */
 const CAMPAIGN = process.env.CAMPAIGN_URL ?? 'http://localhost:3001';
 const MAIN = process.env.MAIN_URL ?? 'http://localhost:3000';
+const APPLY = '/apply';
+
+/** Is the Hebrew edition of the funnel (/he/apply) switched on? Without it that address redirects to /apply. */
+let hebrewFunnel = true;
+/** The same for the client portal (/he/sign-in redirects to /sign-in without it). */
+let hebrewCampaign = true;
+test.beforeAll(async () => {
+  const res = await fetch(`${MAIN}/he${APPLY}`, { redirect: 'manual', headers: { accept: 'text/html' } });
+  hebrewFunnel = res.status !== 307 && res.status !== 308;
+  const portal = await fetch(`${CAMPAIGN}/he/sign-in`, { redirect: 'manual', headers: { accept: 'text/html' } });
+  hebrewCampaign = portal.status !== 307 && portal.status !== 308;
+});
 
 interface Watch {
   problems: string[];
@@ -57,12 +73,16 @@ const meta = (page: Page, selector: string, attr = 'content') => page.locator(se
 
 test.describe('fonts', () => {
   for (const [name, origin, path] of [
-    ['campaign', CAMPAIGN, '/'],
     ['campaign', CAMPAIGN, '/sign-in'],
+    ['campaign', CAMPAIGN, '/link-expired'],
     ['main', MAIN, '/'],
     ['main', MAIN, '/team'],
+    ['main', MAIN, APPLY],
+    ['main', MAIN, `${APPLY}/eligibility`],
   ] as const) {
     test(`${name} ${path}: the Hebrew page asks for its four font files with the page, the English one for none`, async ({ request }) => {
+      test.skip(path.startsWith(APPLY) && !hebrewFunnel, 'the Hebrew edition of /apply is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
+      test.skip(origin === CAMPAIGN && !hebrewCampaign, 'the Hebrew edition of the portal is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
       // a page rendered ahead of time carries the hints in its HTML, one rendered per request in a `Link` response header
       const preloaded = async (url: string) => {
         const res = await request.get(url);
@@ -89,8 +109,9 @@ test.describe('fonts', () => {
   }
 
   test('English pages do not download the Hebrew fonts (the language switch is not prefetched) and log no unused-preload warning', async ({ page }) => {
-    // the one exception: the campaign header writes the other language's name, "עברית", in the Hebrew-capable family (7 KB)
-    for (const url of [`${CAMPAIGN}/`, `${CAMPAIGN}/sign-in`, `${MAIN}/`, `${MAIN}/team`]) {
+    // the one exception: the header of the landing page and the funnel (the firm's /apply) writes the other language's
+    // name, "עברית", in the Hebrew-capable family (7 KB); the portal's sign-in has no language switch and loads none
+    for (const url of [`${CAMPAIGN}/`, `${CAMPAIGN}/sign-in`, `${MAIN}/`, `${MAIN}/team`, `${MAIN}${APPLY}`, `${MAIN}${APPLY}/eligibility`]) {
       const fonts: string[] = [];
       const warnings: string[] = [];
       page.on('response', (r) => {
@@ -102,7 +123,8 @@ test.describe('fonts', () => {
       await page.goto(url, { waitUntil: 'networkidle' });
       await page.waitForTimeout(1500);
       const hebrew = fonts.filter((f) => /hebrew|frank-ruhl|assistant/.test(f)).map((f) => f.replace(/^.*\//, '').replace(/\.[0-9a-f]{8}\.woff2$/, ''));
-      expect(hebrew, url).toEqual(url.startsWith(CAMPAIGN) ? ['assistant-hebrew-wght-normal'] : []);
+      const switchLabelOnly = url.startsWith(`${MAIN}${APPLY}`) && hebrewFunnel;
+      expect(hebrew, url).toEqual(switchLabelOnly ? ['assistant-hebrew-wght-normal'] : []);
       expect(warnings, url).toEqual([]);
       page.removeAllListeners('response');
       page.removeAllListeners('console');
@@ -110,7 +132,8 @@ test.describe('fonts', () => {
   });
 
   test('a Hebrew page does not jump when its fonts arrive (a 412 px phone on a slow connection)', async ({ browser }) => {
-    for (const url of [`${CAMPAIGN}/he`, `${MAIN}/he`]) {
+    test.skip(!hebrewFunnel, 'the Hebrew edition of /apply is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
+    for (const url of [`${CAMPAIGN}/he/sign-in`, `${MAIN}/he`, `${MAIN}/he${APPLY}`]) {
       const context = await browser.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true });
       const page = await context.newPage();
       const cdp = await context.newCDPSession(page);
@@ -134,11 +157,16 @@ test.describe('fonts', () => {
 });
 
 test.describe('without JavaScript', () => {
-  for (const [path, figures] of [['/', ['1,200+', '15+', '94%', '30+']], ['/he', ['1,200+', '15+', '94%', '30+']]] as const) {
-    test(`campaign ${path}: the figures show their real values, not 0 (the count-up needs scripts)`, async ({ browser }) => {
+  // the landing page lives on the firm's site now (the campaign's own address is the portal's sign-in)
+  for (const [path, figures] of [[APPLY, ['1,200+', '15+', '94%', '30+']], [`/he${APPLY}`, ['1,200+', '15+', '94%', '30+']]] as const) {
+    test(`main ${path}: the figures show their real values, not 0 (the count-up needs scripts)`, async ({ browser }) => {
+      // The figures strip draws "0+" / "0%" and counts up with scripts; the real values are in a visually hidden span
+      // (.dpl-sr-only). Without scripts the <noscript><style> of the /apply layout hides the "0+" and shows the real value, so a
+      // visitor without JavaScript (and a crawler that does not run it) is not told "0+ 0+ 0% 0+".
+      test.skip(path.startsWith('/he') && !hebrewFunnel, 'the Hebrew edition of /apply is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
       const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
       const page = await context.newPage();
-      await page.goto(`${CAMPAIGN}${path}`);
+      await page.goto(`${MAIN}${path}`);
       const strip = page.locator('[data-count]');
       await strip.scrollIntoViewIfNeeded();
       for (const figure of figures) await expect(strip.locator('.dpl-sr-only', { hasText: new RegExp(`^${figure.replace(/[+]/g, '\\+')}$`) })).toBeVisible();
@@ -147,43 +175,106 @@ test.describe('without JavaScript', () => {
       expect(text).not.toMatch(/(^|\s)0[+%]/);
       await context.close();
     });
-  }
-});
 
-test.describe('security headers', () => {
-  for (const [name, origin] of [['campaign', CAMPAIGN], ['main', MAIN]] as const) {
-    test(`${name}: every response carries the hardening headers and a strict CSP`, async ({ request }) => {
-      for (const path of ['/', '/he']) {
-        const res = await request.get(origin + path);
-        expect(res.status(), path).toBe(200);
-        const h = res.headers();
-        expect(h['x-content-type-options']).toBe('nosniff');
-        expect(h['x-frame-options']).toBe('SAMEORIGIN');
-        expect(h['referrer-policy']).toBe('strict-origin-when-cross-origin');
-        expect(h['strict-transport-security']).toContain('max-age=');
-        expect(h['permissions-policy']).toContain('camera=()');
-        const csp = h['content-security-policy'] ?? '';
-        expect(csp).toContain("default-src 'self'");
-        expect(csp).toContain("object-src 'none'");
-        expect(csp).toContain("base-uri 'self'");
-        expect(csp).toContain("frame-ancestors 'self'");
-        // nothing may be framed or scripted from anywhere but the services the pages really use
-        for (const host of csp.match(/https?:\/\/[^\s;]+/g) ?? []) {
-          expect(host, `unexpected host in the CSP: ${host}`).toMatch(/challenges\.cloudflare\.com|youtube(-nocookie)?\.com|i\.ytimg\.com|127\.0\.0\.1|localhost|\.supabase\.co/);
-        }
-        expect(csp).not.toContain("'unsafe-eval'");
-      }
+    test(`main ${path}: the page is complete without scripts: headline, the way into the quiz, the figures strip and the questions`, async ({ browser }) => {
+      test.skip(path.startsWith('/he') && !hebrewFunnel, 'the Hebrew edition of /apply is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
+      const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
+      const page = await context.newPage();
+      const res = await page.goto(`${MAIN}${path}`);
+      expect(res?.status()).toBe(200);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      const prefix = path.startsWith('/he') ? '/he' : '';
+      await expect(page.locator(`a[href="${prefix}${APPLY}/eligibility"]`).first()).toBeVisible();
+      // the figures and the answers are in the page itself, not drawn by scripts
+      await expect(page.locator('[data-count]')).toHaveCount(1);
+      expect(await page.locator('[data-count] .dpl-sr-only').allTextContents()).toEqual(figures);
+      expect(await page.locator('details, [aria-expanded]').count()).toBeGreaterThan(0);
+      await context.close();
     });
   }
 });
 
-const campaignPages = [
-  { path: '/', lang: 'en', dir: 'ltr', indexable: true },
-  { path: '/he', lang: 'he', dir: 'rtl', indexable: true },
-  { path: '/privacy', lang: 'en', dir: 'ltr', indexable: true },
-  { path: '/he/privacy', lang: 'he', dir: 'rtl', indexable: true },
-  { path: '/eligibility', lang: 'en', dir: 'ltr', indexable: false },
-  { path: '/he/eligibility', lang: 'he', dir: 'rtl', indexable: false },
+test.describe('security headers', () => {
+  /** The hardening headers and the strict CSP of one response. */
+  const expectHardened = (h: Record<string, string>, what: string) => {
+    expect(h['x-content-type-options'], what).toBe('nosniff');
+    expect(h['x-frame-options'], what).toBe('SAMEORIGIN');
+    expect(h['referrer-policy'], what).toBe('strict-origin-when-cross-origin');
+    expect(h['strict-transport-security'], what).toContain('max-age=');
+    expect(h['permissions-policy'], what).toContain('camera=()');
+    const csp = h['content-security-policy'] ?? '';
+    expect(csp, what).toContain("default-src 'self'");
+    expect(csp, what).toContain("object-src 'none'");
+    expect(csp, what).toContain("base-uri 'self'");
+    expect(csp, what).toContain("frame-ancestors 'self'");
+    // nothing may be framed or scripted from anywhere but the services the pages really use
+    for (const host of csp.match(/https?:\/\/[^\s;]+/g) ?? []) {
+      expect(host, `${what}: unexpected host in the CSP: ${host}`).toMatch(/challenges\.cloudflare\.com|youtube(-nocookie)?\.com|i\.ytimg\.com|127\.0\.0\.1|localhost|\.supabase\.co/);
+    }
+    expect(csp, what).not.toContain("'unsafe-eval'");
+  };
+
+  for (const [name, origin, paths] of [
+    ['campaign', CAMPAIGN, ['/sign-in', '/he/sign-in']],
+    ['main', MAIN, ['/', '/he', APPLY, `/he${APPLY}`]],
+  ] as const) {
+    test(`${name}: every response carries the hardening headers and a strict CSP`, async ({ request }) => {
+      for (const path of paths) {
+        if (path.startsWith('/he/apply') && !hebrewFunnel) continue;
+        const res = await request.get(origin + path);
+        expect(res.status(), path).toBe(200);
+        expectHardened(res.headers(), path);
+      }
+    });
+  }
+
+  test('campaign: its bare address (a redirect to the sign-in) carries them too', async ({ request }) => {
+    // (the permanent redirects of the old landing addresses come from next.config redirects(), which Next.js answers
+    // before it adds the configured headers: they have no body and lead to the firm's site, which sets its own)
+    for (const path of ['/', '/he']) {
+      const res = await request.get(CAMPAIGN + path, { maxRedirects: 0 });
+      expect([307, 308], path).toContain(res.status());
+      expectHardened(res.headers(), path);
+    }
+  });
+});
+
+interface PageCase {
+  path: string;
+  lang: 'en' | 'he';
+  dir: 'ltr' | 'rtl';
+  indexable: boolean;
+  /** false: this page has no Hebrew edition in this build (the /apply funnel with NEXT_PUBLIC_CAMPAIGN_LOCALES=en) */
+  alternates?: boolean;
+}
+
+/** The checks every page gets: a clean console, no CSP violation, the right lang/dir, the SEO tags (or noindex). */
+async function checkPage(page: Page, origin: string, p: PageCase) {
+  const w = await watch(page, origin);
+  await page.goto(origin + p.path);
+  await page.waitForLoadState('networkidle').catch(() => undefined);
+  await scrollThrough(page);
+
+  expect(await page.locator('html').getAttribute('lang')).toBe(p.lang);
+  expect(await page.locator('html').getAttribute('dir')).toBe(p.dir);
+  expect(await page.title()).not.toBe('');
+  const robots = await meta(page, 'meta[name=robots]');
+  if (p.indexable) {
+    expect(robots ?? '').not.toContain('noindex');
+    // the canonical is built from the configured site URL, which for these servers is their own origin
+    expect(strip(await meta(page, 'link[rel=canonical]', 'href'))).toBe(strip(origin + p.path));
+    const hreflangs = await page.locator('link[rel=alternate][hreflang]').evaluateAll((els) => els.map((e) => e.getAttribute('hreflang')));
+    if (p.alternates === false) expect(hreflangs).not.toContain('he');
+    else expect(hreflangs).toEqual(expect.arrayContaining(['en', 'he']));
+  } else {
+    expect(robots).toContain('noindex');
+  }
+  expect(await w.violations(), 'CSP violations').toEqual([]);
+  expect(w.problems).toEqual([]);
+}
+
+// the client portal's own public pages (the sign-in and the pages around it: none of them is indexable)
+const campaignPages: PageCase[] = [
   { path: '/sign-in', lang: 'en', dir: 'ltr', indexable: false },
   { path: '/he/sign-in', lang: 'he', dir: 'rtl', indexable: false },
   { path: '/link-expired', lang: 'en', dir: 'ltr', indexable: false },
@@ -192,33 +283,43 @@ const campaignPages = [
 
 test.describe('campaign pages', () => {
   for (const p of campaignPages) {
-    test(`${p.path}: clean console, no CSP violation, lang/dir, ${p.indexable ? 'indexable with alternates' : 'noindex'}`, async ({ page }) => {
-      const w = await watch(page, CAMPAIGN);
-      await page.goto(CAMPAIGN + p.path);
-      await page.waitForLoadState('networkidle').catch(() => undefined);
-      await scrollThrough(page);
+    test(`${p.path}: clean console, no CSP violation, lang/dir, noindex`, async ({ page }) => {
+      test.skip(p.lang === 'he' && !hebrewCampaign, 'the Hebrew edition of the portal is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
+      await checkPage(page, CAMPAIGN, p);
+    });
+  }
 
-      expect(await page.locator('html').getAttribute('lang')).toBe(p.lang);
-      expect(await page.locator('html').getAttribute('dir')).toBe(p.dir);
-      expect(await page.title()).not.toBe('');
-      const robots = await meta(page, 'meta[name=robots]');
-      if (p.indexable) {
-        expect(robots ?? '').not.toContain('noindex');
-        // the canonical is built from the configured site URL, which for these servers is their own origin
-        expect(strip(await meta(page, 'link[rel=canonical]', 'href'))).toBe(strip(CAMPAIGN + p.path));
-        const hreflangs = await page.locator('link[rel=alternate][hreflang]').evaluateAll((els) => els.map((e) => e.getAttribute('hreflang')));
-        expect(hreflangs).toEqual(expect.arrayContaining(['en', 'he']));
-      } else {
-        expect(robots).toContain('noindex');
-      }
-      expect(await w.violations(), 'CSP violations').toEqual([]);
-      expect(w.problems).toEqual([]);
+  test('its bare address is the sign-in page, in either language', async ({ page }) => {
+    // (without the Hebrew edition /he is the English sign-in too)
+    for (const [from, to] of [['/', '/sign-in'], ['/he', hebrewCampaign ? '/he/sign-in' : '/sign-in']] as const) {
+      await page.goto(CAMPAIGN + from);
+      expect(new URL(page.url()).pathname, from).toBe(to);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    }
+  });
+});
+
+// the landing page and the eligibility funnel, which live on the firm's site under /apply
+const funnelPages: PageCase[] = [
+  { path: APPLY, lang: 'en', dir: 'ltr', indexable: true },
+  { path: `/he${APPLY}`, lang: 'he', dir: 'rtl', indexable: true },
+  { path: `${APPLY}/privacy`, lang: 'en', dir: 'ltr', indexable: true },
+  { path: `/he${APPLY}/privacy`, lang: 'he', dir: 'rtl', indexable: true },
+  { path: `${APPLY}/eligibility`, lang: 'en', dir: 'ltr', indexable: false },
+  { path: `/he${APPLY}/eligibility`, lang: 'he', dir: 'rtl', indexable: false },
+];
+
+test.describe('landing page and funnel (the firm site, /apply)', () => {
+  for (const p of funnelPages) {
+    test(`${p.path}: clean console, no CSP violation, lang/dir, ${p.indexable ? 'indexable with alternates' : 'noindex'}`, async ({ page }) => {
+      test.skip(p.lang === 'he' && !hebrewFunnel, 'the Hebrew edition of /apply is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
+      await checkPage(page, MAIN, { ...p, alternates: p.path.startsWith(APPLY) && !hebrewFunnel ? false : undefined });
     });
   }
 
   test('the landing page: opening the chat, the advisor and the FAQ breaks nothing', async ({ page }) => {
-    const w = await watch(page, CAMPAIGN);
-    await page.goto(CAMPAIGN + '/');
+    const w = await watch(page, MAIN);
+    await page.goto(MAIN + APPLY);
     await page.waitForLoadState('networkidle').catch(() => undefined);
     await scrollThrough(page);
     // every control that opens something, opened and closed with the keyboard

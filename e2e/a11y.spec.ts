@@ -7,7 +7,8 @@ import { RUN, cleanup, newIp } from './support/funnel';
 
 /**
  * Automated accessibility checks (axe-core, WCAG 2.0/2.1 A and AA rules) on every kind of page of both apps, in both
- * languages: the firm website, the campaign, and, signed in, the portal and the CRM.
+ * languages: the firm website, its landing page and eligibility funnel (under /apply), the portal's public pages and,
+ * signed in, the portal and the CRM.
  *
  * Colour contrast is reported but does not fail the run: the design's palette (bronze #a07a3c on cream, grey notes) is
  * kept exactly as designed and its contrast shortfalls are a decision for the firm's designer (see docs/AUDIT.md).
@@ -21,6 +22,12 @@ const MAIN = process.env.MAIN_URL ?? 'http://localhost:3000';
 test.setTimeout(240_000);
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+
+/** Is the Hebrew edition of the funnel (/he/apply) on? Without it that address redirects to /apply. */
+async function hebrewFunnel(): Promise<boolean> {
+  const res = await fetch(`${MAIN}/he/apply`, { redirect: 'manual', headers: { accept: 'text/html' } });
+  return res.status !== 307 && res.status !== 308;
+}
 
 interface Found {
   id: string;
@@ -72,12 +79,34 @@ test.describe('firm website', () => {
   });
 });
 
-test.describe('campaign', () => {
+/** The landing page and the funnel pages that open without a lead (the later steps redirect to the quiz without one). */
+const funnelPages = ['/apply', '/apply/privacy', '/apply/eligibility'];
+
+test.describe('landing page and funnel (the firm site, /apply)', () => {
+  for (const prefix of ['', '/he']) {
+    test(`${prefix || '/en'}: public pages`, async ({ browser }) => {
+      test.skip(prefix === '/he' && !(await hebrewFunnel()), 'the Hebrew edition of /apply is switched off (NEXT_PUBLIC_CAMPAIGN_LOCALES)');
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', extraHTTPHeaders: { 'x-forwarded-for': newIp() } });
+      const page = await ctx.newPage();
+      for (const path of funnelPages) await check(page, MAIN + prefix + path);
+      await ctx.close();
+    });
+  }
+  test('phone width, both languages', async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', extraHTTPHeaders: { 'x-forwarded-for': newIp() } });
+    const page = await ctx.newPage();
+    for (const prefix of (await hebrewFunnel()) ? ['', '/he'] : ['']) for (const path of ['/apply', '/apply/eligibility']) await check(page, MAIN + prefix + path);
+    await ctx.close();
+  });
+});
+
+test.describe('campaign (the portal\'s public pages)', () => {
   for (const prefix of ['', '/he']) {
     test(`${prefix || '/en'}: public pages`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', extraHTTPHeaders: { 'x-forwarded-for': newIp() } });
       const page = await ctx.newPage();
-      for (const path of ['/', '/privacy', '/eligibility', '/sign-in', '/link-expired']) await check(page, CAMPAIGN + prefix + (path === '/' ? '' : path) || CAMPAIGN + '/');
+      // its bare address is the sign-in page
+      for (const path of ['/sign-in', '/link-expired']) await check(page, CAMPAIGN + prefix + path);
       await ctx.close();
     });
   }

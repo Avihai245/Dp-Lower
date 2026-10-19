@@ -13,5 +13,13 @@ import '@/styles/landing.css';
 export default async function SiteLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <ClientMessages namespaces={['landing', 'landingMore', 'common', 'funnel']}>{children}</ClientMessages>;
+  return (
+    <ClientMessages namespaces={['landing', 'landingMore', 'common', 'funnel']}>
+      {/* the figures count up from 0 with scripts: without them show the final value (the text kept for screen readers) instead of "0+" */}
+      <noscript>
+        <style>{`[data-count] [aria-hidden="true"]{display:none!important}[data-count] .dpl-sr-only{position:static!important;width:auto!important;height:auto!important;margin:0!important;overflow:visible!important;clip:auto!important;white-space:nowrap!important;direction:ltr!important;font-family:var(--font-serif)!important;font-size:clamp(38px,3.4vw,54px)!important;line-height:1!important;color:#14202b!important}`}</style>
+      </noscript>
+      {children}
+    </ClientMessages>
+  );
 }

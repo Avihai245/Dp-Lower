@@ -32,7 +32,8 @@ const GoogleG = () => (
 
 /**
  * "Follow your case.": email + password, Continue with Google, and the "Forgot it?" sub-mode that emails a reset link.
- * After a password sign-in staff go to /admin and everybody else to `next` or the portal.
+ * After a password sign-in staff go to /admin (by way of the code of their authenticator app when they enrolled one) and
+ * everybody else to `next` or the portal.
  */
 export function SignInForm({ next, error, mainSiteUrl, known, logoAlt }: { next: string | null; error: 'link' | 'oauth' | 'accountExists' | 'generic' | null; mainSiteUrl: string | null; known: KnownLead | null; logoAlt: string }) {
   const t = useTranslations('auth');
@@ -68,6 +69,12 @@ export function SignInForm({ next, error, mainSiteUrl, known, logoAlt }: { next:
       setBusy(false);
       // the "no password yet" hint is only for a browser that already proved it owns the file (it holds the lead)
       setHint(known?.accountCreated && !known.passwordSet ? 'noPassword' : 'invalid');
+      return;
+    }
+    // a member of staff who protects the account with an authenticator app owes its code before anything else opens
+    const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (level?.nextLevel === 'aal2' && level.currentLevel !== 'aal2') {
+      window.location.assign(localizePath(`/verify?next=${encodeURIComponent(next ?? '/admin')}`, locale));
       return;
     }
     const { data: staff } = await supabase.rpc('is_staff');

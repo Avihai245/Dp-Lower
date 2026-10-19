@@ -46,7 +46,7 @@ function clean(value: string | null | undefined, max: number): string | null {
 }
 
 /** What the URL says about the visit, or null when it says nothing (no source, no utm_*, no entry). */
-export function parseAttribution(search: string | URLSearchParams): Attribution | null {
+export function parseAttribution(search: string | URLSearchParams, defaultSource: string = DEFAULT_SOURCE): Attribution | null {
   const params = typeof search === 'string' ? new URLSearchParams(search) : search;
 
   const source = clean(params.get('source'), SOURCE_MAX_LENGTH);
@@ -63,7 +63,7 @@ export function parseAttribution(search: string | URLSearchParams): Attribution 
 
   if (!source && !hasEntry && !hasUtm) return null;
   return {
-    source: source ?? (hasEntry ? DIRECT_SOURCE : DEFAULT_SOURCE),
+    source: source ?? (hasEntry ? DIRECT_SOURCE : defaultSource),
     utm: hasUtm ? utm : null,
   };
 }
@@ -100,8 +100,9 @@ export function returnCookie(search: string | URLSearchParams): AttributionCooki
 export function firstTouchCookies(
   search: string | URLSearchParams,
   has: (cookieName: string) => boolean,
+  defaultSource: string = DEFAULT_SOURCE,
 ): AttributionCookie[] {
   if (has(SRC_COOKIE) || has(UTM_COOKIE)) return [];
-  const attribution = parseAttribution(search);
+  const attribution = parseAttribution(search, defaultSource);
   return attribution ? attributionCookieList(attribution) : [];
 }

@@ -100,3 +100,13 @@ describe('firstTouchCookies', () => {
     expect(firstTouchCookies('?utm_source=later', (n) => n === 'dpl_utm')).toEqual([]);
   });
 });
+
+describe('the label of a visit that names no source', () => {
+  it('is the campaign by default and whatever the caller says elsewhere (the firm\'s own pages say main-site)', () => {
+    expect(parseAttribution('?utm_source=google')?.source).toBe(DEFAULT_SOURCE);
+    expect(parseAttribution('?utm_source=google', 'main-site')?.source).toBe('main-site');
+    expect(firstTouchCookies('?utm_source=google', () => false, 'main-site').find((c) => c.name === 'dpl_src')?.value).toBe('main-site');
+    // an explicit source always wins
+    expect(parseAttribution('?source=ad&utm_source=google', 'main-site')?.source).toBe('ad');
+  });
+});

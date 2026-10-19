@@ -48,15 +48,32 @@ export async function parseJson<T>(req: Request, schema: ZodType<T>): Promise<T>
 }
 
 /**
- * The address of the visitor, used as the rate-limit bucket. On Vercel the platform sets `x-vercel-forwarded-for` and
- * `x-real-ip` itself and overwrites `x-forwarded-for` with the real client address, none of which a visitor can
- * influence, so those come first. When several proxies have appended to `x-forwarded-for`, the entry added by the
- * proxy closest to this app (the right-most) is the one that cannot be forged by the client; the left-most can.
+ * The address of the visitor, used as the rate-limit bucket. Which header can be believed depends on the host, so the
+ * source is a setting (CLIENT_IP_SOURCE):
+ *
+ *   vercel (default)  Vercel sets `x-vercel-forwarded-for` and `x-real-ip` itself and overwrites `x-forwarded-for`, none of
+ *                     which a visitor can influence; otherwise the right-most `x-forwarded-for` entry.
+ *   xff               Behind other proxies (AWS Amplify / CloudFront, a load balancer): only `x-forwarded-for` is read, and
+ *                     only the entry the last trusted proxy appended, counted from the right (TRUSTED_PROXY_HOPS, default
+ *                     1). `x-real-ip` and `x-vercel-forwarded-for` are ignored, because off Vercel a visitor can send them
+ *                     and so pick their own rate-limit bucket.
+ *   cloudfront        `cloudfront-viewer-address` (ip:port), which CloudFront sets and overwrites; falls back to `xff`.
+ *
+ * The left-most `x-forwarded-for` entry is whatever the visitor sent and is never used.
  */
 export function clientIp(req: Request): string {
   const h = req.headers;
-  const forwarded = h.get('x-forwarded-for')?.split(',').at(-1);
-  return (h.get('x-vercel-forwarded-for')?.split(',')[0] ?? h.get('x-real-ip') ?? forwarded ?? 'unknown').trim() || 'unknown';
+  const entries = (h.get('x-forwarded-for') ?? '').split(',').map((e) => e.trim()).filter(Boolean);
+  const hops = Math.max(1, Number.parseInt(process.env.TRUSTED_PROXY_HOPS ?? '1', 10) || 1);
+  const behindProxy = () => entries.at(-hops) ?? entries[0];
+  const source = (process.env.CLIENT_IP_SOURCE ?? 'vercel').toLowerCase();
+  if (source === 'cloudfront') {
+    const viewer = h.get('cloudfront-viewer-address')?.trim();
+    const ip = viewer ? (viewer.startsWith('[') ? viewer.slice(1, viewer.indexOf(']')) : viewer.replace(/:\d+$/, '')) : '';
+    return ip || behindProxy() || 'unknown';
+  }
+  if (source === 'xff') return behindProxy() || 'unknown';
+  return (h.get('x-vercel-forwarded-for')?.split(',')[0] ?? h.get('x-real-ip') ?? entries.at(-1) ?? 'unknown').trim() || 'unknown';
 }
 
 /**

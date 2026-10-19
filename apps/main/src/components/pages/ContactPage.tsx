@@ -4,6 +4,7 @@ import { campaignIsBilingual, getContent } from '@dpl/i18n';
 import { s, x } from '@dpl/ui';
 import { getTranslations } from 'next-intl/server';
 import { ClientMessages } from '@/components/ClientMessages';
+import { campaignHref } from '@/components/services/campaign-links';
 import { Ltr } from '@/components/shell/Ltr';
 import { ContactForm, type MatterOption } from '../contact/ContactForm';
 import { FIRM } from './firm';
@@ -32,7 +33,8 @@ export async function ContactPage({ locale }: { locale: Locale }) {
   const inLocale = bilingual ? locale : 'en';
   const choice = bilingual && locale === 'en' ? '&lang=en' : '';
   const signIn = campaignUrl(`/sign-in?source=main-site${choice}`, inLocale);
-  const eligibility = campaignUrl(`/eligibility?source=main-site${choice}`, inLocale);
+  // the eligibility check is this site's own /apply
+  const eligibility = campaignHref(locale, 'eligibility');
 
   return (
     <PageFade>

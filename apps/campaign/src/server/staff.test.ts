@@ -5,10 +5,17 @@ vi.mock('server-only', () => ({}));
 // React.cache only memoises inside a server render; here every call must read the (mutable) test state
 vi.mock('react', async (importOriginal) => ({ ...(await importOriginal<typeof import('react')>()), cache: <T>(fn: T) => fn }));
 
-const state = vi.hoisted(() => ({ user: null as { id: string } | null, staff: null as Record<string, unknown> | null }));
+const state = vi.hoisted(() => ({
+  user: null as { id: string; factors?: Array<{ factor_type: string; status: string }> } | null,
+  staff: null as Record<string, unknown> | null,
+  level: 'aal1' as 'aal1' | 'aal2',
+}));
 vi.mock('@dpl/db/server', () => ({
   createServerSupabase: async () => ({
-    auth: { getUser: async () => ({ data: { user: state.user } }) },
+    auth: {
+      getUser: async () => ({ data: { user: state.user } }),
+      mfa: { getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: state.level, nextLevel: 'aal2' } }) },
+    },
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: state.staff }) }) }) }),
   }),
 }));
@@ -27,6 +34,8 @@ const staffRow = (over: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   state.user = null;
   state.staff = null;
+  state.level = 'aal1';
+  vi.unstubAllEnvs();
 });
 
 const failure = async (p: Promise<unknown>) => {
@@ -46,6 +55,54 @@ describe('resolveStaff', () => {
     state.staff = staffRow({ active: false });
     expect((await resolveStaff()).kind).toBe('forbidden'); // deactivated staff are locked out
     state.staff = staffRow();
+    expect((await resolveStaff()).kind).toBe('staff');
+  });
+});
+
+const totp = (status = 'verified') => ({ factor_type: 'totp', status });
+
+describe('two-step verification', () => {
+  it('staff who enrolled an authenticator app are staff only once the session passed the second step', async () => {
+    state.user = { id: 'u1', factors: [totp()] };
+    state.staff = staffRow();
+    expect(await resolveStaff()).toMatchObject({ kind: 'second-step', step: 'verify' });
+    expect(await failure(requireStaff())).toMatchObject({ status: 403, code: 'second_step_required' });
+    expect(await failure(requireAdmin())).toMatchObject({ status: 403, code: 'second_step_required' });
+    state.level = 'aal2';
+    expect((await resolveStaff()).kind).toBe('staff');
+    expect((await requireStaff()).actor.id).toBe('u1');
+  });
+
+  it('an enrolment that was never confirmed protects nothing and asks for nothing', async () => {
+    state.user = { id: 'u1', factors: [totp('unverified')] };
+    state.staff = staffRow();
+    expect((await resolveStaff()).kind).toBe('staff');
+    state.user = { id: 'u1', factors: [{ factor_type: 'phone', status: 'verified' }] };
+    expect((await resolveStaff()).kind).toBe('staff');
+  });
+
+  it('is not asked of people who are not active staff: they stay forbidden, enrolled or not', async () => {
+    state.user = { id: 'u1', factors: [totp()] };
+    expect((await resolveStaff()).kind).toBe('forbidden');
+    state.staff = staffRow({ active: false });
+    expect((await resolveStaff()).kind).toBe('forbidden');
+  });
+
+  it('STAFF_MFA_REQUIRED makes everybody on the staff enrol first', async () => {
+    vi.stubEnv('STAFF_MFA_REQUIRED', '1');
+    state.user = { id: 'u1' };
+    state.staff = staffRow();
+    expect(await resolveStaff()).toMatchObject({ kind: 'second-step', step: 'enroll' });
+    expect(await failure(requireStaff())).toMatchObject({ status: 403, code: 'second_step_required' });
+    // once enrolled and verified, the requirement is met
+    state.user = { id: 'u1', factors: [totp()] };
+    state.level = 'aal2';
+    expect((await resolveStaff()).kind).toBe('staff');
+    // other spellings of "on", and anything else is off
+    vi.stubEnv('STAFF_MFA_REQUIRED', 'true');
+    state.user = { id: 'u1' };
+    expect((await resolveStaff()).kind).toBe('second-step');
+    vi.stubEnv('STAFF_MFA_REQUIRED', '0');
     expect((await resolveStaff()).kind).toBe('staff');
   });
 });

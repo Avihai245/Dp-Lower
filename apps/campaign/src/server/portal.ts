@@ -9,6 +9,7 @@ import { capitalizeName, firstNameOf } from '@dpl/core';
 import type { NextRequest } from 'next/server';
 import { cache } from 'react';
 import { redirect } from '@/i18n/navigation';
+import { isStaffUser } from '@/server/auth';
 import { announceUpdate } from '@dpl/db/lead-events';
 import { APPLICANT_ACTIVITY_CODES, type PortalState } from '@/components/portal/model/types';
 import { buildPortalState } from '@/components/portal/model/state';
@@ -45,7 +46,10 @@ export async function requirePortalPage(locale: string): Promise<PortalContext> 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return redirect({ href: user ? '/' : { pathname: '/sign-in', query: { next: '/portal' } }, locale });
+  // a member of staff has no lead: the CRM is their home. Anybody else without a lead goes to the sign-in page, which
+  // shows the form instead of sending a signed-in user straight back here (the two used to redirect to each other).
+  if (user && (await isStaffUser(createAdminSupabase(), user.id))) return redirect({ href: '/admin', locale });
+  return redirect({ href: user ? '/sign-in' : { pathname: '/sign-in', query: { next: '/portal' } }, locale });
 }
 
 /** For Route Handlers: 401 unless a Supabase session belongs to a lead. */

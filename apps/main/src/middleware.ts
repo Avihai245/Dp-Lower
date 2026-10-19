@@ -1,9 +1,10 @@
-import { COOKIE_MAX_AGE_SECONDS, firstTouchCookies, returnCookie } from '@dpl/core';
+import { COOKIE_MAX_AGE_SECONDS, DEFAULT_SOURCE, firstTouchCookies, returnCookie } from '@dpl/core';
 import createMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { LANG_COOKIE, LANG_COOKIE_OPTIONS, chosenLanguage, countryOf, shouldGoHebrew } from '@dpl/i18n';
 import { routing } from './i18n/routing';
 import { isRootFile, missingPageLocale } from './lib/known-routes';
+import { isBilingual } from './lib/bilingual';
 import { legacyPath } from './lib/legacy-urls';
 
 const intl = createMiddleware(routing);
@@ -16,7 +17,13 @@ const intl = createMiddleware(routing);
  */
 function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
   const from = returnCookie(req.nextUrl.searchParams);
-  const cookies = [...firstTouchCookies(req.nextUrl.searchParams, (name) => req.cookies.has(name)), ...(from ? [from] : [])];
+  // a visit that names no source: on the landing pages (/apply) it is the campaign's own traffic, anywhere else on the
+  // site it is the firm's website that brought the visitor
+  const onLanding = /^(\/he)?\/apply(\/|$)/.test(req.nextUrl.pathname);
+  const cookies = [
+    ...firstTouchCookies(req.nextUrl.searchParams, (name) => req.cookies.has(name), onLanding ? DEFAULT_SOURCE : 'main-site'),
+    ...(from ? [from] : []),
+  ];
   for (const c of cookies) {
     res.cookies.set(c.name, c.value, { maxAge: COOKIE_MAX_AGE_SECONDS, path: '/', sameSite: 'lax', secure: req.nextUrl.protocol === 'https:' });
   }
@@ -65,6 +72,19 @@ export default function middleware(req: NextRequest) {
   // browser as an empty shell). The 404 page itself is an ordinary page that this rewrite points at.
   const missing = missingPageLocale(req.nextUrl.pathname);
   if (missing) return NextResponse.rewrite(new URL(`/${missing}/page-not-found`, req.url), { status: 404 });
+  // The landing pages and the eligibility funnel under /apply are English only (NEXT_PUBLIC_CAMPAIGN_LOCALES, see
+  // @dpl/i18n campaign-locales): their Hebrew edition is switched off and the country-based Hebrew start does not apply
+  // to them. The firm's own pages are unaffected.
+  const applyPath = /^(\/he)?\/apply(\/|$)/.test(req.nextUrl.pathname);
+  if (applyPath && !isBilingual()) {
+    if (req.nextUrl.pathname === '/he/apply' || req.nextUrl.pathname.startsWith('/he/apply/')) {
+      const url = req.nextUrl.clone();
+      url.pathname = req.nextUrl.pathname.replace(/^\/he/, '');
+      url.searchParams.delete('lang');
+      return withAttribution(req, NextResponse.redirect(url, 307));
+    }
+    return withAttribution(req, intl(req));
+  }
   // A visitor in Israel (or who chose Hebrew before) who opens an English address is taken to the Hebrew edition; see
   // @dpl/i18n language-choice for the rules (an explicit choice wins, crawlers are never redirected).
   const { pathname, searchParams } = req.nextUrl;

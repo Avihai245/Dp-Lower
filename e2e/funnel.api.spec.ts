@@ -1,19 +1,34 @@
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test, type APIRequestContext, type APIResponse } from '@playwright/test';
 import {
   BASE_URL,
+  APPLY,
+  FUNNEL_ORIGIN,
+  FUNNEL_URL,
+  PORTAL_ORIGIN,
+  RUN,
+  campaignIsBilingual,
   cleanup,
   createAuthUser,
+  createAuthUserWith,
+  decodeAppToken,
   eventually,
   eventsOf,
+  funnelIsBilingual,
+  goToPortal,
   leadBody,
   leadByEmail,
   linkIn,
   makeStaff,
-  newClient,
+  newClient as newPortalClient,
+  newClientWithCookiesOf,
   newEmail,
+  newFunnelClient,
   newIp,
+  newVisitor,
   passwordSignIn,
   recoveryTokenHash,
+  redirectPath,
+  redirectUrl,
   rest,
   setCookies,
   signAppToken,
@@ -21,15 +36,26 @@ import {
 } from './support/funnel';
 
 /**
- * API integration tests of the campaign funnel against a running dev/prod server (FUNNEL_BASE_URL, default
- * http://localhost:3001) and the local Supabase. Every "browser" is its own APIRequestContext with its own cookie jar
- * and its own x-forwarded-for address, so the per-IP rate limits of one test never affect another.
+ * API integration tests of the funnel and of the auth / unsubscribe routes against the two running production builds and
+ * the local Supabase. The funnel lives on the firm's site (apps/main, FUNNEL_URL, default http://localhost:3000): the
+ * lead / booking / availability / callback / result APIs and "Go to my portal" (POST /api/portal/enter, which only hands
+ * out a link). The portal site (apps/campaign, BASE_URL, default http://localhost:3001) keeps sign-in, set-password, the
+ * emailed /go links, /enter/<token> (where the hand-over opens the session), /auth/callback, /unsubscribe and the portal
+ * APIs. The default `request` fixture below talks to the firm's site; the portal is reached through its own clients.
  *
- *   pnpm exec playwright test e2e/funnel.api.spec.ts
+ * In production the two sites are on different domains, so a person has two cookie jars (see newVisitor): the firm's
+ * site only ever sees the lead cookie, the portal only the session (and the lead cookie its own /enter and /go renew).
+ * Every "browser" is its own set of APIRequestContexts with its own x-forwarded-for address, so the per-IP rate limits of
+ * one test never affect another.
+ *
+ *   CAMPAIGN_URL=http://localhost:3001 MAIN_URL=http://localhost:3000 pnpm exec playwright test e2e/funnel.api.spec.ts
  */
 test.describe.configure({ mode: 'serial' });
-test.use({ baseURL: BASE_URL });
+test.use({ baseURL: FUNNEL_URL });
 test.afterAll(cleanup);
+
+/** The firm's site client; the portal's own is newPortalClient(). */
+const newClient = newFunnelClient;
 
 interface Slot {
   startsAt: string;
@@ -54,6 +80,11 @@ async function freeSlot(request: APIRequestContext, fromEnd = 0): Promise<Slot> 
   const slot = slots[slots.length - 1 - fromEnd];
   if (!slot) throw new Error('no completely free slot left in the next days');
   return slot;
+}
+
+/** The value of a cookie in a client's jar (an httpOnly cookie too), or undefined. */
+async function cookieValue(client: APIRequestContext, name: string): Promise<string | undefined> {
+  return (await client.storageState()).cookies.find((c) => c.name === name)?.value;
 }
 
 async function createLead(client: APIRequestContext, label: string, extra: Record<string, unknown> = {}) {
@@ -125,6 +156,7 @@ test.describe('POST /api/leads', () => {
     expect(cookie, 'lead cookie').toBeTruthy();
     expect(cookie).toMatch(/HttpOnly/i);
     expect(cookie).toMatch(/SameSite=lax/i);
+    expect(cookie).toMatch(/Path=\/(;|$)/);
 
     const lead = await leadByEmail(email);
     expect(lead).toMatchObject({
@@ -165,16 +197,46 @@ test.describe('POST /api/leads', () => {
     await client.dispose();
   });
 
-  test('a deep link from the firm\'s website sets where "Back to the site" goes, even after an earlier first visit', async ({ request }) => {
-    // an earlier visit from an advertisement left the first-touch cookie behind
-    const res = await request.get('/?entry=eligibility&source=main-site', { headers: { cookie: 'dpl_src=campaign-ger-aus' }, maxRedirects: 0 });
-    expect([302, 303, 307, 308]).toContain(res.status());
-    const cookies = setCookies(res);
+  test('a deep link sets where "Back to the site" goes, even after an earlier first visit; the portal\'s deep link hops to the firm\'s site with its attribution', async ({ request, playwright }) => {
+    // the portal's own domain no longer has a funnel: ?entry=eligibility leaves for the firm's /apply, everything but `entry` survives the hop
+    const portal = await newPortalClient(playwright);
+    const hop = await portal.get('/?entry=eligibility&source=main-site&utm_campaign=spring', { maxRedirects: 0 });
+    expect([301, 302, 303, 307, 308]).toContain(hop.status());
+    const target = redirectUrl(hop);
+    expect(target.origin).toBe(FUNNEL_ORIGIN);
+    expect(target.pathname).toBe(APPLY);
+    expect(Object.fromEntries(target.searchParams)).toEqual({ source: 'main-site', utm_campaign: 'spring' });
+    // the old funnel addresses are permanent redirects to the same step under /apply, query intact
+    for (const step of ['eligibility', 'details', 'booking', 'offer', 'privacy']) {
+      const old = await portal.get(`/${step}?source=newsletter`, { maxRedirects: 0 });
+      expect([301, 308], step).toContain(old.status());
+      const to = redirectUrl(old);
+      expect(`${to.origin}${to.pathname}${to.search}`, step).toBe(`${FUNNEL_ORIGIN}${APPLY}/${step}?source=newsletter`);
+    }
+    // the campaign path used in the email footers, and the Hebrew edition of all of this (bilingual builds)
+    const footer = await portal.get('/ger-aus', { maxRedirects: 0 });
+    expect([301, 308]).toContain(footer.status());
+    expect(redirectUrl(footer).origin + redirectUrl(footer).pathname).toBe(`${FUNNEL_ORIGIN}${APPLY}`);
+    if (await campaignIsBilingual()) {
+      const he = await portal.get('/he?entry=eligibility&source=main-site&utm_campaign=spring', { maxRedirects: 0 });
+      expect(redirectUrl(he).origin + redirectUrl(he).pathname).toBe(`${FUNNEL_ORIGIN}/he${APPLY}`);
+      expect(Object.fromEntries(redirectUrl(he).searchParams)).toEqual({ source: 'main-site', utm_campaign: 'spring' });
+      const heOld = await portal.get('/he/booking', { maxRedirects: 0 });
+      expect(redirectUrl(heOld).origin + redirectUrl(heOld).pathname).toBe(`${FUNNEL_ORIGIN}/he${APPLY}/booking`);
+    }
+    await portal.dispose();
+
+    // on the firm's site: an earlier visit from an advertisement left the first-touch cookie behind
+    const arrived = await request.get(`${target.pathname}${target.search}`, { headers: { cookie: 'dpl_src=campaign-ger-aus' }, maxRedirects: 0 });
+    expect(arrived.status()).toBe(200);
+    const cookies = setCookies(arrived);
     expect(cookies.some((c) => /^dpl_from=main-site;/.test(c)), 'the way back is the website').toBe(true);
     expect(cookies.some((c) => /^dpl_src=/.test(c)), 'the first touch is never overwritten').toBe(false);
     // the next deep link from somewhere else replaces the way back
-    const other = await request.get('/?entry=eligibility&source=newsletter', { headers: { cookie: 'dpl_src=main-site; dpl_from=main-site' }, maxRedirects: 0 });
+    const other = await request.get(`${APPLY}?source=newsletter`, { headers: { cookie: 'dpl_src=main-site; dpl_from=main-site' }, maxRedirects: 0 });
     expect(setCookies(other).some((c) => /^dpl_from=newsletter;/.test(c))).toBe(true);
+    // a visit that names no origin leaves both cookies alone
+    expect(setCookies(await request.get(APPLY, { headers: { cookie: 'dpl_src=main-site; dpl_from=main-site' }, maxRedirects: 0 })).filter((c) => /^dpl_(src|from|utm)=/.test(c))).toEqual([]);
   });
 
   test('the same browser updates name, phone and merges answers', async ({ playwright }) => {
@@ -219,7 +281,10 @@ test.describe('POST /api/leads', () => {
     expect(returned.channel).toBe('crm');
     const mail = await emailEvent(first.leadId, 'file-open');
     expect(mail.payload.to?.email).toBe(first.email);
-    expect(linkIn(mail.payload, /https?:\/\/[^\s"'<>]+\/go\/[\w.-]+/), 'portal link in the email').toBeTruthy();
+    // the emailed link opens the PORTAL (its own site), not the firm's
+    const link = linkIn(mail.payload, /https?:\/\/[^\s"'<>]+\/go\/[\w.-]+/);
+    expect(link, 'portal link in the email').toBeTruthy();
+    expect(new URL(link!).origin).toBe(PORTAL_ORIGIN);
 
     // asking again within the hour does not send a second email (no inbox flooding)
     await stranger.post('/api/leads', { data: leadBody(first.email) });
@@ -329,8 +394,11 @@ test.describe('correcting the email on the details page', () => {
     expect(after?.session_epoch).toBe((before?.session_epoch ?? 0) + 1);
     expect((await owner.get('/api/lead')).status(), 'the browser got a fresh cookie and still acts as the lead').toBe(200);
     expect(((await (await owner.get('/api/lead')).json()) as { email: string }).email).toBe(fixed);
-    const old = await (await newClient(playwright)).get(oldLink, { maxRedirects: 0 });
-    expect(new URL(old.headers().location!).pathname, 'a link sent to the mistyped address no longer opens the file').toBe('/link-expired');
+    const stranger = await newPortalClient(playwright);
+    const old = await stranger.get(oldLink, { maxRedirects: 0 });
+    expect(redirectUrl(old).pathname, 'a link sent to the mistyped address no longer opens the file').toBe('/link-expired');
+    expect(setCookies(old).some((c) => /auth-token/.test(c))).toBe(false);
+    await stranger.dispose();
 
     // emails: what waited for the old address is cancelled, welcome 1 goes to the new one, exactly once
     const events = await eventsOf(lead.leadId);
@@ -395,28 +463,26 @@ test.describe('correcting the email on the details page', () => {
   });
 
   test('a lead with a password, or a browser signed in as it, keeps its address (409 email_locked)', async ({ playwright }) => {
-    const owner = await newClient(playwright);
-    const lead = await createLead(owner, 'locked');
-    await owner.post('/api/portal/enter');
-    // signed in, no password yet
-    const viaSession = await owner.post('/api/leads', { data: leadBody(newEmail('locked-new')) });
+    const person = await newVisitor(playwright);
+    const lead = await createLead(person.funnel, 'locked');
+    await goToPortal(person);
+    // the person is signed in at the portal, no password yet. The firm's site cannot see that session in production (another
+    // domain); on localhost the cookie is sent to both ports, which is the only way to put a session in front of this rule
+    // (submitLead: `via === 'session'`), so a browser built from both jars stands in for "signed in as the lead".
+    const signedIn = await newClientWithCookiesOf(playwright, FUNNEL_URL, [person.funnel, person.portal]);
+    const viaSession = await signedIn.post('/api/leads', { data: leadBody(newEmail('locked-new')) });
     expect(viaSession.status()).toBe(409);
     expect(await viaSession.json()).toMatchObject({ error: 'email_locked' });
-    // with a password, even a browser that only holds the lead cookie (no session) cannot move it
-    expect((await owner.post('/api/auth/set-password', { data: { password: 'locked-password-1' } })).status()).toBe(200);
-    const state = await owner.storageState();
-    const cookieOnly = await playwright.request.newContext({
-      baseURL: BASE_URL,
-      extraHTTPHeaders: { 'x-forwarded-for': newIp() },
-      storageState: { cookies: state.cookies.filter((c) => c.name === 'dpl_lead'), origins: [] },
-    });
-    expect((await cookieOnly.get('/api/lead')).status(), 'the cookie alone still identifies the lead').toBe(200);
-    const again = await cookieOnly.post('/api/leads', { data: leadBody(newEmail('locked-new2')) });
+
+    // with a password the lead keeps its address for the one thing the firm's site really sees: the lead cookie
+    expect((await person.portal.post('/api/auth/set-password', { data: { password: 'locked-password-1' } })).status()).toBe(200);
+    expect(((await (await person.funnel.get('/api/lead')).json()) as { passwordSet: boolean }).passwordSet, 'the cookie alone still identifies the lead').toBe(true);
+    const again = await person.funnel.post('/api/leads', { data: leadBody(newEmail('locked-new2')) });
     expect(again.status()).toBe(409);
     expect(await again.json()).toMatchObject({ error: 'email_locked' });
     expect(await leadByEmail(lead.email)).toMatchObject({ id: lead.leadId });
-    await cookieOnly.dispose();
-    await owner.dispose();
+    await signedIn.dispose();
+    await person.dispose();
   });
 });
 
@@ -427,7 +493,9 @@ test.describe('GET /api/lead and PUT /api/lead/answers', () => {
 
     const client = await newClient(playwright);
     const lead = await createLead(client, 'summary');
-    const me = await (await client.get('/api/lead')).json();
+    const meRes = await client.get('/api/lead');
+    expect(meRes.headers()['cache-control'], 'a personal answer is never cached').toContain('no-store');
+    const me = await meRes.json();
     expect(me).toMatchObject({
       leadId: lead.leadId,
       caseRef: lead.caseRef,
@@ -567,7 +635,8 @@ test.describe('bookings', () => {
 test.describe('callbacks', () => {
   test('stores a request, emits callback.requested, links the lead when there is a cookie', async ({ playwright }) => {
     const anonymous = await newClient(playwright);
-    const name = `e2e-funnel-${Date.now()}`;
+    // (named after this run, so that cleanup() finds the row again)
+    const name = `e2e-funnel-${RUN}-callback`;
     const res = await anonymous.post('/api/callbacks', { data: { name, phone: '+1 (718) 555-0142', locale: 'en', source: 'advisor' } });
     expect(res.status()).toBe(201);
     expect(await res.json()).toEqual({ ok: true });
@@ -614,7 +683,9 @@ test.describe('result email', () => {
     expect(await res.json()).toEqual({ ok: true });
     const mail = await emailEvent(lead.leadId, 'file-open');
     expect(mail.payload.to?.email).toBe(lead.email);
-    expect(linkIn(mail.payload, /https?:\/\/[^\s"'<>]+\/go\/[\w.-]+/)).toBeTruthy();
+    const link = linkIn(mail.payload, /https?:\/\/[^\s"'<>]+\/go\/[\w.-]+/);
+    expect(link, 'a link into the portal').toBeTruthy();
+    expect(new URL(link!).origin, 'the portal is its own site').toBe(PORTAL_ORIGIN);
     await leadEvent(lead.leadId, 'result.requested');
     expect((await leadByEmail(lead.email))?.result_emailed_at).toBeTruthy();
 
@@ -632,55 +703,160 @@ test.describe('result email', () => {
   });
 });
 
-test.describe('portal entry, passwords and emailed links', () => {
-  test('POST /api/portal/enter signs the lead-cookie browser in, without a password', async ({ playwright }) => {
-    const anonymous = await newClient(playwright);
+test.describe('"Go to my portal": the hand-over from the firm\'s site to the portal', () => {
+  test('POST /api/portal/enter (firm\'s site) only hands out a short-lived link; /enter/<token> (portal) opens the session', async ({ playwright }) => {
+    const anonymous = await newFunnelClient(playwright);
     expect((await anonymous.post('/api/portal/enter')).status()).toBe(401);
 
-    const client = await newClient(playwright);
-    const lead = await createLead(client, 'enter');
-    const res = await client.post('/api/portal/enter');
+    const person = await newVisitor(playwright);
+    const lead = await createLead(person.funnel, 'enter');
+    const row = (await leadByEmail(lead.email))!;
+    const res = await person.funnel.post('/api/portal/enter');
     expect(res.status(), await res.text()).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
-    const cookies = setCookies(res);
-    expect(cookies.some((c) => /^sb-[\w-]+-auth-token/.test(c)), 'supabase session cookie').toBe(true);
-    expect(cookies.some((c) => c.startsWith('dpl_lead=')), 'renewed lead cookie').toBe(true);
+    const body = (await res.json()) as { url: string };
+    expect(Object.keys(body)).toEqual(['url']);
 
-    const me = await (await client.get('/api/lead')).json();
-    expect(me).toMatchObject({ leadId: lead.leadId, accountCreated: true, stage: 'account', status: 'account_created' });
+    // the link points at the portal's own site, signs nobody in on the firm's site and has changed nothing yet
+    const link = new URL(body.url);
+    expect(link.origin).toBe(PORTAL_ORIGIN);
+    expect(link.pathname).toMatch(/^\/enter\/[\w-]+\.[\w-]+$/);
+    expect(setCookies(res).filter((c) => /auth-token/.test(c))).toEqual([]);
+    expect(await (await person.funnel.get('/api/lead')).json()).toMatchObject({ accountCreated: false, stage: 'lead', status: 'enquiry' });
+    expect((await leadByEmail(lead.email))?.user_id).toBeNull();
+    expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'account.created')).toEqual([]);
+    expect((await person.portal.get('/api/portal/state')).status(), 'nothing on the portal knows this browser yet').toBe(401);
+
+    // the token: purpose "enter", this lead and its epoch, good for two minutes at most
+    const payload = decodeAppToken(link.pathname.split('/').pop()!);
+    expect(payload).toMatchObject({ p: 'enter', lid: lead.leadId, ep: row.session_epoch });
+    const secondsLeft = (payload.exp ?? 0) - Date.now() / 1000;
+    expect(secondsLeft).toBeGreaterThan(0);
+    expect(secondsLeft).toBeLessThanOrEqual(120);
+
+    // following it (a full-page navigation, with the portal's own cookies: none) opens the real session
+    const landed = await person.portal.get(body.url, { maxRedirects: 0 });
+    expect(landed.status()).toBe(303);
+    expect(redirectUrl(landed).pathname).toBe('/portal');
+    const cookies = setCookies(landed);
+    expect(cookies.some((c) => /^sb-[\w-]+-auth-token/.test(c)), 'supabase session cookie').toBe(true);
+    expect(cookies.some((c) => c.startsWith('dpl_lead=')), 'the portal\'s own lead cookie').toBe(true);
+
+    const state = (await (await person.portal.get('/api/portal/state')).json()) as { lead: { caseRef: string; email: string } };
+    expect(state.lead).toMatchObject({ caseRef: lead.caseRef, email: lead.email });
+    // the file now has an account; the firm's site, with its own lead cookie, sees the same file
+    expect(await (await person.funnel.get('/api/lead')).json()).toMatchObject({ leadId: lead.leadId, accountCreated: true, stage: 'account', status: 'account_created' });
     const account = await leadEvent(lead.leadId, 'account.created');
     expect(account.dedupe_key).toBe(`account.created:${lead.leadId}`);
+    // "Go to my portal" proves nothing about the mailbox, unlike an emailed link
+    expect((await leadByEmail(lead.email))?.email_verified_at).toBeNull();
     await anonymous.dispose();
-    await client.dispose();
+    await person.dispose();
   });
 
-  test('POST /api/auth/set-password needs a session, validates, and really sets the password', async ({ playwright }) => {
-    const client = await newClient(playwright);
-    const lead = await createLead(client, 'password');
-    // the lead cookie alone is not enough
-    expect((await client.post('/api/auth/set-password', { data: { password: 'correct-horse-9' } })).status()).toBe(401);
+  test('a Hebrew lead gets a Hebrew link and lands on the Hebrew portal', async ({ playwright }) => {
+    test.skip(!(await campaignIsBilingual()) || !(await funnelIsBilingual()), 'needs the bilingual builds (NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he on both sites)');
+    const person = await newVisitor(playwright);
+    await createLead(person.funnel, 'enter-he', { locale: 'he' });
+    const { url, landed } = await goToPortal(person);
+    expect(new URL(url).pathname).toMatch(/^\/he\/enter\//);
+    expect(landed.status()).toBe(303);
+    expect(redirectUrl(landed).pathname).toBe('/he/portal');
+    expect(setCookies(landed).some((c) => /^sb-[\w-]+-auth-token/.test(c))).toBe(true);
+    await person.dispose();
+  });
 
-    await client.post('/api/portal/enter');
-    expect((await client.post('/api/auth/set-password', { data: { password: 'short' } })).status()).toBe(400);
-    expect((await client.post('/api/auth/set-password', { data: {} })).status()).toBe(400);
-    const ok = await client.post('/api/auth/set-password', { data: { password: 'correct-horse-9' } });
+  test('bad /enter tokens go to sign-in with the link message, never to the portal; a probe signs nobody in', async ({ playwright }) => {
+    const person = await newVisitor(playwright);
+    const lead = await createLead(person.funnel, 'badenter');
+    const row = (await leadByEmail(lead.email))!;
+    const mine = { lid: row.id, ep: row.session_epoch };
+    const good = signAppToken({ ...mine, p: 'enter' }, 120);
+    const [data, signature] = good.split('.') as [string, string];
+    const cases: Array<[string, string]> = [
+      ['not a token', 'not-a-token'],
+      ['a tampered signature', `${data}.${signature[0] === 'A' ? 'B' : 'A'}${signature.slice(1)}`],
+      ['expired', signAppToken({ ...mine, p: 'enter' }, -60)],
+      ['a lead whose epoch moved on (address corrected, emailed link used)', signAppToken({ lid: row.id, ep: row.session_epoch + 1, p: 'enter' }, 120)],
+      ['a lead that does not exist', signAppToken({ lid: uuid(), ep: 0, p: 'enter' }, 120)],
+      ['the lead cookie of this very lead', signAppToken({ ...mine, p: 'lead', v: 1 }, 3600)],
+      ['an emailed portal link', signAppToken({ ...mine, p: 'portal', n: '/portal' }, 3600)],
+      ['an unsubscribe token', signAppToken({ lid: row.id, p: 'unsub' })],
+    ];
+    for (const [what, token] of cases) {
+      const res = await person.portal.get(`/enter/${token}`, { maxRedirects: 0 });
+      expect(res.status(), what).toBe(303);
+      expect(redirectPath(res), what).toBe('/sign-in?error=link&source=main-site');
+      expect(setCookies(res).some((c) => /auth-token/.test(c)), what).toBe(false);
+    }
+    if (await campaignIsBilingual()) {
+      const he = await person.portal.get('/he/enter/not-a-token', { maxRedirects: 0 });
+      expect(redirectPath(he)).toBe('/he/sign-in?error=link&source=main-site');
+    }
+
+    // link checkers and prefetchers probe with HEAD: that must not sign anybody in or create the account
+    const probe = await person.portal.head(`/enter/${good}`);
+    expect(probe.status()).toBe(200);
+    expect(setCookies(probe).some((c) => /auth-token/.test(c))).toBe(false);
+    expect(await leadByEmail(lead.email)).toMatchObject({ user_id: null, account_created_at: null, stage: 'lead' });
+    await person.dispose();
+  });
+
+  test('an /enter token opens nothing else: no emailed /go link, no lead cookie, no unsubscribe token (and the lead cookie is no /enter token)', async ({ playwright }) => {
+    const person = await newVisitor(playwright);
+    const lead = await createLead(person.funnel, 'crosstoken');
+    const row = (await leadByEmail(lead.email))!;
+    const token = signAppToken({ lid: row.id, ep: row.session_epoch, p: 'enter' }, 120);
+
+    for (const res of [await person.portal.get(`/go/${token}`, { maxRedirects: 0 }), await person.portal.post(`/go/${token}`, { maxRedirects: 0 })]) {
+      expect(res.status()).toBe(303);
+      expect(redirectUrl(res).pathname).toBe('/link-expired');
+      expect(setCookies(res).some((c) => /auth-token/.test(c))).toBe(false);
+    }
+    const thief = await playwright.request.newContext({ baseURL: FUNNEL_URL, extraHTTPHeaders: { 'x-forwarded-for': newIp(), cookie: `dpl_lead=${token}` } });
+    expect((await thief.get('/api/lead')).status()).toBe(401);
+    await thief.dispose();
+    expect((await person.portal.post('/api/unsubscribe', { data: { token } })).status()).toBe(400);
+    expect((await leadByEmail(lead.email))?.unsubscribed_at).toBeNull();
+
+    // and the lead cookie the firm's site gave this browser cannot be presented to /enter
+    const cookie = (await person.funnel.storageState()).cookies.find((c) => c.name === 'dpl_lead')!;
+    const res = await person.portal.get(`/enter/${cookie.value}`, { maxRedirects: 0 });
+    expect(redirectPath(res)).toBe('/sign-in?error=link&source=main-site');
+    expect((await leadByEmail(lead.email))?.user_id).toBeNull();
+    await person.dispose();
+  });
+});
+
+test.describe('passwords and emailed links', () => {
+  test('POST /api/auth/set-password needs a session, validates, and really sets the password', async ({ playwright }) => {
+    const person = await newVisitor(playwright);
+    const lead = await createLead(person.funnel, 'password');
+    // the lead cookie alone is not enough
+    const cookieOnly = await newClientWithCookiesOf(playwright, BASE_URL, [person.funnel]);
+    expect((await cookieOnly.post('/api/auth/set-password', { data: { password: 'correct-horse-9' } })).status()).toBe(401);
+    await cookieOnly.dispose();
+
+    await goToPortal(person);
+    expect((await person.portal.post('/api/auth/set-password', { data: { password: 'short' } })).status()).toBe(400);
+    expect((await person.portal.post('/api/auth/set-password', { data: {} })).status()).toBe(400);
+    const ok = await person.portal.post('/api/auth/set-password', { data: { password: 'correct-horse-9' } });
     expect(ok.status(), await ok.text()).toBe(200);
 
     // this browser stays signed in, the lead records it, and the password works against the auth server
-    const me = await (await client.get('/api/lead')).json();
-    expect(me.passwordSet).toBe(true);
+    expect((await person.portal.get('/api/portal/state')).status()).toBe(200);
+    expect(((await (await person.funnel.get('/api/lead')).json()) as { passwordSet: boolean }).passwordSet).toBe(true);
     expect((await leadByEmail(lead.email))?.password_set_at).toBeTruthy();
     expect(await passwordSignIn(lead.email, 'correct-horse-9')).toBe(true);
     expect(await passwordSignIn(lead.email, 'wrong-password-1')).toBe(false);
     const activity = await rest<{ code: string }>('activity_log', `lead_id=eq.${lead.leadId}&select=code`);
     expect(activity.map((a) => a.code)).toContain('password_set');
-    await client.dispose();
+    await person.dispose();
   });
 
   test('POST /api/auth/forgot always answers 200 and only queues a reset for a known address', async ({ playwright }) => {
     const client = await newClient(playwright);
     const lead = await createLead(client, 'forgot');
-    const stranger = await newClient(playwright);
+    const stranger = await newPortalClient(playwright);
 
     const known = await stranger.post('/api/auth/forgot', { data: { email: lead.email, locale: 'en' } });
     const unknown = await stranger.post('/api/auth/forgot', { data: { email: newEmail('nobody'), locale: 'en' } });
@@ -701,63 +877,74 @@ test.describe('portal entry, passwords and emailed links', () => {
     const ip = newIp();
     const statuses: number[] = [];
     for (let i = 0; i < 7; i++) {
-      statuses.push((await request.post('/api/auth/forgot', { data: { email: newEmail('rl') }, headers: { 'x-forwarded-for': ip } })).status());
+      statuses.push((await request.post(`${BASE_URL}/api/auth/forgot`, { data: { email: newEmail('rl') }, headers: { 'x-forwarded-for': ip } })).status());
     }
     expect(statuses).toEqual([200, 200, 200, 200, 200, 429, 429]);
   });
 
   test('the recovery link signs the owner in and the new password replaces the old one', async ({ playwright }) => {
-    const owner = await newClient(playwright);
-    const lead = await createLead(owner, 'recovery');
-    await owner.post('/api/portal/enter');
-    await owner.post('/api/auth/set-password', { data: { password: 'first-password-1' } });
+    const owner = await newVisitor(playwright);
+    const lead = await createLead(owner.funnel, 'recovery');
+    await goToPortal(owner);
+    await owner.portal.post('/api/auth/set-password', { data: { password: 'first-password-1' } });
 
     const row = await leadByEmail(lead.email);
     const tokenHash = await recoveryTokenHash(lead.email);
 
     // a mail scanner "clicks" the link with a GET: that only forwards to the confirmation page and uses nothing up
     const url = `/auth/callback?token_hash=${encodeURIComponent(tokenHash)}&type=recovery&next=${encodeURIComponent('/create-password?mode=reset')}`;
-    const scan = await (await newClient(playwright)).get(url, { maxRedirects: 0 });
+    const scanner = await newPortalClient(playwright);
+    const scan = await scanner.get(url, { maxRedirects: 0 });
     expect(scan.status()).toBe(303);
-    expect(new URL(scan.headers().location!).pathname).toBe('/open-link');
+    expect(redirectUrl(scan).pathname).toBe('/open-link');
     expect(setCookies(scan).some((c) => /auth-token/.test(c))).toBe(false);
 
-    // the owner opens the reset link in the browser that created the lead and presses the button: no revocation,
-    // lands on the reset screen
-    const res = await owner.post('/auth/callback', { form: { token_hash: tokenHash, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
+    // the owner opens the reset link in the browser that went through "Go to my portal" and presses the button: no
+    // revocation, lands on the reset screen
+    const res = await owner.portal.post('/auth/callback', { form: { token_hash: tokenHash, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
     expect(res.status()).toBe(303);
-    expect(new URL(res.headers().location!).pathname + new URL(res.headers().location!).search).toBe('/create-password?mode=reset');
+    expect(redirectPath(res)).toBe('/create-password?mode=reset');
     expect((await leadByEmail(lead.email))?.email_verified_at).toBeTruthy();
     expect((await leadByEmail(lead.email))?.session_epoch).toBe(row?.session_epoch);
 
-    expect((await owner.post('/api/auth/set-password', { data: { password: 'second-password-2' } })).status()).toBe(200);
+    expect((await owner.portal.post('/api/auth/set-password', { data: { password: 'second-password-2' } })).status()).toBe(200);
     expect(await passwordSignIn(lead.email, 'first-password-1')).toBe(false);
     expect(await passwordSignIn(lead.email, 'second-password-2')).toBe(true);
 
     // a Hebrew link keeps the language prefix; a tampered or unknown token goes back to sign-in with a message
-    const heGet = await (await newClient(playwright)).get('/he/auth/callback?token_hash=garbage&type=recovery', { maxRedirects: 0 });
-    expect(new URL(heGet.headers().location!).pathname).toBe('/he/open-link');
-    const he = await (await newClient(playwright)).post('/he/auth/callback', { form: { token_hash: 'garbage', type: 'recovery' }, maxRedirects: 0 });
-    expect(he.status()).toBe(303);
-    expect(new URL(he.headers().location!).pathname + new URL(he.headers().location!).search).toBe('/he/sign-in?error=link');
-    const oauthDenied = await (await newClient(playwright)).get('/auth/callback?error=access_denied', { maxRedirects: 0 });
-    expect(new URL(oauthDenied.headers().location!).pathname + new URL(oauthDenied.headers().location!).search).toBe('/sign-in?error=oauth');
+    // (in the English-only setting a /he address is only redirected to the English one)
+    if (await campaignIsBilingual()) {
+      const heGet = await scanner.get('/he/auth/callback?token_hash=garbage&type=recovery', { maxRedirects: 0 });
+      expect(redirectUrl(heGet).pathname).toBe('/he/open-link');
+      const he = await scanner.post('/he/auth/callback', { form: { token_hash: 'garbage', type: 'recovery' }, maxRedirects: 0 });
+      expect(he.status()).toBe(303);
+      expect(redirectPath(he)).toBe('/he/sign-in?error=link');
+    } else {
+      const heGet = await scanner.get('/he/auth/callback?token_hash=garbage&type=recovery', { maxRedirects: 0 });
+      expect([307, 308]).toContain(heGet.status());
+      expect(redirectUrl(heGet).pathname).toBe('/auth/callback');
+    }
+    const oauthDenied = await scanner.get('/auth/callback?error=access_denied', { maxRedirects: 0 });
+    expect(redirectPath(oauthDenied)).toBe('/sign-in?error=oauth');
+    await scanner.dispose();
     await owner.dispose();
   });
 
   test('a reset link is an account too: a lead that never pressed "Go to my portal" reaches Account created when it uses one', async ({ playwright }) => {
-    const owner = await newClient(playwright);
-    const lead = await createLead(owner, 'acct-reset');
+    const owner = await newVisitor(playwright);
+    const lead = await createLead(owner.funnel, 'acct-reset');
     expect(await leadByEmail(lead.email)).toMatchObject({ account_created_at: null, stage: 'lead', status: 'enquiry' });
 
     // "Forgot it?" gives the lead its sign-in user but is not yet an account: nothing is claimed until the link is used
-    expect((await owner.post('/api/auth/forgot', { data: { email: lead.email } })).status()).toBe(200);
+    expect((await owner.portal.post('/api/auth/forgot', { data: { email: lead.email } })).status()).toBe(200);
     await emailEvent(lead.leadId, 'password-reset');
     expect(await leadByEmail(lead.email)).toMatchObject({ account_created_at: null, status: 'enquiry' });
 
     const tokenHash = await recoveryTokenHash(lead.email);
-    const res = await owner.post('/auth/callback', { form: { token_hash: tokenHash, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
+    const res = await owner.portal.post('/auth/callback', { form: { token_hash: tokenHash, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
     expect(res.status()).toBe(303);
+    expect(redirectUrl(res).pathname).toBe('/create-password');
+    expect((await owner.portal.get('/api/portal/state')).status(), 'the reset link signed the browser in').toBe(200);
 
     const after = await leadByEmail(lead.email);
     expect(after).toMatchObject({ stage: 'account', status: 'account_created' });
@@ -771,41 +958,50 @@ test.describe('portal entry, passwords and emailed links', () => {
 
     // using a second reset link changes nothing about it
     const again = await recoveryTokenHash(lead.email);
-    await owner.post('/auth/callback', { form: { token_hash: again, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
+    await owner.portal.post('/auth/callback', { form: { token_hash: again, type: 'recovery', next: '/create-password?mode=reset' }, maxRedirects: 0 });
     expect((await eventsOf(lead.leadId)).filter((e) => e.type === 'account.created')).toHaveLength(1);
     await owner.dispose();
   });
 
   test('an emailed /go link opens the portal; a link used on another browser revokes what was set before', async ({ playwright }) => {
     // attacker pre-registers somebody else's email in browser X and sets a password
-    const attacker = await newClient(playwright);
-    const lead = await createLead(attacker, 'prereg');
-    await attacker.post('/api/portal/enter');
-    expect((await attacker.post('/api/auth/set-password', { data: { password: 'attacker-pass-1' } })).status()).toBe(200);
+    const attacker = await newVisitor(playwright);
+    const lead = await createLead(attacker.funnel, 'prereg');
+    await goToPortal(attacker);
+    expect((await attacker.portal.post('/api/auth/set-password', { data: { password: 'attacker-pass-1' } })).status()).toBe(200);
     expect(await passwordSignIn(lead.email, 'attacker-pass-1')).toBe(true);
-    expect((await attacker.get('/api/lead')).status()).toBe(200);
+    expect((await attacker.funnel.get('/api/lead')).status()).toBe(200);
+    expect((await attacker.portal.get('/api/portal/state')).status()).toBe(200);
 
     // the real owner types the email in their own browser: "existing", and the mailbox receives a link
-    const owner = await newClient(playwright);
-    const existing = await owner.post('/api/leads', { data: leadBody(lead.email) });
+    const owner = await newVisitor(playwright);
+    const existing = await owner.funnel.post('/api/leads', { data: leadBody(lead.email) });
     expect((await existing.json()).status).toBe('existing');
     const mail = await emailEvent(lead.leadId, 'file-open');
     const link = linkIn(mail.payload, /https?:\/\/[^\s"'<>]+\/go\/[\w.-]+/)!;
     expect(link).toBeTruthy();
+    expect(new URL(link).origin, 'the link opens the portal').toBe(PORTAL_ORIGIN);
 
     // a mail scanner opening the link (GET, no cookies) must change nothing: it is forwarded to the confirmation page
     const before = await leadByEmail(lead.email);
-    const scan = await (await newClient(playwright)).get(new URL(link).pathname, { maxRedirects: 0 });
+    const scanner = await newPortalClient(playwright);
+    const scan = await scanner.get(new URL(link).pathname, { maxRedirects: 0 });
     expect(scan.status()).toBe(303);
-    expect(new URL(scan.headers().location!).pathname).toBe('/open-link');
+    expect(redirectUrl(scan).pathname).toBe('/open-link');
     expect(setCookies(scan).some((c) => /auth-token/.test(c))).toBe(false);
     expect(await leadByEmail(lead.email)).toMatchObject({ email_verified_at: null, session_epoch: before?.session_epoch });
     expect(await passwordSignIn(lead.email, 'attacker-pass-1')).toBe(true);
 
-    // ...a person presses "Open my portal" (the form POST): signed in, sent to the portal
-    const go = await owner.post(new URL(link).pathname, { maxRedirects: 0 });
+    // the attacker's cookie on the firm's site names the epoch the lead has now
+    const attackerCookie = await cookieValue(attacker.funnel, 'dpl_lead');
+    expect(attackerCookie, 'the attacker holds a lead cookie of the firm\'s site').toBeTruthy();
+    expect(decodeAppToken(attackerCookie!)).toMatchObject({ p: 'lead', lid: lead.leadId, ep: before?.session_epoch });
+    // the real owner has no cookie of the firm's site yet: the details form only answered "existing"
+    expect((await owner.funnel.get('/api/lead')).status()).toBe(401);
+
+    // ...a person presses "Open my portal" (the form POST): the mailbox is proven and the portal session opens
+    const go = await owner.portal.post(new URL(link).pathname, { maxRedirects: 0 });
     expect(go.status()).toBe(303);
-    expect(new URL(go.headers().location!).pathname).toBe('/portal');
     expect(setCookies(go).some((c) => /^sb-[\w-]+-auth-token/.test(c))).toBe(true);
 
     const after = await leadByEmail(lead.email);
@@ -814,44 +1010,88 @@ test.describe('portal entry, passwords and emailed links', () => {
     expect(after?.session_epoch).toBe((before?.session_epoch ?? 0) + 1);
     expect(after?.password_set_at).toBeNull();
     expect(await passwordSignIn(lead.email, 'attacker-pass-1')).toBe(false);
-    expect((await attacker.get('/api/lead')).status(), 'the attacker is locked out').toBe(401);
-    expect((await owner.get('/api/lead')).status()).toBe(200);
+    expect((await attacker.funnel.get('/api/lead')).status(), 'the attacker\'s lead cookie on the firm\'s site is dead').toBe(401);
+    expect((await attacker.portal.get('/api/portal/state')).status(), 'and so is the attacker\'s portal session').toBe(401);
+    expect((await owner.portal.get('/api/portal/state')).status(), 'the owner is in on the portal').toBe(200);
+
+    // The proof renewed the epoch, which ended the cookie the firm's site gives whoever fills in the form, so the portal does
+    // not go straight to /portal: it hands the browser to the firm's site with a 2-minute resume token for the new epoch
+    // (the other half of the redirect chain: firm's site -> sets its own fresh lead cookie -> back to the portal)
+    const resume = redirectUrl(go);
+    expect(resume.origin, 'the hand-over runs on the firm\'s site').toBe(FUNNEL_ORIGIN);
+    expect(resume.pathname).toBe('/api/lead/resume');
+    const token = resume.searchParams.get('t')!;
+    expect(decodeAppToken(token)).toMatchObject({ p: 'resume', lid: lead.leadId, ep: after?.session_epoch, n: '/portal' });
+    const lifetime = (decodeAppToken(token).exp ?? 0) - Math.floor(Date.now() / 1000);
+    expect(lifetime, 'the token lives for two minutes at most').toBeLessThanOrEqual(120);
+
+    const resumed = await owner.funnel.get(resume.href, { maxRedirects: 0 });
+    expect(resumed.status()).toBe(303);
+    expect(redirectUrl(resumed).origin + redirectUrl(resumed).pathname, 'and back to the portal').toBe(`${PORTAL_ORIGIN}/portal`);
+    const issued = setCookies(resumed).find((c) => c.startsWith('dpl_lead='));
+    expect(issued, 'the firm\'s site issues its own lead cookie').toBeTruthy();
+    expect(issued).toMatch(/HttpOnly/i);
+    // the owner's cookie belongs to the NEW epoch, the attacker's still names the old one
+    const ownerCookie = (await cookieValue(owner.funnel, 'dpl_lead'))!;
+    expect(decodeAppToken(ownerCookie)).toMatchObject({ p: 'lead', lid: lead.leadId, ep: after?.session_epoch });
+    expect(ownerCookie).not.toBe(attackerCookie);
+    expect((await owner.funnel.get('/api/lead')).status(), 'the owner is known to the firm\'s site now').toBe(200);
+    expect((await (await owner.funnel.get('/api/lead')).json()).leadId).toBe(lead.leadId);
+    expect((await attacker.funnel.get('/api/lead')).status(), 'the attacker\'s old cookie is still dead').toBe(401);
+    // ...and the portal page the chain ends on opens for the owner, not for the attacker
+    expect((await owner.portal.get('/portal', { maxRedirects: 0 })).status()).toBe(200);
+    expect((await attacker.portal.get('/portal', { maxRedirects: 0 })).status()).toBe(307);
 
     // the old link is bound to the old epoch: it now lands on the "request a new link" page
-    const old = await (await newClient(playwright)).get(new URL(link).pathname, { maxRedirects: 0 });
+    const old = await scanner.get(new URL(link).pathname, { maxRedirects: 0 });
     expect(old.status()).toBe(303);
-    expect(new URL(old.headers().location!).pathname).toBe('/link-expired');
+    expect(redirectUrl(old).pathname).toBe('/link-expired');
+    await scanner.dispose();
     await attacker.dispose();
     await owner.dispose();
   });
 
   test('bad /go tokens go to the link-expired page, never to the portal', async ({ playwright }) => {
-    const client = await newClient(playwright);
+    const client = await newPortalClient(playwright);
+    // (without the Hebrew edition of the portal a /he address is only redirected to the English one)
+    const hebrew = await campaignIsBilingual();
     for (const [path, expected] of [
       ['/go/not-a-token', '/link-expired'],
-      ['/he/go/not-a-token', '/he/link-expired'],
+      ...(hebrew ? [['/he/go/not-a-token', '/he/link-expired'] as const] : []),
       [`/go/${signAppToken({ lid: uuid(), ep: 0, p: 'portal', n: '/portal' }, 3600)}`, '/link-expired'],
       [`/go/${signAppToken({ lid: uuid(), ep: 0, p: 'unsub' }, 3600)}`, '/link-expired'],
+      [`/go/${signAppToken({ lid: uuid(), ep: 0, p: 'enter' }, 3600)}`, '/link-expired'],
     ] as const) {
       const res = await client.get(path, { maxRedirects: 0 });
       expect(res.status(), path).toBe(303);
-      expect(new URL(res.headers().location!).pathname, path).toBe(expected);
+      expect(redirectUrl(res).pathname, path).toBe(expected);
       expect(setCookies(res).some((c) => /auth-token/.test(c))).toBe(false);
     }
     await client.dispose();
   });
 
   test('a "next" smuggled into an emailed token cannot leave the site', async ({ playwright }) => {
-    const owner = await newClient(playwright);
-    const lead = await createLead(owner, 'nextsafe');
-    const row = (await leadByEmail(lead.email))!;
+    const owner = await newVisitor(playwright);
+    const lead = await createLead(owner.funnel, 'nextsafe');
     for (const n of ['https://evil.example/', '//evil.example', '/\\evil.example', 'javascript:alert(1)']) {
+      // (the first press verifies the mailbox, which moves the lead on to a new epoch: every token is signed for the current one)
+      const row = (await leadByEmail(lead.email))!;
       const token = signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n }, 3600);
-      const res = await owner.post(`/go/${token}`, { maxRedirects: 0 });
-      expect(res.status()).toBe(303);
-      const location = new URL(res.headers().location!);
-      expect(location.origin).toBe(BASE_URL);
-      expect(location.pathname).toBe('/portal');
+      const res = await owner.portal.post(`/go/${token}`, { maxRedirects: 0 });
+      expect(res.status(), n).toBe(303);
+      let location = redirectUrl(res);
+      // A browser that did not create the lead passes once through the firm's site on the way (its own lead cookie is renewed
+      // there). That is the only other place the link may lead, and what it carries is the portal's own /portal, not the
+      // smuggled value.
+      if (location.origin === FUNNEL_ORIGIN) {
+        expect(location.pathname, n).toBe('/api/lead/resume');
+        expect(decodeAppToken(location.searchParams.get('t')!).n, n).toBe('/portal');
+        const back = await owner.funnel.get(location.href, { maxRedirects: 0 });
+        expect(back.status(), n).toBe(303);
+        location = redirectUrl(back);
+      }
+      expect(location.origin, n).toBe(PORTAL_ORIGIN);
+      expect(location.pathname, n).toBe('/portal');
     }
     await owner.dispose();
   });
@@ -859,7 +1099,7 @@ test.describe('portal entry, passwords and emailed links', () => {
   test('POST /api/auth/link always answers 200 and emails a fresh link only to a known address', async ({ playwright }) => {
     const client = await newClient(playwright);
     const lead = await createLead(client, 'newlink');
-    const stranger = await newClient(playwright);
+    const stranger = await newPortalClient(playwright);
     const known = await stranger.post('/api/auth/link', { data: { email: lead.email } });
     const unknown = await stranger.post('/api/auth/link', { data: { email: newEmail('ghost') } });
     expect([known.status(), unknown.status()]).toEqual([200, 200]);
@@ -870,22 +1110,179 @@ test.describe('portal entry, passwords and emailed links', () => {
     await stranger.dispose();
   });
 
-  test('creating a new lead in a browser signed in as another lead ends that session', async ({ playwright }) => {
-    const client = await newClient(playwright);
-    const a = await createLead(client, 'sharedA');
-    await client.post('/api/portal/enter');
-    expect((await (await client.get('/api/lead')).json()).leadId).toBe(a.leadId);
+  test('creating a new lead in a browser holding another lead\'s portal session ends that session (one jar shared by both sites)', async ({ playwright }) => {
+    // Only a browser that presents the portal's session to the firm's site can be signed out by it. Production never does
+    // (two domains); localhost shares cookies between the ports, which is what puts this rule (endForeignSession) in reach.
+    const person = await newVisitor(playwright);
+    const a = await createLead(person.funnel, 'sharedA');
+    await goToPortal(person);
+    const shared = await newClientWithCookiesOf(playwright, FUNNEL_URL, [person.funnel, person.portal]);
+    expect((await (await shared.get('/api/lead')).json()).leadId).toBe(a.leadId);
 
     // a second person on the same computer: another name (the same name with another address would be a correction)
-    const b = await createLead(client, 'sharedB', { fullName: 'berta schmidt' });
-    const me = await (await client.get('/api/lead')).json();
+    const b = await createLead(shared, 'sharedB', { fullName: 'berta schmidt' });
+    const me = await (await shared.get('/api/lead')).json();
     expect(me.leadId, 'the browser now acts as the new lead, not the old session').toBe(b.leadId);
-    const slot = await freeSlot(client, 6);
-    const booked = await client.post('/api/bookings', { data: { startsAt: slot.startsAt, timezone: 'Asia/Jerusalem' } });
+    const slot = await freeSlot(shared, 6);
+    const booked = await shared.post('/api/bookings', { data: { startsAt: slot.startsAt, timezone: 'Asia/Jerusalem' } });
     expect(booked.status()).toBe(201);
     expect((await rest<{ lead_id: string }>('bookings', `lead_id=eq.${b.leadId}&select=lead_id`)).length).toBe(1);
     expect((await rest<{ lead_id: string }>('bookings', `lead_id=eq.${a.leadId}&select=lead_id`)).length).toBe(0);
-    await client.dispose();
+    await shared.dispose();
+    await person.dispose();
+  });
+
+  test('a second person on the same computer: the firm\'s site follows the newest lead and "Go to my portal" then replaces the first person\'s portal session', async ({ playwright }) => {
+    const person = await newVisitor(playwright);
+    const a = await createLead(person.funnel, 'sameComputerA');
+    await goToPortal(person);
+    const stateOf = async () => ((await (await person.portal.get('/api/portal/state')).json()) as { lead: { caseRef: string } }).lead.caseRef;
+    expect(await stateOf()).toBe(a.caseRef);
+
+    const b = await createLead(person.funnel, 'sameComputerB', { fullName: 'berta schmidt' });
+    expect((await (await person.funnel.get('/api/lead')).json()).leadId, 'the funnel cookie follows the newest lead').toBe(b.leadId);
+    const slot = await freeSlot(person.funnel, 7);
+    expect((await person.funnel.post('/api/bookings', { data: { startsAt: slot.startsAt, timezone: 'Asia/Jerusalem' } })).status()).toBe(201);
+    expect((await rest('bookings', `lead_id=eq.${a.leadId}&select=lead_id`)).length).toBe(0);
+    expect((await rest('bookings', `lead_id=eq.${b.leadId}&select=lead_id`)).length).toBe(1);
+
+    // the second person's own hand-over opens their file, not the first person's
+    await goToPortal(person);
+    expect(await stateOf()).toBe(b.caseRef);
+    await person.dispose();
+  });
+});
+
+test.describe('emailed links that continue the funnel', () => {
+  /** The /go links of an email, with the `next` path each one carries. */
+  const goLinks = (payload: { text?: string; html?: string }) =>
+    [...new Set(`${payload.text ?? ''}\n${payload.html ?? ''}`.replace(/&amp;/g, '&').match(/https?:\/\/[^\s"'<>]+\/go\/[\w.-]+/g) ?? [])].map((href) => ({
+      href,
+      next: decodeAppToken(new URL(href).pathname.split('/').pop()!).n as string | undefined,
+    }));
+
+  /** Follows the hand-over a /go answer points at: the firm's /api/lead/resume with the browser's firm-site jar. */
+  async function followResume(go: APIResponse, funnel: APIRequestContext): Promise<{ resume: URL; landed: APIResponse }> {
+    const resume = redirectUrl(go);
+    expect(resume.origin, 'the hand-over runs on the firm\'s site').toBe(FUNNEL_ORIGIN);
+    expect(resume.pathname).toBe('/api/lead/resume');
+    return { resume, landed: await funnel.get(resume.href, { maxRedirects: 0 }) };
+  }
+
+  test('"Change or cancel" in the confirmation email: the signed link opens the portal session, then the firm\'s site gives the browser its lead cookie and lands on /apply/booking', async ({ playwright }) => {
+    const creator = await newVisitor(playwright);
+    const lead = await createLead(creator.funnel, 'mailbooking');
+    const slot = await freeSlot(creator.funnel, 14);
+    expect((await creator.funnel.post('/api/bookings', { data: { startsAt: slot.startsAt, timezone: 'Asia/Jerusalem' } })).status()).toBe(201);
+    const links = goLinks((await emailEvent(lead.leadId, 'booking-confirmation')).payload);
+    const change = links.find((l) => l.next === '/booking');
+    expect(change, 'a signed link whose destination is the booking step').toBeTruthy();
+    expect(new URL(change!.href).origin).toBe(PORTAL_ORIGIN);
+
+    // the person opens it on their phone: a browser with no cookie of either site, and a person presses the confirmation button
+    const phone = await newVisitor(playwright);
+    expect((await phone.funnel.get('/api/lead')).status(), 'the phone is nobody on the firm\'s site yet').toBe(401);
+    const go = await phone.portal.post(new URL(change!.href).pathname, { maxRedirects: 0 });
+    expect(go.status()).toBe(303);
+    expect(setCookies(go).some((c) => /^sb-[\w-]+-auth-token/.test(c)), 'the portal session is open').toBe(true);
+    // the booking step is on the firm's site, which cannot see that session: 303 to its /api/lead/resume with a 2-minute token
+    const { resume, landed } = await followResume(go, phone.funnel);
+    const token = decodeAppToken(resume.searchParams.get('t')!);
+    expect(token).toMatchObject({ p: 'resume', lid: lead.leadId, n: '/apply/booking' });
+    expect((token.exp ?? 0) - Math.floor(Date.now() / 1000)).toBeLessThanOrEqual(120);
+    expect(landed.status()).toBe(303);
+    expect(redirectUrl(landed).href).toBe(`${FUNNEL_ORIGIN}${APPLY}/booking`);
+    expect(setCookies(landed).some((c) => /^dpl_lead=.+HttpOnly/i.test(c))).toBe(true);
+    // ...and the step now knows whose call this is
+    const who = await phone.funnel.get('/api/lead');
+    expect(who.status()).toBe(200);
+    expect(await who.json()).toMatchObject({ leadId: lead.leadId, booking: { startsAt: slot.startsAt } });
+    expect((await phone.funnel.get(`${APPLY}/booking`, { maxRedirects: 0 })).status(), 'the booking page opens for the phone').toBe(200);
+
+    // the portal's own old /booking address still leaves for the firm's step
+    const hop = await phone.portal.get('/booking', { maxRedirects: 0 });
+    expect([301, 308]).toContain(hop.status());
+    expect(redirectUrl(hop).origin + redirectUrl(hop).pathname).toBe(`${FUNNEL_ORIGIN}${APPLY}/booking`);
+    await phone.dispose();
+    await creator.dispose();
+  });
+
+  test('every funnel step an emailed link can name is handed over to the firm\'s site: /booking, /offer, /details, /eligibility', async ({ playwright }) => {
+    const owner = await newVisitor(playwright);
+    const lead = await createLead(owner.funnel, 'steps');
+    for (const step of ['/booking', '/offer', '/details', '/eligibility']) {
+      const row = (await leadByEmail(lead.email))!;
+      const phone = await newVisitor(playwright);
+      const go = await phone.portal.post(`/go/${signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n: step }, 3600)}`, { maxRedirects: 0 });
+      expect(go.status(), step).toBe(303);
+      const { resume, landed } = await followResume(go, phone.funnel);
+      expect(decodeAppToken(resume.searchParams.get('t')!), step).toMatchObject({ p: 'resume', lid: lead.leadId, n: `${APPLY}${step}` });
+      expect(redirectUrl(landed).href, step).toBe(`${FUNNEL_ORIGIN}${APPLY}${step}`);
+      expect((await phone.funnel.get('/api/lead')).status(), `${step}: the firm's site knows the browser`).toBe(200);
+      await phone.dispose();
+    }
+    // a step that is not on the list is not handed over (and a made-up one cannot be: see the resume route's own tests)
+    const row = (await leadByEmail(lead.email))!;
+    const other = await newVisitor(playwright);
+    const go = await other.portal.post(`/go/${signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n: '/portal/documents' }, 3600)}`, { maxRedirects: 0 });
+    expect(go.status()).toBe(303);
+    expect(redirectUrl(go).origin).toBe(PORTAL_ORIGIN);
+    expect(redirectUrl(go).pathname).toBe('/portal/documents');
+    await other.dispose();
+    await owner.dispose();
+  });
+
+  // The booking step on the firm's site identifies the visitor with the lead cookie of ITS OWN domain (GET /api/lead). A
+  // browser that arrives from an emailed booking link opens a session on the PORTAL's domain only, so /go hands it over
+  // (the test above): without the hand-over the step would send it to /apply/details. Here the jars are kept apart.
+  test('an emailed booking link opens a booking step that knows the lead (a browser holding only the portal session)', async ({ playwright }) => {
+    const creator = await newVisitor(playwright);
+    const lead = await createLead(creator.funnel, 'mailbooking2');
+    const slot = await freeSlot(creator.funnel, 15);
+    expect((await creator.funnel.post('/api/bookings', { data: { startsAt: slot.startsAt, timezone: 'Asia/Jerusalem' } })).status()).toBe(201);
+    const change = goLinks((await emailEvent(lead.leadId, 'booking-confirmation')).payload).find((l) => l.next === '/booking')!;
+
+    const phone = await newVisitor(playwright);
+    const go = await phone.portal.post(new URL(change.href).pathname, { maxRedirects: 0 });
+    expect(go.status()).toBe(303);
+    // what the booking step on the firm's site asks first: nobody, until the hand-over has run
+    expect((await phone.funnel.get('/api/lead')).status()).toBe(401);
+    await followResume(go, phone.funnel);
+    const who = await phone.funnel.get('/api/lead');
+    expect(who.status(), 'the firm\'s booking step must know whose call this is').toBe(200);
+    expect(await who.json()).toMatchObject({ leadId: lead.leadId, booking: { startsAt: slot.startsAt } });
+    await phone.dispose();
+    await creator.dispose();
+  });
+
+  // Second face of the same cause: /go decides "is this the browser that created the lead?" from the lead cookie of the
+  // PORTAL's domain, which the funnel never sets. The person who filled in the form and then opens the first email in the
+  // same browser is treated as a stranger: the pre-registration defence runs (epoch + 1), which ends the firm's cookie of
+  // that very browser. The portal therefore passes it through the firm's site once (/api/lead/resume) for a fresh cookie.
+  test('opening the first emailed link in the browser that filled in the form keeps that browser known to the firm\'s site', async ({ playwright }) => {
+    const person = await newVisitor(playwright);
+    const lead = await createLead(person.funnel, 'mailsame');
+    const before = (await leadByEmail(lead.email))!;
+    const link = goLinks((await emailEvent(lead.leadId, 'welcome-1')).payload).find((l) => l.next === '/portal')!;
+    const go = await person.portal.post(new URL(link.href).pathname, { maxRedirects: 0 });
+    expect(go.status()).toBe(303);
+    // the epoch moved on, so the cookie the firm's site gave this browser is dead until the hand-over has run
+    const after = (await leadByEmail(lead.email))!;
+    expect(after.session_epoch).toBe(before.session_epoch + 1);
+    expect((await person.funnel.get('/api/lead')).status(), 'the old cookie of the firm\'s site died with the old epoch').toBe(401);
+    const { resume, landed } = await followResume(go, person.funnel);
+    expect(decodeAppToken(resume.searchParams.get('t')!)).toMatchObject({ n: '/portal', ep: after.session_epoch });
+    expect(landed.status()).toBe(303);
+    expect(redirectUrl(landed).href, 'and back to the portal, signed in').toBe(`${PORTAL_ORIGIN}/portal`);
+    expect((await person.funnel.get('/api/lead')).status(), 'the lead cookie of the firm\'s site identifies the lead again').toBe(200);
+    expect((await person.portal.get('/api/portal/state')).status()).toBe(200);
+
+    // a later press of a link of the NEW epoch (the mailbox is proven already, nothing is renewed) goes straight to the portal
+    const again = (await leadByEmail(lead.email))!;
+    const direct = await person.portal.post(`/go/${signAppToken({ lid: again.id, ep: again.session_epoch, p: 'portal', n: '/portal' }, 3600)}`, { maxRedirects: 0 });
+    expect(direct.status()).toBe(303);
+    expect(redirectUrl(direct).origin + redirectUrl(direct).pathname).toBe(`${PORTAL_ORIGIN}/portal`);
+    await person.dispose();
   });
 });
 
@@ -895,7 +1292,7 @@ test.describe('staff', () => {
     const userId = await createAuthUser(email, 'staff-pass-123');
     await makeStaff(userId, email);
 
-    const client = await newClient(playwright);
+    const client = await newPortalClient(playwright);
     expect((await client.post('/api/auth/forgot', { data: { email, locale: 'en' } })).status()).toBe(200);
     const mail = await eventually(
       async () =>
@@ -908,21 +1305,23 @@ test.describe('staff', () => {
     // the recovery link signs the staff member in and goes to the admin area; no lead is invented for them
     const res = await client.post('/auth/callback', { form: { token_hash: await recoveryTokenHash(email), type: 'recovery' }, maxRedirects: 0 });
     expect(res.status()).toBe(303);
-    expect(new URL(res.headers().location!).pathname).toBe('/admin');
+    expect(redirectUrl(res).pathname).toBe('/admin');
     expect(setCookies(res).some((c) => /^sb-[\w-]+-auth-token/.test(c))).toBe(true);
     expect(await leadByEmail(email)).toBeNull();
 
     // an explicit next is validated like everybody else's: it can never leave the site
     const again = await client.post('/auth/callback', { form: { token_hash: await recoveryTokenHash(email), type: 'recovery', next: '//evil.example' }, maxRedirects: 0 });
-    expect(new URL(again.headers().location!).origin).toBe(BASE_URL);
+    expect(redirectUrl(again).origin).toBe(PORTAL_ORIGIN);
     await client.dispose();
   });
 });
 
 test.describe('unsubscribe', () => {
   test('opening the link never unsubscribes; the confirm POST does, once', async ({ playwright }) => {
-    const client = await newClient(playwright);
-    const lead = await createLead(client, 'unsub');
+    const funnel = await newClient(playwright);
+    const lead = await createLead(funnel, 'unsub');
+    await funnel.dispose();
+    const client = await newPortalClient(playwright);
     const token = signAppToken({ lid: lead.leadId, p: 'unsub' });
 
     const page = await client.get(`/unsubscribe?t=${token}`);
@@ -947,9 +1346,11 @@ test.describe('unsubscribe', () => {
     const welcome = await emailEvent(lead.leadId, 'welcome-1');
     const address = welcome.payload.listUnsubscribe as string;
     expect(address).toMatch(/\/api\/unsubscribe\/one-click\?t=[\w.-]+$/);
+    // the emails are queued by the firm's site, but the unsubscribe address is the portal's (that is where the route lives)
+    expect(new URL(address).origin).toBe(PORTAL_ORIGIN);
     // the link in the body is the page that asks first, with the same token
     const token = address.split('?t=')[1]!;
-    expect(String(welcome.payload.html)).toContain(`/unsubscribe?t=${token}`);
+    expect(String(welcome.payload.html)).toContain(`${PORTAL_ORIGIN}/unsubscribe?t=${token}`);
 
     // the provider's request comes from its own servers: no cookie, no Origin
     const provider = await playwright.request.newContext({ extraHTTPHeaders: { 'x-forwarded-for': newIp() } });
@@ -974,7 +1375,7 @@ test.describe('unsubscribe', () => {
     const otherAddress = ((await emailEvent(other.leadId, 'welcome-1')).payload.listUnsubscribe as string);
     const get = await provider.get(otherAddress, { maxRedirects: 0 });
     expect(get.status()).toBe(303);
-    expect(new URL(get.headers().location!, BASE_URL).pathname).toBe('/unsubscribe');
+    expect(redirectUrl(get).pathname).toBe('/unsubscribe');
     expect((await leadByEmail(other.email))?.unsubscribed_at).toBeNull();
     await provider.dispose();
     await second.dispose();
@@ -983,20 +1384,21 @@ test.describe('unsubscribe', () => {
 });
 
 test.describe('hardening', () => {
-  test('a token from an email is not a login: neither the unsubscribe link nor the portal link works as the lead cookie', async ({ playwright }) => {
+  test('a token from an email is not a login: neither the unsubscribe link nor the portal link nor the hand-over link works as the lead cookie', async ({ playwright }) => {
     const owner = await newClient(playwright);
     const lead = await createLead(owner, 'tokens');
     const row = (await leadByEmail(lead.email))!;
     const stolen = [
       signAppToken({ lid: lead.leadId, p: 'unsub' }), // sits in every nurture email, never expires
       signAppToken({ lid: lead.leadId, ep: row.session_epoch, p: 'portal', n: '/portal' }, 3600), // the emailed portal link
+      signAppToken({ lid: lead.leadId, ep: row.session_epoch, p: 'enter' }, 120), // the "Go to my portal" hand-over link
       signAppToken({ lid: lead.leadId, ep: row.session_epoch }, 3600), // no purpose at all
       signAppToken({ lid: lead.leadId, p: 'lead' }, 3600), // right purpose, no epoch
     ];
     for (const token of stolen) {
-      const thief = await playwright.request.newContext({ baseURL: BASE_URL, extraHTTPHeaders: { 'x-forwarded-for': newIp(), cookie: `dpl_lead=${token}` } });
+      const thief = await playwright.request.newContext({ baseURL: FUNNEL_URL, extraHTTPHeaders: { 'x-forwarded-for': newIp(), cookie: `dpl_lead=${token}` } });
       expect((await thief.get('/api/lead')).status()).toBe(401);
-      expect((await thief.post('/api/portal/enter', { headers: { origin: new URL(BASE_URL).origin } })).status()).toBe(401);
+      expect((await thief.post('/api/portal/enter', { headers: { origin: FUNNEL_ORIGIN } })).status()).toBe(401);
       await thief.dispose();
     }
     // the real cookie of the person who filled in the form still works
@@ -1004,55 +1406,177 @@ test.describe('hardening', () => {
     await owner.dispose();
   });
 
-  test('state-changing routes refuse a cross-site Origin', async ({ playwright }) => {
-    const client = await newClient(playwright);
-    await createLead(client, 'origin');
-    const evil = { origin: 'https://evil.example' };
-    for (const [method, path, data] of [
-      ['post', '/api/leads', leadBody(newEmail('o'))],
-      ['post', '/api/bookings', { startsAt: new Date().toISOString(), timezone: 'UTC' }],
-      ['delete', '/api/bookings', undefined],
-      ['post', '/api/callbacks', { phone: '+1 555 000 1234' }],
-      ['post', '/api/results/email', undefined],
-      ['post', '/api/portal/enter', undefined],
-      ['post', '/api/auth/set-password', { password: 'correct-horse-9' }],
-      ['post', '/api/auth/forgot', { email: 'a@b.co' }],
-      ['post', '/api/auth/link', { email: 'a@b.co' }],
-      ['post', '/api/unsubscribe', { token: 'x'.repeat(20) }],
-      ['put', '/api/lead/answers', { answers: {} }],
+  test('state-changing routes refuse a cross-site Origin, and the two sites refuse each other\'s', async ({ playwright }) => {
+    const funnel = await newClient(playwright);
+    const portal = await newPortalClient(playwright);
+    await createLead(funnel, 'origin');
+    const evil = 'https://evil.example';
+    const routes = {
+      funnel: [
+        ['post', '/api/leads', leadBody(newEmail('o'))],
+        ['post', '/api/bookings', { startsAt: new Date().toISOString(), timezone: 'UTC' }],
+        ['delete', '/api/bookings', undefined],
+        ['post', '/api/callbacks', { phone: '+1 555 000 1234' }],
+        ['post', '/api/results/email', undefined],
+        ['post', '/api/portal/enter', undefined],
+        ['put', '/api/lead/answers', { answers: {} }],
+        ['post', '/api/auth/link', { email: 'a@b.co' }],
+      ],
+      portal: [
+        ['post', '/api/auth/set-password', { password: 'correct-horse-9' }],
+        ['post', '/api/auth/forgot', { email: 'a@b.co' }],
+        ['post', '/api/auth/link', { email: 'a@b.co' }],
+        ['post', '/api/unsubscribe', { token: 'x'.repeat(20) }],
+      ],
+    } as const;
+    // (an unrelated address, and the OTHER site of the pair: the portal's pages never call the funnel's API, nor the reverse)
+    for (const [client, list, other] of [
+      [funnel, routes.funnel, PORTAL_ORIGIN],
+      [portal, routes.portal, FUNNEL_ORIGIN],
     ] as const) {
-      const res = await client[method](path, { data, headers: { ...evil, 'x-forwarded-for': newIp() } });
-      expect(res.status(), `${method} ${path}`).toBe(403);
+      for (const [method, path, data] of list) {
+        for (const origin of [evil, other]) {
+          const res = await client[method](path, { data, headers: { origin, 'x-forwarded-for': newIp() } });
+          expect(res.status(), `${method} ${path} from ${origin}`).toBe(403);
+          expect((await res.json()).error).toBe('bad_origin');
+        }
+      }
     }
-    await client.dispose();
+    await funnel.dispose();
+    await portal.dispose();
+  });
+
+  test('the other write routes are rate limited per address too, and say when to come back', async ({ playwright }) => {
+    const funnel = await newClient(playwright);
+    const portal = await newPortalClient(playwright);
+    // (anonymous or invalid requests: they change nothing, and the limit is checked before anything else)
+    const routes = [
+      [funnel, 'post', '/api/portal/enter', undefined, 20],
+      [funnel, 'post', '/api/results/email', undefined, 5],
+      [funnel, 'post', '/api/bookings', {}, 20],
+      [funnel, 'put', '/api/lead/answers', { answers: {} }, 30],
+      [funnel, 'post', '/api/auth/link', { email: 'nope' }, 5],
+      [portal, 'post', '/api/auth/set-password', { password: 'correct-horse-9' }, 10],
+      [portal, 'post', '/api/auth/link', { email: 'nope' }, 5],
+      [portal, 'post', '/api/unsubscribe', { token: 'x'.repeat(40) }, 10],
+    ] as const;
+    for (const [client, method, path, data, max] of routes) {
+      for (let i = 0; i < max; i++) {
+        const res = await client[method](path, { data });
+        expect(res.status(), `${method} ${path} #${i + 1} is within the limit`).not.toBe(429);
+      }
+      const limited = await client[method](path, { data });
+      expect(limited.status(), `${method} ${path} #${max + 1}`).toBe(429);
+      expect((await limited.json()).error).toBe('rate_limited');
+      expect(limited.headers()['retry-after']).toBe('60');
+    }
+    await funnel.dispose();
+    await portal.dispose();
   });
 
   test('malformed JSON is a 400, not a 500', async ({ request }) => {
     const res = await request.post('/api/leads', { data: '{not json', headers: { 'content-type': 'application/json', 'x-forwarded-for': newIp() } });
     expect(res.status()).toBe(400);
+    const portal = await request.post(`${BASE_URL}/api/auth/forgot`, { data: '{not json', headers: { 'content-type': 'application/json', 'x-forwarded-for': newIp() } });
+    expect(portal.status()).toBe(400);
+  });
+});
+
+test.describe('which site serves what', () => {
+  const FUNNEL_API = [
+    ['get', '/api/availability'],
+    ['post', '/api/leads'],
+    ['get', '/api/lead'],
+    ['put', '/api/lead/answers'],
+    ['post', '/api/bookings'],
+    ['delete', '/api/bookings'],
+    ['post', '/api/callbacks'],
+    ['post', '/api/results/email'],
+    ['post', '/api/portal/enter'],
+    // the two halves of the hand-over between the sites that end on the firm's site (see lead-handover.spec.ts)
+    ['get', '/api/lead/resume'],
+    ['get', '/api/lead/forget'],
+  ] as const;
+  /** Routes of the same name on both sites: the portal's "send me a new link" (expired-link page) and the funnel's (details form). */
+  const BOTH_API = [['post', '/api/auth/link']] as const;
+  const PORTAL_API = [
+    ['post', '/api/auth/forgot'],
+    ['post', '/api/auth/set-password'],
+    ['post', '/api/unsubscribe'],
+    ['post', '/api/unsubscribe/one-click'],
+    ['get', '/api/portal/state'],
+    ['post', '/api/portal/sign-out'],
+    ['post', '/api/cron/dispatch'],
+  ] as const;
+  const PORTAL_PAGES = ['/sign-in', '/portal', '/admin', '/go/x', '/enter/x', '/auth/callback', '/open-link', '/link-expired', '/create-password', '/verify', '/two-step', '/unsubscribe'];
+
+  test('the funnel APIs exist on the firm\'s site only, the portal APIs on the portal only', async ({ playwright }) => {
+    const funnel = await newClient(playwright);
+    const portal = await newPortalClient(playwright);
+    // (never the other host's cron route with a body: it is only asked on the firm's site, where it must not exist)
+    for (const [method, path] of FUNNEL_API) {
+      const res = await portal[method](path, { data: method === 'get' ? undefined : {} });
+      expect(res.status(), `portal ${method} ${path}`).toBe(404);
+    }
+    for (const [method, path] of PORTAL_API) {
+      const res = await funnel[method](path, { data: method === 'get' ? undefined : {} });
+      expect(res.status(), `firm's site ${method} ${path}`).toBe(404);
+    }
+    // (an empty body is refused with 400 by both: the route exists, it is not a 404)
+    for (const [method, path] of BOTH_API) {
+      for (const [name, client] of [['firm\'s site', funnel], ['portal', portal]] as const) {
+        const res = await client[method](path, { data: {} });
+        expect(res.status(), `${name} ${method} ${path}`).toBe(400);
+      }
+    }
+    await funnel.dispose();
+    await portal.dispose();
+  });
+
+  test('the portal\'s pages are not on the firm\'s site, and the funnel\'s pages are not on the portal', async ({ playwright }) => {
+    const funnel = await newClient(playwright);
+    const portal = await newPortalClient(playwright);
+    for (const path of PORTAL_PAGES) {
+      expect((await funnel.get(path, { maxRedirects: 0 })).status(), `firm's site ${path}`).toBe(404);
+    }
+    for (const path of [APPLY, `${APPLY}/eligibility`, `${APPLY}/details`, `${APPLY}/booking`, `${APPLY}/offer`]) {
+      expect((await portal.get(path, { maxRedirects: 0 })).status(), `portal ${path}`).toBe(404);
+      expect((await funnel.get(path, { maxRedirects: 0 })).status(), `firm's site ${path}`).toBe(200);
+    }
+    // the portal's bare address is its sign-in
+    const root = await portal.get('/', { maxRedirects: 0 });
+    expect([302, 303, 307]).toContain(root.status());
+    expect(redirectPath(root)).toBe('/sign-in');
+    await funnel.dispose();
+    await portal.dispose();
   });
 });
 
 test.describe('an address that already has a sign-in account of someone else', () => {
-  test('a member of staff: a lead made with the address is refused entry ("Go to my portal" is 409), links nothing and opens no session', async ({ playwright }) => {
+  const SIGN_IN_EXISTS = '/sign-in?error=accountExists&source=main-site';
+
+  test('a member of staff: a lead made with the address gets a hand-over link that opens nothing ("account exists" at sign-in), links nothing and opens no session', async ({ playwright }) => {
     const email = newEmail('staff-takeover');
     const staffId = await createAuthUser(email, 'Staff-Pass-1!');
     await makeStaff(staffId, email);
-    const stranger = await newClient(playwright);
+    const stranger = await newVisitor(playwright);
     // a lead may still be started for any address, as before (the owner can unsubscribe from what it sends)
-    const created = await stranger.post('/api/leads', { data: leadBody(email) });
+    const created = await stranger.funnel.post('/api/leads', { data: leadBody(email) });
     expect(created.status()).toBe(201);
 
-    const enter = await stranger.post('/api/portal/enter');
-    expect(enter.status()).toBe(409);
-    expect((await enter.json()).error).toBe('account_exists');
-    expect(setCookies(enter).filter((c) => c.startsWith('sb-'))).toEqual([]);
+    // the firm's site only checks the lead cookie and hands out the link; the portal's /enter is where the account is looked at
+    const { enter, landed } = await goToPortal(stranger);
+    expect(enter.status()).toBe(200);
+    expect(landed.status()).toBe(303);
+    expect(redirectPath(landed)).toBe(SIGN_IN_EXISTS);
+    expect(setCookies(landed).filter((c) => c.startsWith('sb-'))).toEqual([]);
     expect((await leadByEmail(email))!.user_id).toBeNull();
+    expect((await stranger.portal.get('/api/portal/state')).status()).toBe(401);
 
     // the browser is not signed in to anything: the CRM sends it to the sign-in page
-    const admin = await stranger.get('/admin', { maxRedirects: 0 });
+    const admin = await stranger.portal.get('/admin', { maxRedirects: 0 });
     expect([302, 303, 307, 308]).toContain(admin.status());
-    expect(new URL(admin.headers().location!, BASE_URL).pathname).toMatch(/\/sign-in$/);
+    expect(redirectUrl(admin).pathname).toMatch(/\/sign-in$/);
     // and the staff member's own password is untouched
     expect(await passwordSignIn(email, 'Staff-Pass-1!')).toBe(true);
     await stranger.dispose();
@@ -1062,11 +1586,11 @@ test.describe('an address that already has a sign-in account of someone else', (
     const email = newEmail('staff-link');
     const staffId = await createAuthUser(email, 'Staff-Pass-2!');
     await makeStaff(staffId, email);
-    const stranger = await newClient(playwright);
-    expect((await stranger.post('/api/leads', { data: leadBody(email) })).status()).toBe(201);
+    const stranger = await newVisitor(playwright);
+    expect((await stranger.funnel.post('/api/leads', { data: leadBody(email) })).status()).toBe(201);
     const row = (await leadByEmail(email))!;
-    const res = await stranger.post(`/go/${signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n: '/portal' }, 3600)}`, { maxRedirects: 0 });
-    expect(new URL(res.headers().location!, BASE_URL).pathname).toBe('/link-expired');
+    const res = await stranger.portal.post(`/go/${signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n: '/portal' }, 3600)}`, { maxRedirects: 0 });
+    expect(redirectUrl(res).pathname).toBe('/link-expired');
     expect(setCookies(res).filter((c) => c.startsWith('sb-'))).toEqual([]);
     expect((await leadByEmail(email))!.user_id).toBeNull();
     await stranger.dispose();
@@ -1075,17 +1599,23 @@ test.describe('an address that already has a sign-in account of someone else', (
   test('an account somebody made by hand: the cookie holder is refused; the mailbox owner, through the emailed link, gets it and the old password stops working', async ({ playwright }) => {
     const email = newEmail('handmade');
     await createAuthUser(email, 'Known-To-Someone-1!');
-    const visitor = await newClient(playwright);
-    expect((await visitor.post('/api/leads', { data: leadBody(email) })).status()).toBe(201);
-    expect((await visitor.post('/api/portal/enter')).status()).toBe(409);
+    const visitor = await newVisitor(playwright);
+    expect((await visitor.funnel.post('/api/leads', { data: leadBody(email) })).status()).toBe(201);
+    const { landed } = await goToPortal(visitor);
+    expect(redirectPath(landed)).toBe(SIGN_IN_EXISTS);
+    expect(setCookies(landed).filter((c) => c.startsWith('sb-'))).toEqual([]);
     expect((await leadByEmail(email))!.user_id).toBeNull();
     expect(await passwordSignIn(email, 'Known-To-Someone-1!')).toBe(true);
 
     const row = (await leadByEmail(email))!;
-    const open = await visitor.post(`/go/${signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n: '/portal' }, 3600)}`, { maxRedirects: 0 });
+    const open = await visitor.portal.post(`/go/${signAppToken({ lid: row.id, ep: row.session_epoch, p: 'portal', n: '/portal' }, 3600)}`, { maxRedirects: 0 });
     expect(open.status()).toBe(303);
-    expect(new URL(open.headers().location!, BASE_URL).pathname).toBe('/portal');
     expect(setCookies(open).some((c) => c.startsWith('sb-'))).toBe(true);
+    // the mailbox was proven by a browser that did not create the lead: the firm's site renews its cookie on the way to /portal
+    expect(redirectUrl(open).origin + redirectUrl(open).pathname).toBe(`${FUNNEL_ORIGIN}/api/lead/resume`);
+    const back = await visitor.funnel.get(redirectUrl(open).href, { maxRedirects: 0 });
+    expect(back.status()).toBe(303);
+    expect(redirectUrl(back).href).toBe(`${PORTAL_ORIGIN}/portal`);
     expect((await leadByEmail(email))!.user_id).not.toBeNull();
     // whoever registered the address first no longer holds it
     expect(await passwordSignIn(email, 'Known-To-Someone-1!')).toBe(false);
@@ -1093,19 +1623,15 @@ test.describe('an address that already has a sign-in account of someone else', (
   });
 
   test('an applicant whose account the server made (cut off before it was linked) still gets it', async ({ playwright }) => {
-    const visitor = await newClient(playwright);
-    const lead = await createLead(visitor, 'cutoff');
+    const visitor = await newVisitor(playwright);
+    const lead = await createLead(visitor.funnel, 'cutoff');
     const row = (await leadByEmail(lead.email))!;
     // what an interrupted "Go to my portal" leaves behind: the account, with the lead named in app_metadata, not yet linked
-    const made = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321'}/auth/v1/admin/users`, {
-      method: 'POST',
-      headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '', authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ email: lead.email, password: 'cutoff-Password-1!', email_confirm: true, app_metadata: { lead_id: row.id } }),
-    });
-    expect(made.ok).toBe(true);
-    const enter = await visitor.post('/api/portal/enter');
-    expect(enter.status()).toBe(200);
-    expect((await leadByEmail(lead.email))!.user_id).toBe(((await made.json()) as { id: string }).id);
+    const made = await createAuthUserWith(lead.email, 'cutoff-Password-1!', { lead_id: row.id });
+    const { landed } = await goToPortal(visitor);
+    expect(landed.status()).toBe(303);
+    expect(redirectUrl(landed).pathname).toBe('/portal');
+    expect((await leadByEmail(lead.email))!.user_id).toBe(made);
     await visitor.dispose();
   });
 });

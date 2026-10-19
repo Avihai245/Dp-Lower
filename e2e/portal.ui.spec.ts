@@ -8,6 +8,7 @@
  */
 import { expect as baseExpect, test, type Browser, type Page } from '@playwright/test';
 import { adminDb, BASE_URL, createApplicant, FULL_APPLICATION, storedObjects, tinyPdf, type Applicant } from './portal.helpers';
+import { campaignIsBilingual } from './support/funnel';
 
 /* The app usually runs in development mode here, where the first visit to a page compiles it, on a busy machine: allow for that. */
 const expect = baseExpect.configure({ timeout: 20_000 });
@@ -251,7 +252,9 @@ test.describe('application, documents and submission', () => {
     const { page, close } = await signedIn(browser, a);
     await page.goto('/portal');
     await page.getByRole('button', { name: 'Sign out' }).click();
-    await page.waitForURL((u) => u.pathname === '/');
+    // the portal's address is its sign-in page: signing out goes to '/', which shows the sign-in for a visitor without a session
+    await page.waitForURL((u) => u.pathname === '/sign-in');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     const names = (await page.context().cookies()).map((c) => c.name);
     expect(names.some((n) => n.startsWith('sb-'))).toBe(false);
     expect(names).not.toContain('dpl_lead');
@@ -271,6 +274,7 @@ test.describe('Hebrew', () => {
   });
 
   test('is mirrored, translated and keeps its own arrow keys in the tour', async ({ browser }) => {
+    test.skip(!(await campaignIsBilingual()), 'the portal is English only (default setting): see english-only.spec.ts');
     const { page, errors, close } = await signedIn(browser, a);
     await page.goto('/he/portal');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');

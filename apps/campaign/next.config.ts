@@ -22,6 +22,14 @@ const supabaseOrigin = (() => {
     return '';
   }
 })();
+// the firm's own site: where the funnel steps linked from emails are
+const mainOrigin = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? 'https://www.lawoffice.org.il').origin;
+  } catch {
+    return '';
+  }
+})();
 /**
  * Content-Security-Policy. Next.js needs inline scripts for hydration, so script-src allows 'unsafe-inline' (all content is
  * escaped by React and there is no user-supplied HTML). Third parties are limited to what the pages really use: YouTube
@@ -39,7 +47,8 @@ function contentSecurityPolicy(): string {
     "media-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    // the confirmation form of an emailed link is answered with a redirect to the firm's site (the funnel steps live there)
+    `form-action 'self'${mainOrigin ? ` ${mainOrigin}` : ''}`,
     "frame-ancestors 'self'",
     // only when the site is really served over https (a local `next start` over http must keep working)
     ...(!isDev && (process.env.NEXT_PUBLIC_SITE_URL ?? '').startsWith('https://') ? ['upgrade-insecure-requests'] : []),

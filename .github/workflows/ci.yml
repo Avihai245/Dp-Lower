@@ -47,6 +47,9 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key
       SUPABASE_SERVICE_ROLE_KEY: ci-service-key
       APP_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
+      # the firm's site refuses to build without the portal's address (its "Client portal" button)
+      NEXT_PUBLIC_CAMPAIGN_URL: http://localhost:3001
+      NEXT_PUBLIC_MAIN_SITE_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -90,6 +93,7 @@ jobs:
           ENV
           cat > apps/main/.env.local <<ENV
           NEXT_PUBLIC_SITE_URL=http://localhost:3000
+          NEXT_PUBLIC_MAIN_SITE_URL=http://localhost:3000
           NEXT_PUBLIC_CAMPAIGN_URL=http://localhost:3001
           NEXT_PUBLIC_SUPABASE_URL=$API_URL
           NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY
@@ -108,7 +112,7 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Full suite (the campaign built bilingual, NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he)
         run: pnpm e2e
-      - name: The default setting (campaign English only): rebuild without the variable and run its own spec
+      - name: "The default setting (campaign English only): rebuild without the variable and run the whole suite again"
         run: |
           pkill -f "next start" || true
           sed -i '/NEXT_PUBLIC_CAMPAIGN_LOCALES/d' apps/campaign/.env.local apps/main/.env.local
@@ -118,7 +122,7 @@ jobs:
           for port in 3000 3001; do
             for i in $(seq 1 60); do curl -fsS "http://localhost:$port/" > /dev/null && break; sleep 1; done
           done
-          pnpm exec playwright test e2e/english-only.spec.ts
+          pnpm e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

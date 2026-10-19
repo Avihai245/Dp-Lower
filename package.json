@@ -22,7 +22,8 @@
     "db:reset": "SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/db/src/database.types.ts",
     "db:test": "bash supabase/tests/run.sh",
-    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts"
+    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
+    "smoke:live": "node scripts/smoke-live.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -39,7 +40,7 @@
     "supabase": "^2.120.0",
     "tsx": "^4.23.15",
     "typescript": "~5.9.3",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.12"
   },
   "pnpm": {
     "overrides": {

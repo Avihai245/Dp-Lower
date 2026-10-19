@@ -1,5 +1,6 @@
 'use client';
 
+import { isEmail } from '@dpl/core';
 import { s, x } from '@dpl/ui';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, useTransition } from 'react';
@@ -69,7 +70,8 @@ function InviteDialog({ onClose }: { onClose: () => void }) {
   const [saving, startSave] = useTransition();
 
   const nameOk = name.trim().length >= 2;
-  const emailOk = /.+@.+\..+/.test(email.trim());
+  // the same rule as the server's: an address the form accepts but the server refuses would fail without a word
+  const emailOk = isEmail(email.trim());
   const valid = nameOk && emailOk;
 
   const send = () => {

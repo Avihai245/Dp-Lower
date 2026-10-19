@@ -10,6 +10,7 @@ import { SignInForm } from '@/components/auth/SignInForm';
 import { parseSource, SRC_COOKIE } from '@dpl/core';
 import { redirect } from '@/i18n/navigation';
 import { pageMetadata } from '@/lib/seo';
+import { getSessionLead } from '@dpl/db/lead-session';
 import { isStaffUser } from '@/server/auth';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -37,8 +38,11 @@ export default async function SignInPage({ params, searchParams }: { params: Pro
       data: { user },
     } = await (await createServerSupabase()).auth.getUser();
     if (user) {
-      const staff = await isStaffUser(createAdminSupabase(), user.id);
-      redirect({ href: next ?? (staff ? '/admin' : '/portal'), locale });
+      const db = createAdminSupabase();
+      const staff = await isStaffUser(db, user.id);
+      // a signed-in user with neither a file nor a staff role has nowhere to go: show the form (a redirect would bounce
+      // between here and the portal for ever)
+      if (staff || (await getSessionLead(db))) redirect({ href: next ?? (staff ? '/admin' : '/portal'), locale });
     }
   }
 

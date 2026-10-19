@@ -10,8 +10,8 @@ import { isRootFile, looksLikeRootFile } from './lib/root-files';
 
 const intl = createMiddleware(routing);
 
-/** Pages that need a signed-in user. /admin additionally checks the staff role in its layout. */
-const PROTECTED = ['/portal', '/admin'];
+/** Pages that need a signed-in user. /admin additionally checks the staff role in its layout; /verify and /two-step are the staff's two-step verification screens. */
+const PROTECTED = ['/portal', '/admin', '/verify', '/two-step'];
 /** Pages that read or refresh the session cookie. Everything else stays free of Supabase round trips. */
 const SESSION_AWARE = [...PROTECTED, '/sign-in', '/create-password', '/auth'];
 

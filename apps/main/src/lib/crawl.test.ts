@@ -1,5 +1,5 @@
 import { ARTICLE_SLUGS, SERVICE_SLUGS, TEAM_SLUGS } from '@dpl/i18n';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { articleIsoDate } from './dates';
 import { CONTENT_UPDATED, robotsConfig, sitemapEntries, sitePages, WELCOMED_CRAWLERS } from './crawl';
 
@@ -58,16 +58,18 @@ describe('sitePages', () => {
   });
 });
 
-describe('sitemapEntries', () => {
-  const entries = sitemapEntries(ORIGIN);
+describe('sitemapEntries (the campaign setting bilingual)', () => {
+  beforeEach(() => vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', 'en,he'));
+  afterEach(() => vi.unstubAllEnvs());
+  const entries = () => sitemapEntries(ORIGIN);
 
   it('lists every page in both languages', () => {
-    expect(entries).toHaveLength(PAGES * 2);
-    expect(entries).toHaveLength(160);
+    expect(entries()).toHaveLength(PAGES * 2);
+    expect(entries()).toHaveLength(160);
   });
 
   it('has only absolute, clean, unique URLs under the site origin (nothing from the campaign app)', () => {
-    const urls = entries.map((e) => e.url);
+    const urls = entries().map((e) => e.url);
     expect(new Set(urls).size).toBe(urls.length);
     for (const url of urls) {
       expect(url.startsWith(`${ORIGIN}/`) || url === ORIGIN).toBe(true);
@@ -85,7 +87,7 @@ describe('sitemapEntries', () => {
   });
 
   it('gives every entry en, he and x-default alternates that include itself', () => {
-    for (const e of entries) {
+    for (const e of entries()) {
       const langs = e.alternates?.languages as Record<string, string> | undefined;
       expect(Object.keys(langs ?? {}).sort(), e.url).toEqual(['en', 'he', 'x-default']);
       expect(Object.values(langs!)).toContain(e.url);
@@ -97,7 +99,7 @@ describe('sitemapEntries', () => {
   });
 
   it('carries priority and lastModified on every entry', () => {
-    for (const e of entries) {
+    for (const e of entries()) {
       expect(typeof e.priority).toBe('number');
       expect(String(e.lastModified)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
@@ -136,5 +138,20 @@ describe('robotsConfig', () => {
   it('points at the sitemap and has none of the campaign sign-in rules', () => {
     expect(robots.sitemap).toBe(`${ORIGIN}/sitemap.xml`);
     expect(JSON.stringify(robots)).not.toMatch(/disallow|entry=/i);
+  });
+});
+
+describe('sitemapEntries (the campaign setting English only, the default)', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('lists the landing pages in English only, without Hebrew alternates; everything else in both languages', () => {
+    vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', 'en');
+    const entries = sitemapEntries(ORIGIN);
+    const apply = entries.filter((e) => /\/apply(\/|$)/.test(new URL(e.url).pathname));
+    expect(apply.map((e) => new URL(e.url).pathname).sort()).toEqual(['/apply', '/apply/privacy']);
+    for (const e of apply) expect(e.alternates).toBeUndefined();
+    expect(entries.some((e) => new URL(e.url).pathname.startsWith('/he/apply'))).toBe(false);
+    expect(entries.some((e) => new URL(e.url).pathname === '/he/about')).toBe(true);
+    expect(entries).toHaveLength(PAGES * 2 - 2);
   });
 });

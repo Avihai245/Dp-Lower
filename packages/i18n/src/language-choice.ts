@@ -52,7 +52,7 @@ export function shouldGoHebrew(req: LanguageRequest): boolean {
 
 /** The country of a request from the headers the hosting platforms add; null when none is present. */
 export function countryOf(headers: { get(name: string): string | null }): string | null {
-  const code = headers.get('x-vercel-ip-country') ?? headers.get('cf-ipcountry');
+  const code = headers.get('x-vercel-ip-country') ?? headers.get('cloudfront-viewer-country') ?? headers.get('cf-ipcountry');
   return code && /^[A-Za-z]{2}$/.test(code) ? code.toUpperCase() : null;
 }
 

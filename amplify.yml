@@ -19,7 +19,7 @@ applications:
         build:
           commands:
             - cd "$(git rev-parse --show-toplevel)"
-            - env | grep -E '^(SUPABASE_|APP_SECRET|CRON_SECRET|ZAPIER_|EMAIL_|TURNSTILE_|SEND_EMAIL_|NEXT_PUBLIC_)' >> apps/main/.env.production || true
+            - env | grep -E '^(SUPABASE_|APP_SECRET|CRON_SECRET|ZAPIER_|EMAIL_|TURNSTILE_|SEND_EMAIL_|CLIENT_IP_|TRUSTED_PROXY_|NEXT_PUBLIC_)' >> apps/main/.env.production || true
             - pnpm --filter @dpl/main build
       artifacts:
         baseDirectory: .next
@@ -40,7 +40,7 @@ applications:
         build:
           commands:
             - cd "$(git rev-parse --show-toplevel)"
-            - env | grep -E '^(SUPABASE_|APP_SECRET|CRON_SECRET|ZAPIER_|EMAIL_|TURNSTILE_|SEND_EMAIL_|NEXT_PUBLIC_)' >> apps/campaign/.env.production || true
+            - env | grep -E '^(SUPABASE_|APP_SECRET|CRON_SECRET|ZAPIER_|EMAIL_|TURNSTILE_|SEND_EMAIL_|CLIENT_IP_|TRUSTED_PROXY_|NEXT_PUBLIC_)' >> apps/campaign/.env.production || true
             - pnpm --filter @dpl/campaign build
       artifacts:
         baseDirectory: .next

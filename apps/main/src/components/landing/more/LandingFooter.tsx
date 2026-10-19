@@ -1,6 +1,8 @@
 import { s, x } from '@dpl/ui';
-import { getTranslations } from 'next-intl/server';
+import type { Locale } from '@dpl/core';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import { campaignUrl } from '@/lib/shell/campaign';
 import { PAD } from './kit';
 
 const NAV_LINK = 'text-decoration:none;color:#23292f';
@@ -11,6 +13,7 @@ const NAV_LINK = 'text-decoration:none;color:#23292f';
  */
 export async function LandingFooter() {
   const t = await getTranslations('landingMore.footer');
+  const locale = (await getLocale()) as Locale;
   return (
     <footer
       data-pad
@@ -44,9 +47,8 @@ export async function LandingFooter() {
           <Link href="/#faq" style={s(NAV_LINK)}>
             {t('nav.faq')}
           </Link>
-          <Link
-            href="/sign-in"
-            prefetch={false}
+          <a
+            href={campaignUrl(locale, 'sign-in')}
             // a link, but laid out like the prototype's <button>: normal line height, text centred in its box
             {...x(
               'display:flex;align-items:center;line-height:normal;text-decoration:none;background:none;border:0;padding:0;font-family:inherit;font-size:inherit;font-weight:400;color:#23292f;cursor:pointer;border-bottom:1px solid #ece6dc',
@@ -54,7 +56,7 @@ export async function LandingFooter() {
             )}
           >
             {t('nav.signIn')}
-          </Link>
+          </a>
         </nav>
       </div>
       <p style={s('font-size:13.5px;line-height:1.7;color:#736d64;margin:26px auto 0;max-width:82ch')}>{t('disclaimer')}</p>

@@ -6,11 +6,20 @@ import type { APIRequestContext, APIResponse, PlaywrightWorkerArgs } from '@play
 type PlaywrightRunner = PlaywrightWorkerArgs['playwright'];
 
 /**
- * Helpers shared by the funnel end-to-end specs: the app under test (FUNNEL_BASE_URL), direct access to the local
- * Supabase (service role, for assertions and clean-up only) and a few builders. Everything the specs create uses
+ * Helpers shared by the funnel end-to-end specs: the two apps under test (BASE_URL = the portal, FUNNEL_URL = the firm's
+ * site with the funnel under /apply; see "the two sites" below for clients that keep their cookies apart), direct access to
+ * the local Supabase (service role, for assertions and clean-up only) and a few builders. Everything the specs create uses
  * emails of the form e2e-funnel-<run>-<n>@example.com so it can be found and deleted again.
  */
-export const BASE_URL = process.env.FUNNEL_BASE_URL ?? process.env.CAMPAIGN_URL ?? 'http://localhost:3001';
+/** The client portal, sign-in and staff CRM (apps/campaign, euro-passports.com in production). */
+export const BASE_URL = process.env.PORTAL_BASE_URL ?? process.env.CAMPAIGN_URL ?? 'http://localhost:3001';
+/**
+ * The landing pages and the eligibility funnel (apps/main, lawoffice.org.il in production): pages under /apply and the lead /
+ * booking / availability / callback / result APIs. "Go to my portal" hands the browser over to BASE_URL.
+ */
+export const FUNNEL_URL = process.env.FUNNEL_BASE_URL ?? process.env.MAIN_URL ?? 'http://localhost:3000';
+/** The path under which the funnel pages live on FUNNEL_URL. */
+export const APPLY = '/apply';
 
 function readEnvFile(): Record<string, string> {
   const file = path.resolve(__dirname, '../../apps/campaign/.env.local');
@@ -53,6 +62,86 @@ export async function newClient(playwright: PlaywrightRunner, ip = newIp()): Pro
 
 export const setCookies = (res: APIResponse): string[] =>
   res.headersArray().filter((h) => h.name.toLowerCase() === 'set-cookie').map((h) => h.value);
+
+// ---- the two sites -------------------------------------------------------------------------------------------------------
+//
+// Production serves the funnel (apps/main, lawoffice.org.il) and the portal (apps/campaign, euro-passports.com) from two
+// different domains, so a browser never presents one site's cookies to the other. On localhost cookies ignore the port
+// and WOULD be shared. The helpers below therefore give a person one cookie jar per site (a "visitor"), and the only way
+// from the funnel to the portal is the real hand-over ("Go to my portal": POST /api/portal/enter, then the link it returns).
+
+/** The origins ("http://localhost:3000") of the firm's site and of the portal. */
+export const FUNNEL_ORIGIN = new URL(FUNNEL_URL).origin;
+export const PORTAL_ORIGIN = new URL(BASE_URL).origin;
+
+/** A client of the firm's site (funnel pages and funnel APIs): its own cookie jar and its own address. */
+export async function newFunnelClient(playwright: PlaywrightRunner, ip = newIp()): Promise<APIRequestContext> {
+  return playwright.request.newContext({ baseURL: FUNNEL_URL, extraHTTPHeaders: { 'x-forwarded-for': ip } });
+}
+
+/** A client of the portal site: the same as newClient(), named for what it is. */
+export const newPortalClient = newClient;
+
+/**
+ * A client of `baseURL` that starts with the cookies of other clients (their cookie jars merged). Use it for "the browser
+ * holds X" situations without relying on one shared jar. Note that on localhost a cookie is sent to BOTH sites whichever
+ * client it came from, which production never does: use it for what a cookie alone can do, not for what a site can see.
+ */
+export async function newClientWithCookiesOf(
+  playwright: PlaywrightRunner,
+  baseURL: string,
+  from: APIRequestContext[],
+  options: { only?: string[]; ip?: string } = {},
+): Promise<APIRequestContext> {
+  const cookies = (await Promise.all(from.map(async (c) => (await c.storageState()).cookies))).flat();
+  return playwright.request.newContext({
+    baseURL,
+    extraHTTPHeaders: { 'x-forwarded-for': options.ip ?? newIp() },
+    storageState: { cookies: options.only ? cookies.filter((c) => options.only!.includes(c.name)) : cookies, origins: [] },
+  });
+}
+
+/** One person with one browser: a cookie jar for the firm's site and a separate one for the portal, same address. */
+export interface Visitor {
+  funnel: APIRequestContext;
+  portal: APIRequestContext;
+  ip: string;
+  dispose(): Promise<void>;
+}
+
+export async function newVisitor(playwright: PlaywrightRunner, ip = newIp()): Promise<Visitor> {
+  const funnel = await newFunnelClient(playwright, ip);
+  const portal = await newClient(playwright, ip);
+  return { funnel, portal, ip, dispose: async () => void (await Promise.all([funnel.dispose(), portal.dispose()])) };
+}
+
+/**
+ * "Go to my portal", the way the browser does it: POST /api/portal/enter on the firm's site (needs the lead cookie there)
+ * returns { url } to /enter/<token> on the portal; following it with the portal's own jar opens the session and redirects to
+ * the portal. Returns both responses (the redirect is NOT followed, so the caller can inspect it) and the link.
+ */
+export async function goToPortal(visitor: Visitor): Promise<{ enter: APIResponse; url: string; landed: APIResponse }> {
+  const enter = await visitor.funnel.post('/api/portal/enter');
+  if (enter.status() !== 200) throw new Error(`POST /api/portal/enter answered ${enter.status()}: ${await enter.text()}`);
+  const { url } = (await enter.json()) as { url: string };
+  return { enter, url, landed: await visitor.portal.get(url, { maxRedirects: 0 }) };
+}
+
+/** Where a redirect response points, as path + query ("/portal", "/sign-in?error=link"), whatever the host. */
+export function redirectPath(res: APIResponse): string {
+  const location = res.headers().location;
+  if (!location) throw new Error(`${res.url()} answered ${res.status()} without a Location header`);
+  const u = new URL(location, res.url());
+  return `${u.pathname}${u.search}`;
+}
+
+/** The full target of a redirect response. */
+export const redirectUrl = (res: APIResponse): URL => new URL(res.headers().location ?? '', res.url());
+
+/** The payload of a signed app token (lead cookie, /go and /enter links), without checking the signature. */
+export function decodeAppToken(token: string): Record<string, unknown> & { exp?: number; p?: string } {
+  return JSON.parse(Buffer.from(token.split('.')[0]!, 'base64url').toString('utf8')) as Record<string, unknown>;
+}
 
 // ---- Supabase (service role) ----------------------------------------------------------------------------------------
 
@@ -132,10 +221,15 @@ const createdUsers: string[] = [];
 
 /** A confirmed auth user with a password (for the staff tests); removed again by cleanup(). */
 export async function createAuthUser(email: string, password: string): Promise<string> {
+  return createAuthUserWith(email, password, {});
+}
+
+/** createAuthUser() with `app_metadata` (e.g. the lead_id the server writes on an account it made for a lead). */
+export async function createAuthUserWith(email: string, password: string, appMetadata: Record<string, unknown>): Promise<string> {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
     method: 'POST',
     headers: adminHeaders(),
-    body: JSON.stringify({ email, password, email_confirm: true }),
+    body: JSON.stringify({ email, password, email_confirm: true, ...(Object.keys(appMetadata).length ? { app_metadata: appMetadata } : {}) }),
   });
   const body = (await res.json()) as { id?: string };
   if (!res.ok || !body.id) throw new Error(`createUser failed: ${res.status}`);
@@ -204,11 +298,36 @@ export function linkIn(payload: EventRecord['payload'], pattern: RegExp): string
 export const uuid = randomUUID;
 
 /**
- * Is the campaign running with its Hebrew edition on (NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he)? In the default English-only
- * setting every address under /he is redirected to the English page. The Hebrew tests need the bilingual build; the
- * English-only tests need the default one.
+ * Is the portal (apps/campaign) running with its Hebrew edition on (NEXT_PUBLIC_CAMPAIGN_LOCALES=en,he)? In the default
+ * English-only setting every address under /he (the staff area aside) is redirected to the English page. The Hebrew tests
+ * need the bilingual build; the English-only tests need the default one.
+ * (The bare /he cannot tell the two apart any more: the portal's root is its sign-in, so /he redirects in both builds.
+ * /he/sign-in is a page in the bilingual build and a redirect in the English-only one.)
  */
 export async function campaignIsBilingual(): Promise<boolean> {
-  const res = await fetch(`${BASE_URL}/he`, { redirect: 'manual', headers: { accept: 'text/html' } });
+  const res = await fetch(`${BASE_URL}/he/sign-in`, { redirect: 'manual', headers: { accept: 'text/html' } });
   return res.status !== 307 && res.status !== 308;
+}
+
+/**
+ * The same question for the funnel on the firm's site: is its Hebrew edition (/he/apply/...) on? Without it /he/apply is
+ * redirected to /apply (the firm's own pages are Hebrew either way).
+ */
+export async function funnelIsBilingual(): Promise<boolean> {
+  const res = await fetch(`${FUNNEL_URL}/he/apply`, { redirect: 'manual', headers: { accept: 'text/html' } });
+  return res.status !== 307 && res.status !== 308;
+}
+
+/** The Hebrew edition is on in both apps (the funnel on the firm's site and the portal). Hebrew tests skip themselves otherwise. */
+export async function hebrewIsOn(): Promise<boolean> {
+  return (await funnelIsBilingual()) && (await campaignIsBilingual());
+}
+
+/** The message of a skipped Hebrew test. */
+export const NO_HEBREW =
+  'the Hebrew edition is switched off in this build (NEXT_PUBLIC_CAMPAIGN_LOCALES): see english-only.spec.ts';
+
+/** The languages the apps serve in this build: ['en', 'he'] when the Hebrew edition is on, else ['en']. */
+export async function activeLocales(): Promise<Array<'en' | 'he'>> {
+  return (await hebrewIsOn()) ? ['en', 'he'] : ['en'];
 }

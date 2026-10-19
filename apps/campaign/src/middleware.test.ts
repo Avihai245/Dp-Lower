@@ -22,6 +22,8 @@ beforeEach(() => {
   session.user = null;
   session.calls = 0;
   vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', 'en,he');
+  // the expected addresses are the production defaults, whatever the machine's .env.local says
+  vi.stubEnv('NEXT_PUBLIC_MAIN_SITE_URL', undefined);
 });
 afterEach(() => vi.unstubAllEnvs());
 

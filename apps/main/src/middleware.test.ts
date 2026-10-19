@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import middleware, { config } from './middleware';
 
 const get = (url: string) => middleware(new NextRequest(`http://localhost:3000${url}`));
@@ -97,5 +97,33 @@ describe('the language a visitor starts in', () => {
     // files and the 404 page keep their behaviour
     expect(page('/robots.txt', IL).status).toBe(200);
     expect(page('/wp-login.php', IL).status).toBe(404);
+  });
+});
+
+describe('the landing pages under /apply are English only (the default setting)', () => {
+  afterEach(() => vi.unstubAllEnvs());
+  const page = (url: string, headers: Record<string, string> = {}) =>
+    middleware(new NextRequest(`http://localhost:3000${url}`, { headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0 Chrome/126', ...headers } }));
+  const IL = { 'x-vercel-ip-country': 'IL' };
+
+  it('the Hebrew edition goes to the English page, query kept; a visitor in Israel stays on English there', () => {
+    vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', 'en');
+    for (const [from, to] of [['/he/apply', '/apply'], ['/he/apply/eligibility?source=ad', '/apply/eligibility?source=ad'], ['/he/apply/privacy', '/apply/privacy']] as const) {
+      const res = page(from);
+      expect(res.status, from).toBe(307);
+      expect(res.headers.get('location'), from).toBe(`http://localhost:3000${to}`);
+    }
+    for (const p of ['/apply', '/apply/eligibility', '/apply/booking']) expect(page(p, IL).status, p).toBe(200);
+    // the firm's own pages keep the Hebrew start
+    expect(page('/about', IL).status).toBe(307);
+    expect(page('/he/about', IL).status).toBe(200);
+  });
+
+  it('with the bilingual setting the Hebrew edition and the Hebrew start apply to /apply as well', () => {
+    vi.stubEnv('NEXT_PUBLIC_CAMPAIGN_LOCALES', 'en,he');
+    expect(page('/he/apply').status).toBe(200);
+    const res = page('/apply', IL);
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe('http://localhost:3000/he/apply');
   });
 });
