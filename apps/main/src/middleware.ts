@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { LANG_COOKIE, LANG_COOKIE_OPTIONS, chosenLanguage, countryOf, shouldGoHebrew } from '@dpl/i18n';
 import { routing } from './i18n/routing';
 import { isRootFile, missingPageLocale } from './lib/known-routes';
+import { isBilingual } from './lib/bilingual';
 import { legacyPath } from './lib/legacy-urls';
 
 const intl = createMiddleware(routing);
@@ -65,6 +66,19 @@ export default function middleware(req: NextRequest) {
   // browser as an empty shell). The 404 page itself is an ordinary page that this rewrite points at.
   const missing = missingPageLocale(req.nextUrl.pathname);
   if (missing) return NextResponse.rewrite(new URL(`/${missing}/page-not-found`, req.url), { status: 404 });
+  // The landing pages and the eligibility funnel under /apply are English only (NEXT_PUBLIC_CAMPAIGN_LOCALES, see
+  // @dpl/i18n campaign-locales): their Hebrew edition is switched off and the country-based Hebrew start does not apply
+  // to them. The firm's own pages are unaffected.
+  const applyPath = /^(\/he)?\/apply(\/|$)/.test(req.nextUrl.pathname);
+  if (applyPath && !isBilingual()) {
+    if (req.nextUrl.pathname === '/he/apply' || req.nextUrl.pathname.startsWith('/he/apply/')) {
+      const url = req.nextUrl.clone();
+      url.pathname = req.nextUrl.pathname.replace(/^\/he/, '');
+      url.searchParams.delete('lang');
+      return withAttribution(req, NextResponse.redirect(url, 307));
+    }
+    return withAttribution(req, intl(req));
+  }
   // A visitor in Israel (or who chose Hebrew before) who opens an English address is taken to the Hebrew edition; see
   // @dpl/i18n language-choice for the rules (an explicit choice wins, crawlers are never redirected).
   const { pathname, searchParams } = req.nextUrl;

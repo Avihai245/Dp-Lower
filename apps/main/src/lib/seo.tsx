@@ -1,5 +1,6 @@
 import { stripBidiControls, type Locale } from '@dpl/core';
 import { absoluteUrl, alternates } from '@dpl/i18n';
+import { isBilingual } from './bilingual';
 import type { Metadata } from 'next';
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
@@ -37,7 +38,8 @@ export function pageMetadata(p: PageMeta): Metadata {
   return {
     title: p.title,
     description: p.description,
-    alternates: { canonical: url, languages: alternates(SITE_URL, p.path) },
+    // the landing pages under /apply are English only unless NEXT_PUBLIC_CAMPAIGN_LOCALES says otherwise: no Hebrew alternate
+    alternates: p.path.startsWith('/apply') && !isBilingual() ? { canonical: url } : { canonical: url, languages: alternates(SITE_URL, p.path) },
     robots: p.noindex
       ? { index: false, follow: true }
       : { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },

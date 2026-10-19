@@ -1,6 +1,7 @@
 import { LOCALES } from '@dpl/core';
 import { absoluteUrl, alternates, ARTICLE_SLUGS, SERVICE_SLUGS, TEAM_SLUGS } from '@dpl/i18n';
 import type { MetadataRoute } from 'next';
+import { isBilingual } from './bilingual';
 import { articleIsoDate } from './dates';
 
 /**
@@ -53,14 +54,16 @@ export function sitePages(): SitePage[] {
 
 /** One entry per page and language, each pointing at its alternates (en, he, x-default). The campaign app has its own sitemap. */
 export function sitemapEntries(origin: string): MetadataRoute.Sitemap {
-  return sitePages().flatMap((p) =>
-    LOCALES.map((locale) => ({
+  return sitePages().flatMap((p) => {
+    // the landing pages under /apply are English only unless NEXT_PUBLIC_CAMPAIGN_LOCALES says otherwise
+    const englishOnly = p.path.startsWith('/apply') && !isBilingual();
+    return LOCALES.filter((locale) => locale === 'en' || !englishOnly).map((locale) => ({
       url: absoluteUrl(origin, locale, p.path),
       lastModified: p.lastModified,
       priority: p.priority,
-      alternates: { languages: alternates(origin, p.path) },
-    })),
-  );
+      ...(englishOnly ? {} : { alternates: { languages: alternates(origin, p.path) } }),
+    }));
+  });
 }
 
 /** Search and AI answer engines the firm explicitly welcomes (same list as the design handoff's robots.txt). */
