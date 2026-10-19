@@ -282,7 +282,7 @@ test.describe('campaign site (the client portal)', () => {
     expect(robots).not.toMatch(/Disallow:\s*\/\s*$/m);
     for (const group of robots.split(/\n\s*\n/).filter((g) => /User-Agent:/i.test(g))) {
       const agent = /User-Agent:\s*(.+)/i.exec(group)![1]!;
-      for (const path of ['/api/', '/portal', '/admin', '/sign-in', '/create-password', '/go/', '/enter/', '/auth/', '/unsubscribe']) {
+      for (const path of ['/api/', '/portal', '/admin', '/sign-in', '/create-password', '/verify', '/two-step', '/go/', '/enter/', '/auth/', '/unsubscribe']) {
         expect(group, `${agent}: ${path}`).toContain(`Disallow: ${path}`);
         // (the Hebrew edition of the portal is off by default: there is no /he to keep out then)
         if (hebrew) expect(group, `${agent}: /he${path}`).toContain(`Disallow: /he${path}`);

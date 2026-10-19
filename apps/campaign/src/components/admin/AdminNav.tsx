@@ -72,6 +72,17 @@ export function AdminNav() {
         </nav>
 
         <span data-admin-utils style={s('margin-left:auto;display:flex;align-items:center;gap:14px;flex:none')}>
+          {/* two-step verification (an authenticator app) lives outside the CRM shell: it must work before the second step is done */}
+          <Link
+            href="/two-step?next=/admin"
+            data-admin-security
+            {...x(
+              "font-family:'Manrope',system-ui,sans-serif;font-size:11.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;color:#736d64;padding:6px 1px;border-bottom:1px solid #ece6dc",
+              { hover: 'color:#a07a3c;border-bottom-color:#a07a3c' },
+            )}
+          >
+            {t('nav.security')}
+          </Link>
           <span role="group" aria-label={t('nav.language')} style={s('display:inline-flex;align-items:center;gap:2px')}>
             {(['en', 'he'] as const).map((l) => (
               <Link

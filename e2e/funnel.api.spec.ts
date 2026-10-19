@@ -1508,7 +1508,7 @@ test.describe('which site serves what', () => {
     ['post', '/api/portal/sign-out'],
     ['post', '/api/cron/dispatch'],
   ] as const;
-  const PORTAL_PAGES = ['/sign-in', '/portal', '/admin', '/go/x', '/enter/x', '/auth/callback', '/open-link', '/link-expired', '/create-password', '/unsubscribe'];
+  const PORTAL_PAGES = ['/sign-in', '/portal', '/admin', '/go/x', '/enter/x', '/auth/callback', '/open-link', '/link-expired', '/create-password', '/verify', '/two-step', '/unsubscribe'];
 
   test('the funnel APIs exist on the firm\'s site only, the portal APIs on the portal only', async ({ playwright }) => {
     const funnel = await newClient(playwright);

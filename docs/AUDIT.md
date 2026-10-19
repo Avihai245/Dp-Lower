@@ -164,7 +164,7 @@ Another contributor moved the landing pages and the funnel to the firm's site (`
 | R-14 | GitHub started no job on any push since 2026-10-09: `.github/workflows/ci.yml` was invalid YAML (an unquoted step name containing a colon), so the whole pipeline had never run | Quoted; the build job also sets the portal address the firm's site now refuses to build without; the e2e job runs the whole suite on both builds. First real run: verify, build, database and end-to-end all green |
 | R-15 | The committed `supabase/config.toml` carried a temporary local database port (54332), so the CI database job could not connect | Back to 54322 |
 
-Remaining, accepted: the hand-over tokens appear in one redirect URL (single use, two minutes); MFA enrolment is off in the hosted project (the advisor notes it) and the app has no enrolment screen yet, so staff accounts rely on strong passwords until it is built.
+Remaining, accepted: the hand-over tokens appear in one redirect URL (single use, two minutes). Staff two-step verification was built after this round (TOTP, optional or compulsory with `STAFF_MFA_REQUIRED`, enforced by the CRM and by the database; `e2e/admin.mfa.spec.ts`, `supabase/tests/011_staff_mfa.sql`): a staff account is as strong as its owner's use of it, so the administrator should enrol first and then switch the requirement on (DEPLOYMENT.md, "Two-step verification").
 
 ### 1.1g The campaign pages are English only (decision of 2026-10-09)
 

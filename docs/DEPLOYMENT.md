@@ -32,12 +32,13 @@ no code changes are needed to go live. Placeholders you must replace are in `<an
 5. **Authentication, Hooks, Send Email**: HTTPS hook `https://euro-passports.com/api/auth/send-email`, generate the secret and keep it for `SEND_EMAIL_HOOK_SECRET` (format `v1,whsec_...`; `supabase/snippets/auth-send-email-hook.sql` documents the equivalent local setting). With this hook Supabase never sends mail itself: password-reset and sign-in emails are rendered by the app, in the user's language, and delivered through the same Zapier path as every other email, so no SMTP server is needed.
 6. **Database, Backups**: enable daily backups (Pro) or schedule `pg_dump`. The `documents` bucket holds passports and civil records: keep it private (it is by default) and restrict who has dashboard access.
 7. Realtime: nothing to do (the migration adds the CRM tables to the publication).
+8. **Authentication, Multi-Factor (MFA)**: switch on **TOTP** (authenticator app) for both enrolment and verification (hosted: Authentication, Sign In / Providers, Multi-Factor; `[auth.mfa.totp]` in `supabase/config.toml` for the local stack). Staff then protect their account from the **Security** link in the CRM header (`/two-step`); see "Two-step verification" below.
 
 ### 2.1 State of the hosted project `Dp-Lower` (set up on 2026-10-09)
 
 Project ref `gfjkvlcecnvrvvqxikhf`, API `https://gfjkvlcecnvrvvqxikhf.supabase.co`, organization "Avihai sabatier" (Pro), region **ap-northeast-1 (Tokyo)**.
 
-Done: all migrations `20261009000001` to `20261009000101` are applied, recorded under their file versions (so `supabase db push` later sees nothing to do); the `documents` bucket is private (20 MB, PDF/JPG/PNG/HEIC/WebP/DOCX); every table has RLS on, the Data API is read-only for signed-in users and closed to visitors, and the SQL tests (`supabase/tests`, all roll back) pass on it; the security advisor lists only two intended items (`rate_limits` has RLS and no policy on purpose: only the server's service role reads it; `is_staff`, `is_admin` and `owns_lead` stay callable by signed-in users because the policies and the sign-in page need them). Auth: Site URL `https://euro-passports.com`; redirect allow-list `https://euro-passports.com/**` and `https://www.lawoffice.org.il/**`; password minimum 8 with the leaked-password check; MFA enrolment off; the case reference counter starts at DPL-26-1001.
+Done: all migrations `20261009000001` to `20261009000101` are applied, recorded under their file versions (so `supabase db push` later sees nothing to do); the `documents` bucket is private (20 MB, PDF/JPG/PNG/HEIC/WebP/DOCX); every table has RLS on, the Data API is read-only for signed-in users and closed to visitors, and the SQL tests (`supabase/tests`, all roll back) pass on it; the security advisor lists only two intended items (`rate_limits` has RLS and no policy on purpose: only the server's service role reads it; `is_staff`, `is_admin` and `owns_lead` stay callable by signed-in users because the policies and the sign-in page need them). Auth: Site URL `https://euro-passports.com`; redirect allow-list `https://euro-passports.com/**` and `https://www.lawoffice.org.il/**`; password minimum 8 with the leaked-password check; TOTP multi-factor available for staff (see "Two-step verification"); the case reference counter starts at DPL-26-1001.
 
 Still to do by hand (they need things only the firm has): step 5 above (Send Email hook, once the campaign is deployed and `SEND_EMAIL_HOOK_SECRET` exists), Google (section 7), backups, and the Vercel variables (section 3: the URL and the publishable key are public, the **service role key** is a secret: Project Settings, API Keys, `service_role`).
 
@@ -61,6 +62,7 @@ Set them in each Vercel project (Settings, Environment Variables, Production + P
 | `SUPABASE_SERVICE_ROLE_KEY` | secret key (or legacy service_role key). **Server only.** |
 | `APP_SECRET` | 64 hex characters. Signs the lead cookie and emailed links. Changing it logs everybody out of the funnel and invalidates emailed links. |
 | `CRON_SECRET` | random; Vercel Cron sends it as `Authorization: Bearer ...` |
+| `STAFF_MFA_REQUIRED` | optional, `1` to make two-step verification compulsory for every staff member (they must enrol before the CRM opens). Leave it unset until every member has had a chance to enrol, then switch it on. |
 | `ZAPIER_EMAIL_WEBHOOK_URL` | Catch Hook URL of the email Zap (section 4) |
 | `ZAPIER_CRM_WEBHOOK_URL` | Catch Hook URL of the CRM Zap (or leave empty and set `ZAPIER_WEBHOOK_URL` for one hook) |
 | `ZAPIER_SIGNING_SECRET` | optional; adds `x-dpl-signature: sha256=<hmac of the body>` |
@@ -118,6 +120,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co SUPABASE_SERVICE_ROLE
 Without the password argument the tool generates one and prints it once. The sign-up endpoint is public, so an address that somebody registered before it became staff gets a new password (and its sessions are ended) rather than keeping the one its registrant chose; an account that is already staff keeps its password when the tool is run again.
 
 Sign in at `https://euro-passports.com/sign-in`; staff land on `/admin`. Admins can add more staff (role `lawyer` or `case_manager`) and edit the call-availability calendars (the unassigned template, each lawyer's hours) and blocked days; a lawyer edits their own hours and days off.
+
+### Two-step verification (staff)
+
+A staff member can protect their account with an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password and others): **Security** in the CRM header, then *Set up an authenticator app*, scan the QR code and type the first code. From then on the sign-in asks for the 6-digit code after the password (`/verify`), and **nothing opens without it**: the CRM pages and actions answer to `requireStaff()`, and the database applies the same rule to its own staff checks (`is_staff()` / `is_admin()`, migration `20261019000001_staff_mfa.sql`: a session that is still at assurance level aal1 is not staff to the Data API, so a stolen password alone cannot read the leads or the documents there either). Turning it off needs the code too.
+
+Enrolment is optional until you set `STAFF_MFA_REQUIRED=1`. The sensible order: switch TOTP on in Supabase (step 8 above), deploy, have the administrator enrol first (do it from `/two-step` and keep the secret key or the phone safe), then the others, then set `STAFF_MFA_REQUIRED=1` and redeploy. **Recovery:** there are no backup codes. If a member loses the phone, an administrator removes the factor in Supabase (Authentication, Users, the member, *Remove MFA factors*) and the member enrols again; if the only administrator loses it, do the same in the dashboard as the project owner. Applicants never see any of this.
 
 ## 7. Google sign-in (optional)
 
