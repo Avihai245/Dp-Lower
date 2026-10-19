@@ -8,12 +8,12 @@ code is organised), `DEPLOYMENT.md` (how to go live) and `HEBREW_REVIEW.md` (the
 
 | Check | Where | What it proves |
 |---|---|---|
-| Unit and integration tests | `pnpm test` (Vitest; 86 files, 1,408 tests) | Business rules (`@dpl/core`), the email templates (every template, both languages, structure, escaping, fidelity against the design's HTML), the nurture schedule and outbox against the real local Supabase, token and cookie handling, message parity (every English key has a Hebrew twin, non-empty values), Hebrew bidi guard, route lists |
+| Unit and integration tests | `pnpm test` (Vitest; 90 files, 1,458 tests) | Business rules (`@dpl/core`), the email templates (every template, both languages, structure, escaping, fidelity against the design's HTML), the nurture schedule and outbox against the real local Supabase, token and cookie handling, message parity (every English key has a Hebrew twin, non-empty values), Hebrew bidi guard, route lists |
 | SQL tests | `pnpm db:test` (`supabase/tests/001..006` and `010`) | Schema, RLS (applicants read only their own rows, the Data API is read-only for signed-in users), booking capacity under concurrency, per-lawyer booking and the clean-up of past calls, outbox claiming, storage policies, case references, the Realtime publication and pinned function paths |
-| End-to-end | `pnpm e2e` (Playwright, production builds, desktop + phone width, English + Hebrew; 247 tests) | The whole journey (landing, quiz, details, booking, offer, password, portal, application, uploads, submit, CRM status change visible in the portal), every API route, the three firm-website forms, CRM actions and permissions, SEO of every sitemap URL, no console or CSP errors, no sideways scroll, axe accessibility scan of 40+ pages |
+| End-to-end | `pnpm e2e` (Playwright, production builds, desktop + phone width, English + Hebrew; 348 tests: 341 pass and 7 skip on the bilingual build, 313 pass and 35 skip on the default English-only build, where the Hebrew tests skip themselves) | The whole journey (landing, quiz, details, booking, offer, password, portal, application, uploads, submit, CRM status change visible in the portal), every API route, the three firm-website forms, CRM actions and permissions, SEO of every sitemap URL, no console or CSP errors, no sideways scroll, axe accessibility scan of 40+ pages |
 | Visual comparison | `tools/visual` | Screenshots of the prototypes next to the app at 1440 and 390 px; differences listed in section 4 |
 | Independent audits (three agents that did not write the code) | this section | See 1.1 |
-| Dependency audit | `pnpm audit --prod` | Clean after the `postcss` override |
+| Dependency audit | `pnpm audit --prod` | Clean (nothing that ships is affected). The full `pnpm audit` was cleared of the vitest/tinypool findings by moving to vitest 4; one dev-only finding is left, `braces` (stack exhaustion on a hostile glob) behind the lint plugin, which has no patched release and processes only the repository's own file patterns |
 | Database advisors | `pnpm exec supabase db advisors --local` | Security and performance advisors report nothing (migration 14 pinned the `search_path` of five helper functions). Run it again on the hosted project once it exists |
 
 ### 1.1 Independent audits and what became of their findings
@@ -144,7 +144,7 @@ Accepted or left to the firm: a name typed as `Tom <tom@evil.com>` is stored as 
 
 ### 1.1h Fifth round: after the funnel moved to the firm's site (2026-10-14 merge) and before production
 
-Another contributor moved the landing pages and the funnel to the firm's site (`/apply`), the portal and CRM staying on the campaign domain. The whole end-to-end suite was adapted to the two-site layout (341 tests pass on the bilingual build, the English-only checks on the default one) and doing so found real defects, all fixed and each covered by a test:
+Another contributor moved the landing pages and the funnel to the firm's site (`/apply`), the portal and CRM staying on the campaign domain. The whole end-to-end suite was adapted to the two-site layout (341 tests pass on the bilingual build; on the default English-only build 313 pass and the Hebrew ones skip themselves) and doing so found real defects, all fixed and each covered by a test:
 
 | ID | Finding | Resolution |
 |---|---|---|
