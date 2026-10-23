@@ -105,6 +105,7 @@ export function TwoStepPanel({ enrolled, required, next, logoAlt }: { enrolled: 
   return (
     <AuthShell
       logoAlt={logoAlt}
+      audience="staff"
       width={500}
       header={
         // while the firm requires it, there is nowhere to go before it is set up
@@ -124,17 +125,17 @@ export function TwoStepPanel({ enrolled, required, next, logoAlt }: { enrolled: 
         <span data-status={status} role="status">{t(`status.${status}`)}</span>
       </p>
 
-      {justOn && <p role="status" style={s('border: 1px solid #ece6dc; background: #f8f5f0; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; margin: 0 0 22px')}>{t('done')}</p>}
-      {justOff && <p role="status" style={s('border: 1px solid #ece6dc; background: #f8f5f0; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; margin: 0 0 22px')}>{t('turnedOff')}</p>}
+      {justOn && <p role="status" style={s('border: 1px solid #cfe0d5; background: #e5f0e9; border-radius: 14px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; margin: 0 0 22px')}>{t('done')}</p>}
+      {justOff && <p role="status" style={s('border: 1px solid #cfe0d5; background: #e5f0e9; border-radius: 14px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; margin: 0 0 22px')}>{t('turnedOff')}</p>}
       {problem && mode === 'idle' && <p role="alert" style={s('font-size: 13.5px; line-height: 1.5; color: #a3462f; margin: 0 0 18px')}>{t(problem)}</p>}
 
       {mode === 'scan' && qr && (
         <form noValidate onSubmit={confirm}>
           <h2 style={s("font-family: 'Newsreader', Georgia, serif; font-weight: 400; font-size: 22px; margin: 0 0 8px")}>{t('scanTitle')}</h2>
           <p style={s('font-size: 14.5px; line-height: 1.6; color: #736d64; margin: 0 0 16px')}>{t('scanLede')}</p>
-          <img src={qr.src} alt={t('qrAlt')} width={200} height={200} style={s('display: block; width: 200px; height: 200px; margin: 0 0 16px; border: 1px solid #ece6dc; padding: 8px; background: #fff')} />
+          <img src={qr.src} alt={t('qrAlt')} width={200} height={200} style={s('display: block; width: 200px; height: 200px; margin: 0 0 16px; border: 1px solid #e6dfd3; padding: 8px; background: #fff; border-radius: 14px')} />
           <p style={s('font-size: 13px; color: #736d64; margin: 0 0 6px')}>{t('secretLabel')}</p>
-          <code id="mfa-secret" dir="ltr" style={s('display: block; font-size: 15px; letter-spacing: 0.08em; word-break: break-all; background: #f8f5f0; border: 1px solid #ece6dc; padding: 10px 12px; margin: 0 0 22px')}>{qr.secret}</code>
+          <code id="mfa-secret" dir="ltr" style={s('display: block; font-size: 15px; letter-spacing: 0.08em; word-break: break-all; background: #f5f2ec; border: 1px solid #e6dfd3; border-radius: 10px; padding: 10px 12px; margin: 0 0 22px')}>{qr.secret}</code>
           <div style={s('margin-bottom: 22px')}>
             <label htmlFor="mfa-code" style={s(AUTH_LABEL)}>{t('codeLabel')}</label>
             <input

@@ -57,6 +57,7 @@ export function VerifyForm({ next, logoAlt }: { next: string; logoAlt: string })
   return (
     <AuthShell
       logoAlt={logoAlt}
+      audience="staff"
       width={460}
       header={
         <button type="button" onClick={() => void signOut()} style={s(`${HEADER_LINK}; cursor: pointer`)}>
