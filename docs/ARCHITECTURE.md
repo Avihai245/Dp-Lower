@@ -18,6 +18,14 @@ Backend: Supabase (Postgres + RLS, Auth, Storage, Realtime). Email and CRM sync 
 
 The design is final and supplied as HTML prototypes. **Do not redesign. Recreate pixel for pixel and make it work.**
 
+**Exception, since 2026-10-23 (the firm asked for it):** the client portal, the sign-in screens and the CRM have a new look
+of their own: the same brand (ink, gold, paper, the same fonts) with a new layout and new components, built on
+`apps/campaign/src/styles/app-ui.css` (tokens and `ui-*` classes, written with logical properties so they mirror in Hebrew),
+the icons, `Stepper` and `ProgressRing` in `apps/campaign/src/components/ui`, `PortalShell` (every portal page), `AuthShell`
+(the sign-in family) and the CRM frame in `styles/admin.css` (`adm-*`). These screens no longer follow the prototypes pixel
+for pixel; new work there uses those classes and components rather than prototype style strings. The firm's website, the
+landing pages, the funnel and the emails still follow the prototypes.
+
 ## 2. Repository layout
 
 ```

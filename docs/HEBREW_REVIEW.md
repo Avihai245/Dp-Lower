@@ -72,6 +72,8 @@ Change these in one search-and-replace if the firm prefers other words.
 - "האב הקדמון" (ancestor), "פרק" for a section of the form (versus "חלק"), "שושלת המשפחה", "מנהל תיק", "הגורם המטפל בתיק", "הושלם" as the generic completion label.
 - Route labels "סעיף 116(2)" and "סעיף 58c" (English uses §).
 - The legal wording of the persecution-proof slot ("הוכחת רדיפה או מועד העזיבה… אחרי 1933") and of the submitting screen ("מצפינים את המסמכים ומשייכים את התיק לעורך דין").
+- The redesigned portal (2026-10-23), new short labels: the tabs "סקירה" / "הבקשה" / "מסמכים" (`portal.nav.*`), their group name "אזורי הפורטל", the case badge "תיק {ref}", the checklist card title "רשימת המשימות שלכם" (`portal.dashboard.checklistTitle`) and the roadmap card title "הדרך מכאן" (`portal.submitted.roadmapTitle`).
+- The brand panel beside the sign-in screens (`auth.brand.*`): for clients "פורטל הלקוחות", "התיק שלכם, במקום אחד ומאובטח.", "הבקשה והמסמכים נשמרים תוך כדי עבודה.", "הקבצים שלכם גלויים רק לצוות המשרד.", "עדכוני סטטוס נשלחים אליכם במייל."; on the staff two-step screens "לצוות המשרד", "מערכת התיקים של המשרד.", "אימות דו-שלבי שומר על תיקי הלקוחות.", "התיקים גלויים לצוות המשרד בלבד.", "שינויי סטטוס והערות נשמרים ביומן הפעילות של כל תיק."; and "חיבור מאובטח ומוצפן". The English versions are new text too.
 
 ### Staff screens (CRM)
 

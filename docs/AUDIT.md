@@ -284,6 +284,12 @@ are in `ARCHITECTURE.md` section 10.
    prototype can be shown at.*
 7. **Placeholders kept exactly as designed** and marked in the pages: the 30% reduction, the figures, 4.9 / 380+ reviews, the
    case study, "Draft for review" on the legal pages.
+8. **New look for the portal, the sign-in screens and the CRM** (2026-10-23, at the firm's request: "same brand, new look").
+   The client portal has a top bar with Overview / Application / Documents tabs, an ink progress hero, a stage timeline card
+   and cards for the next step, the checklist, the form and the documents; the sign-in family has an ink brand panel beside
+   the form card; the CRM has an ink sidebar, a filter toolbar, summary tiles and a card-framed table. Texts, behaviour,
+   roles, the guided tour and every data attribute the tests use are unchanged; a few short labels are new
+   (`HEBREW_REVIEW.md`). *The firm should look through these screens: they deliberately differ from the prototypes.*
 
 ## 5. Known limitations
 
