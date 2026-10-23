@@ -9,14 +9,15 @@ import { useAdmin } from './AdminProvider';
 
 // -- style strings reused across panels ------------------------------------------------------------------------------
 
-export const CARD = 'background:#fff;border:1px solid #e8e1d5;border-radius:18px;padding:22px 22px 20px';
+export const CARD =
+  'background:#fff;border:1px solid #e6dfd3;border-radius:18px;padding:22px 22px 20px;box-shadow:0 1px 2px rgba(20,32,43,0.05), 0 12px 32px -16px rgba(20,32,43,0.22)';
 export const KICKER =
   'font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#7a5c2c;margin:0 0 14px';
 export const KICKER_INLINE = 'font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#7a5c2c;margin:0';
 export const MUTED = 'font-size:13px;color:#736d64';
 /** the outlined pill used for "Edit", "← All leads", "Edit details & password" */
 export const PILL =
-  "background:#fff;border:1px solid #e2dbcf;border-radius:999px;font-family:'Manrope',system-ui,sans-serif;font-weight:600;color:#14202b;cursor:pointer";
+  "background:#fff;border:1px solid #d6ccbc;border-radius:999px;font-family:'Manrope',system-ui,sans-serif;font-weight:600;color:#14202b;cursor:pointer";
 export const SMALL_BTN = `${PILL};font-size:12px;padding:6px 12px;white-space:nowrap`;
 
 // -- "?" help popover ------------------------------------------------------------------------------------------------
@@ -63,13 +64,14 @@ export function HelpTip({ id, align = 'right' }: { id: string; align?: 'left' | 
 
 export function PageFrame({ title, help, lead, children }: { title: string; help?: string; lead?: string; children: React.ReactNode }) {
   return (
-    <div data-pad style={s("padding:22px 24px 64px;max-width:1440px;margin:0 auto;box-sizing:border-box;font-family:'Manrope',system-ui,sans-serif;color:#14202b")}>
-      <div style={s('display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px')}>
-        <h1 style={s("font-family:'Newsreader',Georgia,serif;font-size:34px;line-height:1.1;font-weight:400;letter-spacing:0;margin:0")}>{title}</h1>
-        {help && <HelpTip id={help} align="left" />}
+    <div data-pad className="adm-page">
+      <div className="adm-page-head">
+        <div style={s('display:flex;align-items:center;gap:12px;flex-wrap:wrap')}>
+          <h1 className="adm-page-title">{title}</h1>
+          {help && <HelpTip id={help} align="left" />}
+        </div>
+        {lead && <p className="adm-page-lead">{lead}</p>}
       </div>
-      {lead && <p style={s('font-size:14px;color:#736d64;margin:0 0 18px')}>{lead}</p>}
-      {!lead && <div style={s('height:12px')} />}
       {children}
     </div>
   );
@@ -78,15 +80,7 @@ export function PageFrame({ title, help, lead, children }: { title: string; help
 /** Pill-shaped filter button (same look as the filter pills in the header). */
 export function Pill({ on, onClick, children, ...rest }: { on: boolean; onClick: () => void; children: React.ReactNode } & Record<`data-${string}`, string>) {
   return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
-      {...rest}
-      style={s(
-        `cursor:pointer;border-radius:999px;border:1px solid ${on ? '#14202b' : '#e2dbcf'};background:${on ? '#14202b' : '#fff'};color:${on ? '#f8f5f0' : '#14202b'};padding:7px 14px;font-family:'Manrope',system-ui,sans-serif;font-size:12.5px;font-weight:600`,
-      )}
-    >
+    <button type="button" aria-pressed={on} onClick={onClick} {...rest} className="adm-chip">
       {children}
     </button>
   );

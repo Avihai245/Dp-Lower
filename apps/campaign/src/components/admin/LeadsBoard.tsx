@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useAdmin } from './AdminProvider';
 import { boardColumns, type LeadRow } from './model';
-import { sub, useAgo, useIsolate, useWaitingLabel } from './rowbits';
+import { initialsOf, sub, useAgo, useIsolate, useWaitingLabel } from './rowbits';
 import { Arrow, useRouteLabels } from './ui';
 
 const arrowBtn = (on: boolean) =>
@@ -61,7 +61,7 @@ export function LeadsBoard({ rows }: { rows: LeadRow[] }) {
               if (card) void move(card, col.stage);
             }}
             style={s(
-              `background:${over ? '#efe7d8' : '#f2efe9'};border:1px solid ${over ? '#a07a3c' : '#e8e1d5'};border-radius:16px;padding:10px;transition:background 140ms ease, border-color 140ms ease`,
+              `background:${over ? '#f5eddf' : 'rgba(255,255,255,0.6)'};border:1px solid ${over ? '#a07a3c' : '#e6dfd3'};border-radius:18px;padding:10px;transition:background 140ms ease, border-color 140ms ease`,
             )}
           >
             <div style={s('display:flex;align-items:center;gap:8px;padding:4px 6px 12px')}>
@@ -96,7 +96,7 @@ export function LeadsBoard({ rows }: { rows: LeadRow[] }) {
                     }}
                     onClick={() => router.push(`/admin/leads/${r.id}${listQuery}`)}
                     {...x(
-                      `background:#fff;border:1px solid ${r.attention ? '#e4c9a3' : '#e8e1d5'};border-radius:14px;padding:12px 12px 10px;cursor:grab;transition:border-color 140ms ease, box-shadow 140ms ease;opacity:${dragId === r.id ? '0.45' : '1'}`,
+                      `background:#fff;border:1px solid ${r.attention ? '#e4c9a3' : '#e6dfd3'};border-radius:14px;padding:12px 12px 10px;cursor:grab;box-shadow:0 1px 2px rgba(20,32,43,0.05);transition:border-color 140ms ease, box-shadow 140ms ease;opacity:${dragId === r.id ? '0.45' : '1'}`,
                       { hover: 'border-color:#c9bfae;box-shadow:0 6px 18px rgba(20,32,43,0.08)' },
                     )}
                   >
@@ -104,16 +104,15 @@ export function LeadsBoard({ rows }: { rows: LeadRow[] }) {
                       <span style={s(`font-size:11.5px;letter-spacing:0.04em;color:${sub(55)}`)}>
                         <bdi>{r.caseRef}</bdi>
                       </span>
-                      <span
-                        style={s(
-                          'font-size:10.5px;font-weight:600;letter-spacing:0.1em;padding:2px 7px;border-radius:999px;background:var(--color-accent-100);color:var(--color-accent-800)',
-                        )}
-                      >
+                      <span className="ui-badge ui-badge-gold ui-badge-plain" style={s('font-size:10.5px;padding:2px 8px;letter-spacing:0.08em')}>
                         {route.short(r.route)}
                       </span>
                       <span style={s(`margin-left:auto;font-size:11.5px;color:${sub(50)}`)}>{ago(r.updatedAt)}</span>
                     </div>
-                    <div style={s('font-size:15px;font-weight:600;line-height:1.25;overflow-wrap:anywhere')}>
+                    <div style={s('display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;line-height:1.25;overflow-wrap:anywhere')}>
+                      <span className="adm-avatar" aria-hidden="true" style={s('width:28px;height:28px;font-size:11px')}>
+                        {initialsOf(r.fullName)}
+                      </span>
                       <Link
                         href={`/admin/leads/${r.id}${listQuery}`}
                         onClick={(e) => e.stopPropagation()}

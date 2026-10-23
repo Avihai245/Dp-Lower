@@ -12,7 +12,7 @@ import { ErasePanel } from './ErasePanel';
 import { formatCall } from './format';
 import { ActivityPanel, AnswersPanel, ApplicationPanel } from './InfoPanels';
 import { nextActionFor, pagerOrder, stageNeighbours } from './model';
-import { useAgo } from './rowbits';
+import { initialsOf, useAgo } from './rowbits';
 import { ContactPanel, NotesPanel, OwnerPanel, StatusPanel } from './SidePanels';
 import type { LeadDetailData } from './types';
 import { Arrow, HelpTip, PILL, useRouteLabels } from './ui';
@@ -65,11 +65,7 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
   };
 
   return (
-    <div
-      data-pad
-      data-lead-page
-      style={s("padding:18px 24px 64px;max-width:1440px;margin:0 auto;box-sizing:border-box;font-family:'Manrope',system-ui,sans-serif;color:#14202b")}
-    >
+    <div data-pad data-lead-page className="adm-page">
       {/* back, position, previous / next */}
       <div style={s('display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px')}>
         <Link href={`/admin${listQuery}`} {...x(`${PILL};font-size:13px;padding:9px 16px;text-decoration:none;display:inline-flex;align-items:center;gap:6px`, { hover: 'border-color:#14202b' })}>
@@ -100,8 +96,11 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
       </div>
 
       {/* identity and case stages */}
-      <div style={s('background:#fff;border:1px solid #e8e1d5;border-radius:18px;padding:24px 26px;margin-bottom:14px')}>
-        <div style={s('display:flex;align-items:flex-start;gap:16px 24px;flex-wrap:wrap')}>
+      <div className="adm-lead-card">
+        <div style={s('display:flex;align-items:flex-start;gap:16px 20px;flex-wrap:wrap')}>
+          <span className="adm-avatar adm-avatar-lg" aria-hidden="true">
+            {initialsOf(lead.fullName)}
+          </span>
           <div style={s('flex:1;min-width:min(240px,100%);max-width:100%')}>
             <div style={s('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px')}>
               <span style={s('font-size:12.5px;letter-spacing:0.04em;color:#736d64')}>
@@ -177,7 +176,7 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
       </div>
 
       {/* next action */}
-      <div style={s('display:flex;align-items:flex-start;gap:14px;background:#14202b;color:#f8f5f0;border-radius:18px;padding:18px 22px;margin-bottom:14px;flex-wrap:wrap')}>
+      <div className="adm-next" style={s('display:flex;align-items:flex-start;gap:14px;color:#f8f5f0;padding:20px 24px;margin-bottom:16px;flex-wrap:wrap')}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c9a45c" strokeWidth="1.7" style={s('flex:none;margin-top:2px;transform:scaleX(var(--dir, 1))')} aria-hidden>
           <path d="M5 12h14M13 6l6 6-6 6" />
         </svg>
@@ -213,16 +212,16 @@ export function LeadDetail({ detail }: { detail: LeadDetailData }) {
         )}
       </div>
 
-      <div data-resp="2" style={s('display:grid;grid-template-columns:minmax(0, 1.5fr) minmax(0, 1fr);gap:14px;align-items:start')}>
-        <div style={s('display:flex;flex-direction:column;gap:14px')}>
+      <div data-resp="2" style={s('display:grid;grid-template-columns:minmax(0, 1.5fr) minmax(0, 1fr);gap:16px;align-items:start')}>
+        <div style={s('display:flex;flex-direction:column;gap:16px')}>
           <DocumentsPanel detail={detail} />
-          <div data-resp="2" style={s('display:grid;grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);gap:14px')}>
+          <div data-resp="2" style={s('display:grid;grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);gap:16px')}>
             <ApplicationPanel sections={detail.sections} />
             <AnswersPanel answers={detail.answers} />
           </div>
           <ActivityPanel activity={detail.activity} />
         </div>
-        <div style={s('display:flex;flex-direction:column;gap:14px')}>
+        <div style={s('display:flex;flex-direction:column;gap:16px')}>
           <ContactPanel detail={detail} />
           {detail.call && <CallPanel key={detail.call.id} leadId={lead.id} call={detail.call} />}
           <OwnerPanel lead={lead} />

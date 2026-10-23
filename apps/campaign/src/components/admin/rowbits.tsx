@@ -67,3 +67,12 @@ export function NotesBadge({ count, label }: { count: number; label: string }) {
     </span>
   );
 }
+
+/** Up to two initials, for the round badge next to a name. */
+export const initialsOf = (name: string): string =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => Array.from(w)[0]!.toUpperCase())
+    .join('');
