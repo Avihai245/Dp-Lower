@@ -38,7 +38,7 @@ export function LinkExpiredForm({ logoAlt }: { logoAlt: string }) {
       <p style={s('font-size: 15.5px; line-height: 1.65; color: #736d64; margin: 0 0 26px')}>{t('linkExpired.lede')}</p>
       {sent ? (
         <>
-          <div role="status" style={s('display: flex; align-items: flex-start; gap: 12px; border: 1px solid #ece6dc; background: #f8f5f0; padding: 18px 20px; margin-bottom: 24px')}>
+          <div role="status" style={s('display: flex; align-items: flex-start; gap: 12px; border: 1px solid #cfe0d5; background: #e5f0e9; border-radius: 14px; padding: 16px 18px; margin-bottom: 24px')}>
             <CheckIcon style={s('flex: none; margin-top: 2px')} />
             <span style={s('font-size: 14.5px; line-height: 1.6; color: #14202b')}>{t('linkExpired.sent')}</span>
           </div>

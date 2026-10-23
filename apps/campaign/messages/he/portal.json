@@ -8,8 +8,14 @@
     "logoAlt": "דקר, פקס, לוי",
     "tour": "סיור היכרות",
     "myDetails": "הפרטים שלי",
-    "signOut": "התנתקות",
-    "portal": "פורטל"
+    "signOut": "התנתקות"
+  },
+  "nav": {
+    "label": "אזורי הפורטל",
+    "overview": "סקירה",
+    "application": "הבקשה",
+    "documents": "מסמכים",
+    "case": "תיק <e>{ref}</e>"
   },
   "mail": {
     "setPassword": "הגדרת סיסמה",
@@ -79,7 +85,8 @@
       "continue": "המשך הבקשה",
       "documents": "למסמכים"
     },
-    "teamStatus": "עדכון מהצוות שלנו: <b>{status}</b>"
+    "teamStatus": "עדכון מהצוות שלנו: <b>{status}</b>",
+    "checklistTitle": "רשימת המשימות שלכם"
   },
   "submitted": {
     "kicker": "{route} · הוגשה ב-{date}",
@@ -114,6 +121,7 @@
       "requested": "הצוות ביקש את המסמך הזה.",
       "button": "העלאת מסמך"
     },
+    "roadmapTitle": "הדרך מכאן",
     "steps": {
       "eligibility": "זכאות",
       "application": "בקשה",
@@ -214,7 +222,6 @@
     "resetError": "לא הצלחנו לשלוח את הקישור כרגע. נסו שוב בעוד רגע."
   },
   "application": {
-    "back": "פורטל",
     "headerProgress": "בקשה · הושלמו {percent}%",
     "railTitle": "הבקשה שלכם",
     "kicker": "שלב 3 מתוך 4 · בקשה · פרק {n} מתוך 5",
@@ -311,7 +318,6 @@
     }
   },
   "documents": {
-    "headerLabel": "בקשה · מסמכים",
     "kicker": "שלב 4 מתוך 4 · מסמכים והגשה",
     "title": "שלחו לנו את מה שכבר יש לכם.",
     "intro": "מסמכי המפתח נושאים את התיק. השאר מסייעים. מה שלא תמצאו, נחפש בארכיונים.",

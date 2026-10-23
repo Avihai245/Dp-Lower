@@ -1,23 +1,17 @@
 'use client';
 import { APPLICANT_STATUS_OPTIONS, APPLICATION_SECTIONS } from '@dpl/core';
-import { s } from '@dpl/ui';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import {
-  buildChecklist,
-  dashboardHeadline,
-  nextLine,
-  type ChecklistItem,
-} from './model/progress';
+import { IconAlert, IconArrow, IconCheck, IconFolder, IconSpark } from '../ui/icons';
+import { ProgressRing } from '../ui/ProgressRing';
+import { buildChecklist, dashboardHeadline, nextLine } from './model/progress';
 import type { PortalState } from './model/types';
-import { Arrow, SANS, mix } from './shared';
+import { Timeline } from './Timeline';
 
-const markCss = (state: ChecklistItem['state']): string =>
-  `width: 26px; height: 26px; display: grid; place-items: center; font-size: 13px; border: 1px solid ${
-    state === 'next' ? mix(28) : 'var(--color-accent)'
-  }; background: ${state === 'done' ? 'var(--color-accent)' : 'transparent'}; color: ${state === 'done' ? 'var(--color-bg)' : 'var(--color-accent-700)'}`;
-
-/** The dashboard before the application is submitted: progress, checklist and the one next step. */
+/**
+ * The dashboard before the application is submitted: the progress (hero), where the case stands (timeline), the one
+ * next step and the checklist. The timeline comes before the checklist: the tour visits them in that order.
+ */
 export function NotSubmittedView({ state }: { state: PortalState }) {
   const t = useTranslations('portal');
   const { application, progress, lead } = state;
@@ -27,6 +21,7 @@ export function NotSubmittedView({ state }: { state: PortalState }) {
   const headline = dashboardHeadline({ started, applicationComplete });
   const checklist = buildChecklist({ applicationComplete, docsReceived: progress.docsReceived, docsTotal: progress.docsTotal });
   const next = nextLine({ data, docsReceived: progress.docsReceived, docsTotal: progress.docsTotal });
+  const doneCount = checklist.filter((c) => c.state === 'done').length;
 
   const nextText =
     next.kind === 'section'
@@ -39,71 +34,83 @@ export function NotSubmittedView({ state }: { state: PortalState }) {
   const teamStatus = (APPLICANT_STATUS_OPTIONS as readonly string[]).includes(lead.status);
 
   return (
-    <div data-pad style={s('max-width: 100%; margin: 0 auto; padding: 56px clamp(20px, 4.6vw, 160px) 80px')}>
-      <div style={s(`${SANS}; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-accent-700); margin-bottom: 16px`)}>
-        {t('dashboard.kicker')}
-      </div>
+    <>
       {teamStatus && (
-        <p
-          data-team-status
-          role="status"
-          style={s(`${SANS}; font-size: 14.5px; line-height: 1.55; color: ${mix(80)}; border: 1px solid var(--color-accent); padding: 10px 16px; margin: 0 0 22px; max-width: 620px`)}
-        >
-          {t.rich('dashboard.teamStatus', { status: t(`status.${lead.status}`), b: (chunks) => <strong style={s('font-weight: 600')}>{chunks}</strong> })}
+        <p data-team-status role="status" className="ui-note ui-note-gold ui-rise" style={{ margin: 0 }}>
+          <IconAlert size={18} style={{ color: 'var(--ui-gold-strong)' }} />
+          <span>{t.rich('dashboard.teamStatus', { status: t(`status.${lead.status}`), b: (chunks) => <strong>{chunks}</strong> })}</span>
         </p>
       )}
-      <h1 data-hero-h1 style={s('font-size: 48px; letter-spacing: -0.022em; margin: 0 0 14px; max-width: 22ch')}>{t(`dashboard.headline.${headline}`)}</h1>
-      <p style={s(`font-size: 17px; color: ${mix(68)}; margin: 0 0 26px; max-width: 60ch`)}>{t(`dashboard.sub.${started ? 'continue' : 'start'}`)}</p>
-      <div style={s('display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 44px; max-width: 620px')}>
-        <span style={s('flex: 1; min-width: 200px; height: 3px; background: var(--color-divider); display: block')}>
-          <span
-            style={s(`display: block; height: 3px; background: #a07a3c; width: ${progress.percent}%; transition: width 700ms cubic-bezier(0.4,0,0.2,1)`)}
-          />
-        </span>
-        <span style={s('font-size: 14.5px; color: #736d64')}>{t('dashboard.progress', { percent: progress.percent })}</span>
+
+      <section className="ui-hero ui-hero-pad ui-rise">
+        <div className="ui-hero-grid">
+          <div>
+            <div className="ui-kicker">{t('dashboard.kicker')}</div>
+            <h1 className="ui-h1 ui-hero-title">{t(`dashboard.headline.${headline}`)}</h1>
+            <p className="ui-lede">{t(`dashboard.sub.${started ? 'continue' : 'start'}`)}</p>
+            <div className="ui-hero-progress">
+              <span className="ui-meter">
+                <span style={{ width: `${progress.percent}%` }} />
+              </span>
+              <span className="ui-hero-progress-text">{t('dashboard.progress', { percent: progress.percent })}</span>
+            </div>
+          </div>
+          <div className="ui-hide-sm">
+            <ProgressRing percent={progress.percent} />
+          </div>
+        </div>
+      </section>
+
+      <div className="ui-rise-2">
+        <Timeline timeline={state.timeline} />
       </div>
 
-      <div data-resp="2" style={s('display: grid; grid-template-columns: minmax(0, 0.6fr) minmax(0, 1fr); gap: 56px; align-items: start')}>
-        <ul data-tour="checklist" style={s('list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-divider)')}>
-          {checklist.map((c) => (
-            <li
-              key={c.id}
-              style={s(
-                `display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--color-divider); opacity: ${c.state === 'next' ? '0.5' : '1'}`,
-              )}
-            >
-              <span aria-hidden="true" style={s(markCss(c.state))}>
-                {c.state === 'done' ? '✓' : c.state === 'current' ? <Arrow forward /> : '○'}
-              </span>
-              <span style={s(`${SANS}; font-size: 17px; padding-top: 1px`)}>{t(`dashboard.checklist.${c.id}`)}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="blueprint" style={s('border: 1px solid var(--color-accent); padding: 30px 28px')}>
-          <div style={s(`${SANS}; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-accent-700); margin-bottom: 14px`)}>
-            {t('dashboard.current.kicker')}
+      <div className="ui-grid-2 ui-rise-3">
+        <section className="ui-card ui-card-pad ui-next" aria-labelledby="pt-next-title">
+          <div className="ui-kicker">{t('dashboard.current.kicker')}</div>
+          <h2 id="pt-next-title" className="ui-h2">
+            {t('dashboard.current.title')}
+          </h2>
+          <p className="ui-next-line">
+            <IconSpark size={18} />
+            <span>{nextText}</span>
+          </p>
+          <p className="ui-small" style={{ margin: '0 0 22px' }}>
+            {t('dashboard.current.saved')}
+          </p>
+          <div className="ui-stack-sm">
+            <Link href="/portal/application" data-tour="action" className="ui-btn ui-btn-primary ui-btn-lg ui-btn-block">
+              {t(`dashboard.current.${started ? 'continue' : 'start'}`)}
+              <IconArrow size={18} />
+            </Link>
+            <Link href="/portal/documents" data-tour="docs" className="ui-btn ui-btn-lg ui-btn-block">
+              <IconFolder size={18} />
+              {t('dashboard.current.documents')}
+            </Link>
           </div>
-          <div style={s("font-family: 'Newsreader', Georgia, serif; font-size: 26px; line-height: 1.15; margin-bottom: 14px")}>{t('dashboard.current.title')}</div>
-          <p style={s(`font-size: 14.5px; line-height: 1.6; color: ${mix(68)}; margin: 0 0 10px`)}>{nextText}</p>
-          <p style={s(`font-size: 13.5px; line-height: 1.6; color: ${mix(55)}; margin: 0 0 24px`)}>{t('dashboard.current.saved')}</p>
-          <Link
-            href="/portal/application"
-            data-tour="action"
-            className="btn btn-primary"
-            style={s('width: 100%; padding: 16px; font-size: 14.5px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px')}
-          >
-            {t(`dashboard.current.${started ? 'continue' : 'start'}`)}
-          </Link>
-          <Link
-            href="/portal/documents"
-            data-tour="docs"
-            className="btn btn-secondary"
-            style={s('width: 100%; padding: 15px; font-size: 13.5px; letter-spacing: 0.08em; text-transform: uppercase')}
-          >
-            {t('dashboard.current.documents')}
-          </Link>
-        </div>
+        </section>
+
+        <section data-tour="checklist" className="ui-card" aria-labelledby="pt-checklist-title">
+          <div className="ui-card-head">
+            <h2 id="pt-checklist-title" className="ui-card-title">
+              {t('dashboard.checklistTitle')}
+            </h2>
+            <span className="ui-badge ui-badge-ok ui-push" dir="ltr">
+              {doneCount}/{checklist.length}
+            </span>
+          </div>
+          <ul className="ui-rows ui-checklist">
+            {checklist.map((c, i) => (
+              <li key={c.id} data-state={c.state}>
+                <span className="ui-check-mark" aria-hidden="true">
+                  {c.state === 'done' ? <IconCheck size={15} strokeWidth={2.4} /> : c.state === 'current' ? <IconArrow size={15} strokeWidth={2.2} /> : i + 1}
+                </span>
+                <span>{t(`dashboard.checklist.${c.id}`)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
-    </div>
+    </>
   );
 }

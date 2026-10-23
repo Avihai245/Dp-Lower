@@ -1,16 +1,12 @@
 'use client';
-import { s } from '@dpl/ui';
-import { createBrowserSupabase } from '@dpl/db/browser';
-import { useLocale } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
-import { DashboardHeader } from './DashboardHeader';
 import { MailLine } from './MailLine';
-import { MyDetailsModal, type DetailsValues } from './MyDetailsModal';
+import type { DetailsValues } from './MyDetailsModal';
 import { NotSubmittedView } from './NotSubmittedView';
 import type { PortalState } from './model/types';
+import { PortalShell } from './PortalShell';
 import { SubmittedView } from './SubmittedView';
-import { Timeline } from './Timeline';
 import { Tour } from './Tour';
 
 /** Time between arriving on the dashboard and the tour starting by itself (the prototype's 700ms). */
@@ -21,10 +17,8 @@ const TOUR_AUTO_START_MS = 700;
  * itself once, on the first visit); after submission it shows the status of the case.
  */
 export function Dashboard({ initial }: { initial: PortalState }) {
-  const locale = useLocale();
   const [state, setState] = useState(initial);
   const [tourOn, setTourOn] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const tourSeen = useRef(initial.lead.tourDone);
   const { lead } = state;
   const submitted = !!lead.submittedAt;
@@ -48,33 +42,13 @@ export function Dashboard({ initial }: { initial: PortalState }) {
     setState((prev) => ({ ...prev, lead: { ...prev.lead, fullName: values.fullName, phone: values.phone } }));
   }, []);
 
-  const signOut = async () => {
-    try {
-      // this browser only: signing out here must not end the applicant's sessions on their other devices
-      await createBrowserSupabase().auth.signOut({ scope: 'local' });
-    } catch {
-      /* the server call below closes the session too */
-    }
-    // also clears the httpOnly lead cookie, which could otherwise open the portal again without a password
-    const out = await api<{ forgetUrl?: string }>('/api/portal/sign-out', { method: 'POST' });
-    // the firm's site holds a lead cookie of its own: pass through it so a shared computer keeps nothing of this visit
-    window.location.assign(out.data?.forgetUrl ? `${out.data.forgetUrl}?l=${locale}` : locale === 'he' ? '/he' : '/');
-  };
-
   return (
-    <main style={s('min-height: 100vh; animation: fadeIn 300ms ease both')}>
-      <DashboardHeader
-        email={lead.email}
-        showTour={!submitted}
-        onTour={() => setTourOn(true)}
-        onDetails={() => setDetailsOpen(true)}
-        onSignOut={signOut}
-      />
-      <MailLine email={lead.email} passwordSet={lead.passwordSet} submitted={submitted} />
-      <Timeline timeline={state.timeline} />
-      {submitted ? <SubmittedView state={state} /> : <NotSubmittedView state={state} />}
+    <PortalShell active="overview" lead={lead} onTour={submitted ? undefined : () => setTourOn(true)} onDetailsSaved={saved}>
+      <div className="ui-stack">
+        <MailLine email={lead.email} passwordSet={lead.passwordSet} submitted={submitted} />
+        {submitted ? <SubmittedView state={state} /> : <NotSubmittedView state={state} />}
+      </div>
       {tourOn && !submitted && <Tour onClose={closeTour} />}
-      {detailsOpen && <MyDetailsModal lead={lead} onClose={() => setDetailsOpen(false)} onSaved={saved} />}
-    </main>
+    </PortalShell>
   );
 }

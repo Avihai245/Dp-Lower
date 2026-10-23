@@ -1,22 +1,16 @@
 'use client';
 import type { Locale } from '@dpl/core';
-import { s } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { IconAlert, IconClock, IconShield, IconUpload } from '../ui/icons';
+import { Stepper } from '../ui/Stepper';
 import { ancestorSummary } from './model/facts';
 import { formatLongDate, formatShortDate } from './model/format';
-import type { PortalActivity, PortalState, StatusStep, StatusStepMeta, StepState } from './model/types';
-import { SANS, mix, richTags } from './shared';
+import type { PortalActivity, PortalState, StatusStepMeta } from './model/types';
+import { richTags } from './shared';
+import { Timeline } from './Timeline';
 
 const AFTER = ['one', 'two', 'three'] as const;
-
-const stepCss = (state: StepState): string => `padding: 22px 20px 24px 0; opacity: ${state === 'next' ? '0.5' : '1'}`;
-const stepBarCss = (state: StepState): string =>
-  `display: block; height: 2px; margin: -23px 0 20px; background: ${state === 'next' ? 'var(--color-neutral-200)' : 'var(--color-accent)'}`;
-const stepMarkCss = (state: StepState): string =>
-  `width: 20px; height: 20px; display: grid; place-items: center; font-size: 11px; border: 1px solid ${
-    state === 'next' ? mix(28) : 'var(--color-accent)'
-  }; background: ${state === 'done' ? 'var(--color-accent)' : 'transparent'}; color: ${state === 'done' ? 'var(--color-bg)' : 'var(--color-accent-700)'}`;
 
 /** The dashboard once the application is with the firm: status, what happens next, the roadmap, activity and case facts. */
 export function SubmittedView({ state }: { state: PortalState }) {
@@ -66,115 +60,109 @@ export function SubmittedView({ state }: { state: PortalState }) {
     },
   ];
 
-  const h3 = `font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: ${mix(55)}; margin: 0 0 18px`;
-
   return (
-    <div data-pad style={s('max-width: 100%; margin: 0 auto; padding: 56px clamp(20px, 4.6vw, 160px) 80px')}>
-      <div style={s(`${SANS}; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-accent-700); margin-bottom: 16px`)}>
-        {t('submitted.kicker', { route: t(`submitted.route.${route}`), date: formatLongDate(lead.submittedAt ?? lead.createdAt, locale) })}
-      </div>
-      <h1 data-hero-h1 style={s('font-size: 48px; letter-spacing: -0.024em; margin: 0 0 10px; max-width: 24ch')}>{t(`status.${lead.status}`)}</h1>
-      <p style={s(`font-size: 16px; color: ${mix(66)}; margin: 0 0 34px`)}>{t.rich('submitted.intro', { caseRef: lead.caseRef, ...richTags })}</p>
-
-      <div
-        data-resp="3"
-        style={s(
-          'display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding: 26px 0 34px; border-top: 1px solid var(--color-divider); border-bottom: 1px solid var(--color-divider); margin-bottom: 48px',
-        )}
-      >
-        {AFTER.map((key, i) => (
-          <div key={key}>
-            <div style={s('font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #a07a3c; margin-bottom: 10px')}>0{i + 1}</div>
-            <div style={s("font-family: 'Newsreader', Georgia, serif; font-size: 21px; line-height: 1.2; margin-bottom: 8px")}>{t(`submitted.after.${key}.title`)}</div>
-            <div style={s(`font-size: 14.5px; line-height: 1.6; color: ${mix(66)}`)}>{t(`submitted.after.${key}.body`)}</div>
-          </div>
-        ))}
-      </div>
+    <>
+      <section className="ui-hero ui-hero-pad ui-rise">
+        <div className="ui-kicker">
+          {t('submitted.kicker', { route: t(`submitted.route.${route}`), date: formatLongDate(lead.submittedAt ?? lead.createdAt, locale) })}
+        </div>
+        <h1 className="ui-h1 ui-hero-title">{t(`status.${lead.status}`)}</h1>
+        <p className="ui-lede">{t.rich('submitted.intro', { caseRef: lead.caseRef, ...richTags })}</p>
+      </section>
 
       {showAction && (
-        <div
-          className="blueprint"
-          data-resp="2"
-          style={s('border: 1px solid var(--color-accent); padding: 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: center; margin-bottom: 56px')}
-        >
-          <div>
-            <div style={s(`${SANS}; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-accent-700); margin-bottom: 12px`)}>
-              {t('submitted.action.kicker')}
-            </div>
-            <div style={s(`${SANS}; font-size: 30px; line-height: 1.15; margin-bottom: 8px`)}>{actionTitle}</div>
+        <section className="ui-card ui-card-pad ui-action-card ui-rise-2" aria-labelledby="pt-action-title">
+          <span className="ui-icon-chip ui-icon-chip-lg ui-icon-chip-warn" aria-hidden="true">
+            <IconAlert size={22} />
+          </span>
+          <div className="ui-action-body">
+            <div className="ui-kicker">{t('submitted.action.kicker')}</div>
+            <h2 id="pt-action-title" className="ui-h2" style={{ margin: '6px 0 8px' }}>
+              {actionTitle}
+            </h2>
             {flagged.length === 0 ? (
-              <p style={s(`font-size: 14.5px; color: ${mix(70)}; margin: 0; max-width: 60ch`)}>{t('submitted.action.bodyInfo')}</p>
+              <p className="ui-action-text">{t('submitted.action.bodyInfo')}</p>
             ) : (
               flagged.map((d) => (
-                <p key={d.docType} style={s(`font-size: 14.5px; color: ${mix(70)}; margin: 0 0 4px; max-width: 60ch`)}>
-                  <strong style={s('font-weight: 600')}>{t(`documents.slots.${d.docType}.title`)}</strong>
+                <p key={d.docType} className="ui-action-text">
+                  <strong>{t(`documents.slots.${d.docType}.title`)}</strong>
                   {': '}
                   {d.reviewNote ? <span dir="auto">{d.reviewNote}</span> : t(`submitted.action.${d.status === 'reupload' ? 'reupload' : 'requested'}`)}
                 </p>
               ))
             )}
           </div>
-          <Link
-            href="/portal/documents"
-            className="btn btn-primary"
-            style={s('padding: 18px 30px; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap')}
-          >
+          <Link href="/portal/documents" className="ui-btn ui-btn-primary ui-btn-lg">
+            <IconUpload size={18} />
             {t('submitted.action.button')}
           </Link>
-        </div>
+        </section>
       )}
 
-      <ol
-        data-resp="6"
-        style={s('list-style: none; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--color-divider); margin: 0 0 56px')}
-      >
-        {state.statusSteps.map((step: StatusStep) => (
-          <li key={step.id} data-cell aria-current={step.state === 'current' ? 'step' : undefined} style={s(stepCss(step.state))}>
-            <span aria-hidden="true" style={s(stepBarCss(step.state))} />
-            <span aria-hidden="true" style={s(stepMarkCss(step.state))}>
-              {step.state === 'done' ? '✓' : step.state === 'current' ? '●' : ''}
-            </span>
-            <span style={s(`${SANS}; font-size: 17px; line-height: 1.15; margin-top: 14px; display: block`)}>{t(`submitted.steps.${step.id}`)}</span>
-            <span style={s(`font-size: 12.5px; color: ${mix(55)}; display: block; margin-top: 5px`)}>{stepMeta(step.meta)}</span>
-          </li>
-        ))}
-      </ol>
+      <div className="ui-rise-2">
+        <Timeline timeline={state.timeline} />
+      </div>
 
-      <div data-resp="2" style={s('display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px')}>
-        <div>
-          <h3 style={s(h3)}>{t('submitted.activityTitle')}</h3>
-          <ul style={s('list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-divider)')}>
+      <div className="ui-grid-3 ui-rise-3">
+        {AFTER.map((key, i) => (
+          <div key={key} className="ui-card ui-card-pad ui-after">
+            <span className="ui-num" aria-hidden="true">
+              0{i + 1}
+            </span>
+            <h3 className="ui-after-title">{t(`submitted.after.${key}.title`)}</h3>
+            <p className="ui-small" style={{ margin: 0, fontSize: 14 }}>
+              {t(`submitted.after.${key}.body`)}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <section className="ui-card" aria-labelledby="pt-road-title">
+        <div className="ui-card-head">
+          <h2 id="pt-road-title" className="ui-kicker" style={{ margin: 0 }}>
+            {t('submitted.roadmapTitle')}
+          </h2>
+        </div>
+        <div className="ui-card-pad">
+          <Stepper items={state.statusSteps.map((step) => ({ key: step.id, state: step.state, label: t(`submitted.steps.${step.id}`), meta: stepMeta(step.meta) }))} />
+        </div>
+      </section>
+
+      <div className="ui-grid-2">
+        <section className="ui-card" aria-labelledby="pt-activity-title">
+          <div className="ui-card-head">
+            <IconClock size={18} style={{ color: 'var(--ui-gold)' }} />
+            <h2 id="pt-activity-title" className="ui-card-title">
+              {t('submitted.activityTitle')}
+            </h2>
+          </div>
+          <ul className="ui-rows ui-activity">
             {state.activity.map((a) => (
-              <li
-                key={a.id}
-                data-kv
-                style={s('display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 18px; padding: 15px 0; border-bottom: 1px solid var(--color-divider)')}
-              >
-                <span style={s(`font-size: 12.5px; letter-spacing: 0.04em; color: ${mix(52)}; ${SANS}`)}>{formatShortDate(a.at, locale)}</span>
-                <span style={s('font-size: 14.5px; line-height: 1.5')}>{activityText(a)}</span>
+              <li key={a.id}>
+                <span className="ui-activity-date">{formatShortDate(a.at, locale)}</span>
+                <span>{activityText(a)}</span>
               </li>
             ))}
           </ul>
-        </div>
-        <div>
-          <h3 style={s(h3)}>{t('submitted.caseTitle')}</h3>
-          <dl style={s('margin: 0; border-top: 1px solid var(--color-divider)')}>
+        </section>
+        <section className="ui-card" aria-labelledby="pt-case-title">
+          <div className="ui-card-head">
+            <IconShield size={18} style={{ color: 'var(--ui-gold)' }} />
+            <h2 id="pt-case-title" className="ui-card-title">
+              {t('submitted.caseTitle')}
+            </h2>
+          </div>
+          <dl className="ui-rows ui-facts">
             {facts.map((f) => (
-              <div
-                key={f.key}
-                data-kv
-                style={s('display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; padding: 15px 0; border-bottom: 1px solid var(--color-divider)')}
-              >
-                <dt style={s(`font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: ${mix(52)}; ${SANS}`)}>{f.label}</dt>
-                <dd style={s('font-size: 14.5px; margin: 0')}>{f.value}</dd>
+              <div key={f.key}>
+                <dt>{f.label}</dt>
+                <dd>{f.value}</dd>
               </div>
             ))}
           </dl>
-          <p style={s(`font-size: 12.5px; color: ${mix(50)}; margin-top: 20px`)}>
-            {caseHandler ? t('submitted.handler', { name: caseHandler.name }) : t('submitted.handlerNone')}
-          </p>
-        </div>
+          <p className="ui-small ui-handler">{caseHandler ? t('submitted.handler', { name: caseHandler.name }) : t('submitted.handlerNone')}</p>
+        </section>
       </div>
-    </div>
+    </>
   );
 }

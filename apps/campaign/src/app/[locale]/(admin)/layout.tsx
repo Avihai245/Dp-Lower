@@ -8,6 +8,7 @@ import { ClientMessages } from '@/components/ClientMessages';
 import { loadInboxCounts, loadLeadRows, loadStaffOptions } from '@/server/crm';
 import { requireStaffPage } from '@/server/staff-page';
 
+import '@/styles/app-ui.css';
 import '@/styles/admin.css';
 
 /** The CRM is for the firm only: never indexed, never cached. */

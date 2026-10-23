@@ -1,13 +1,6 @@
 'use client';
-import { s } from '@dpl/ui';
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useEffect, type ReactNode, type RefObject } from 'react';
-
-/** The sans-serif prototype font stack (mapped to the Hebrew-aware variable by s()). */
-export const SANS = "font-family: 'Manrope', system-ui, sans-serif";
-
-/** color-mix(in srgb, var(--color-text) N%, transparent): the prototype's `sub()` helper. */
-export const mix = (percent: number): string => `color-mix(in srgb, var(--color-text) ${percent}%, transparent)`;
 
 export const useDir = (): 'ltr' | 'rtl' => (useLocale() === 'he' ? 'rtl' : 'ltr');
 
@@ -19,23 +12,6 @@ export const richTags = {
   e: (chunks: ReactNode) => <bdi dir="ltr">{chunks}</bdi>,
   n: (chunks: ReactNode) => <bdi>{chunks}</bdi>,
 };
-
-export function PortalLogo() {
-  const t = useTranslations('portal.header');
-  return <img src="/images/DPL_logo-sm.webp" alt={t('logoAlt')} width={320} height={114} decoding="async" style={s('height: 30px; width: auto; display: block')} />;
-}
-
-/**
- * The prototype's ← and → glyphs mean "back" and "forward". They are mirrored in a right-to-left page
- * (transform: scaleX(var(--dir))), so ← reads as → in Hebrew and still points away from the reading direction.
- */
-export function Arrow({ forward = false }: { forward?: boolean }) {
-  return (
-    <span aria-hidden="true" style={{ display: 'inline-block', transform: 'scaleX(var(--dir, 1))' }}>
-      {forward ? '→' : '←'}
-    </span>
-  );
-}
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';

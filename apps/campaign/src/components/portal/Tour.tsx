@@ -150,7 +150,7 @@ export function Tour({ onClose }: { onClose: () => void }) {
         top: rect.y - pad,
         width: rect.w + pad * 2,
         height: rect.h + pad * 2,
-        borderRadius: 16,
+        borderRadius: 22,
         boxShadow: '0 0 0 2px #c9a45c, 0 0 0 9999px rgba(20,32,43,0.55)',
       }
     : { display: 'none' };
