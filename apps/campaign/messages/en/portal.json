@@ -8,8 +8,14 @@
     "logoAlt": "Decker Pex Levi",
     "tour": "Show me around",
     "myDetails": "My details",
-    "signOut": "Sign out",
-    "portal": "Portal"
+    "signOut": "Sign out"
+  },
+  "nav": {
+    "label": "Your portal",
+    "overview": "Overview",
+    "application": "Application",
+    "documents": "Documents",
+    "case": "Case <e>{ref}</e>"
   },
   "mail": {
     "setPassword": "Set a password",
@@ -79,7 +85,8 @@
       "continue": "Continue my application",
       "documents": "Go to documents"
     },
-    "teamStatus": "Update from our team: <b>{status}</b>"
+    "teamStatus": "Update from our team: <b>{status}</b>",
+    "checklistTitle": "Your checklist"
   },
   "submitted": {
     "kicker": "{route} · Submitted {date}",
@@ -114,6 +121,7 @@
       "requested": "Our team has asked for this record.",
       "button": "Upload document"
     },
+    "roadmapTitle": "The road ahead",
     "steps": {
       "eligibility": "Eligibility",
       "application": "Application",
@@ -214,7 +222,6 @@
     "resetError": "We could not send the link just now. Please try again in a moment."
   },
   "application": {
-    "back": "Portal",
     "headerProgress": "Application · {percent}% complete",
     "railTitle": "Your application",
     "kicker": "Step 3 of 4 · Application · Section {n} of 5",
@@ -311,7 +318,6 @@
     }
   },
   "documents": {
-    "headerLabel": "Application · Documents",
     "kicker": "Step 4 of 4 · Documents and submission",
     "title": "Send us what you already have.",
     "intro": "Key records carry the case. The rest help. Anything you cannot find, we search the archives for.",

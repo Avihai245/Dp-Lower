@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { ClientMessages } from '@/components/ClientMessages';
 import { requirePortalPage } from '@/server/portal';
+import '@/styles/app-ui.css';
 import '@/styles/portal.css';
 
 /** The applicant's own files: never indexed. */

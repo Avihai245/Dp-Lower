@@ -1,23 +1,12 @@
 'use client';
 import { phoneSchema, type Locale } from '@dpl/core';
-import { s, x } from '@dpl/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
+import { IconCheck, IconClose, IconLock, IconUser } from '../ui/icons';
 import { formatClock } from './model/format';
 import { fullNameSchema } from './model/schemas';
 import { richTags, useFocusTrap } from './shared';
-
-const FIELD_BASE =
-  "width: 100%; padding: 14px 16px; font-size: 16px; font-family: 'Manrope', system-ui, sans-serif; color: #14202b; border: 1px solid #ddd5c8; background: #fff; border-radius: 12px; box-sizing: border-box";
-const LABEL = 'display: block; font-size: 13.5px; font-weight: 600; color: #14202b; margin-bottom: 7px';
-const ERROR = 'display: block; font-size: 13px; color: #a03a2c; margin-top: 6px';
-
-const Check = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2f5a3e" strokeWidth="2" aria-hidden="true" style={s('flex: none; margin-top: 2px')}>
-    <path d="m4 12.5 5 5L20 6.5" />
-  </svg>
-);
 
 export interface DetailsValues {
   fullName: string;
@@ -103,139 +92,110 @@ export function MyDetailsModal({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('title')}
-      style={s("position: fixed; inset: 0; z-index: 95; display: flex; align-items: center; justify-content: center; padding: 16px; font-family: 'Manrope', system-ui, sans-serif")}
-    >
-      <div onClick={onClose} aria-hidden="true" style={s('position: absolute; inset: 0; background: rgba(20,32,43,0.55); animation: fadeIn 200ms ease both')} />
-      <div
-        ref={cardRef}
-        data-edit-card
-        style={s(
-          'position: relative; width: 100%; max-width: 480px; max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box; background: #fff; border-radius: 22px; padding: 28px 28px 26px; box-shadow: 0 24px 60px rgba(20,32,43,0.28); color: #14202b; animation: qIn 260ms cubic-bezier(0.2,0,0,1) both',
-        )}
-      >
-        <div style={s('display: flex; align-items: flex-start; gap: 16px; margin-bottom: 22px')}>
-          <div style={s('flex: 1; min-width: 0')}>
-            <div style={s('font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #a07a3c; margin-bottom: 6px')}>
-              {t('kicker')}
-            </div>
-            <div style={s("font-family: 'Newsreader', Georgia, serif; font-size: 27px; line-height: 1.15")}>{t('title')}</div>
+    <div role="dialog" aria-modal="true" aria-label={t('title')} className="ui-modal">
+      <div onClick={onClose} aria-hidden="true" className="ui-modal-veil" />
+      <div ref={cardRef} data-edit-card className="ui-modal-card">
+        <div className="ui-modal-head">
+          <span className="ui-icon-chip ui-icon-chip-lg ui-icon-chip-ink" aria-hidden="true">
+            <IconUser size={22} />
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="ui-kicker">{t('kicker')}</div>
+            <div className="ui-modal-title">{t('title')}</div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('close')}
-            {...x('width: 40px; height: 40px; flex: none; border-radius: 50%; border: 1px solid #e2dbcf; background: #fff; cursor: pointer; display: grid; place-items: center; color: #14202b', {
-              hover: 'border-color: #14202b',
-            })}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path d="M6 6l12 12M18 6 6 18" />
-            </svg>
+          <button type="button" onClick={onClose} aria-label={t('close')} className="ui-btn ui-btn-icon ui-btn-quiet">
+            <IconClose size={18} />
           </button>
         </div>
 
-        <div style={s('display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px')}>
-          <div>
-            <label htmlFor="portal-details-name" style={s(LABEL)}>
-              {t('name')}
-            </label>
-            <input
-              id="portal-details-name"
-              type="text"
-              autoComplete="name"
-              value={name}
-              onChange={edit(setName)}
-              aria-invalid={tried && !nameOk}
-              {...x(FIELD_BASE, { focus: 'border-color: #14202b; outline: none' })}
-            />
-            {tried && !nameOk && <span style={s(ERROR)}>{t('nameError')}</span>}
-          </div>
-          <div>
-            <label htmlFor="portal-details-email" style={s(LABEL)}>
-              {t('email')}
-            </label>
-            <input
-              id="portal-details-email"
-              type="email"
-              dir="ltr"
-              readOnly
-              value={lead.email}
-              aria-describedby="portal-details-email-note"
-              style={s(`${FIELD_BASE}; background: #f8f5f0; color: #5f5a52; cursor: default; text-align: left`)}
-            />
-            <span id="portal-details-email-note" style={s('display: block; font-size: 13px; line-height: 1.5; color: #736d64; margin-top: 6px')}>
-              {t('emailNote')}
-            </span>
-          </div>
-          <div>
-            <label htmlFor="portal-details-phone" style={s(LABEL)}>
-              {t('phone')}
-            </label>
-            <input
-              id="portal-details-phone"
-              type="tel"
-              dir="ltr"
-              inputMode="tel"
-              autoComplete="tel"
-              value={phone}
-              onChange={edit(setPhone)}
-              aria-invalid={tried && !phoneOk}
-              {...x(`${FIELD_BASE}; text-align: left`, { focus: 'border-color: #14202b; outline: none' })}
-            />
-            {tried && !phoneOk && <span style={s(ERROR)}>{t('phoneError')}</span>}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          {...x(
-            `width: 100%; background: #14202b; color: #f8f5f0; border: 1px solid #14202b; border-radius: 999px; padding: 16px; font-family: 'Manrope', system-ui, sans-serif; font-size: 14.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; opacity: ${saved || saving ? '0.6' : '1'}`,
-            { hover: 'background: #1e2f3f' },
-          )}
-        >
-          {saving ? t('saving') : saved ? t('saved') : t('save')}
-        </button>
-        <div role="status" aria-live="polite">
-          {saved && (
-            <div style={s('display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: 14px; line-height: 1.5; color: #2f5a3e')}>
-              <Check />
-              <span>{t('savedLine')}</span>
+        <div className="ui-modal-body">
+          <div className="ui-stack" style={{ gap: 16, marginBottom: 20 }}>
+            <div>
+              <label htmlFor="portal-details-name" className="ui-label">
+                {t('name')}
+              </label>
+              <input
+                id="portal-details-name"
+                className="ui-input"
+                type="text"
+                autoComplete="name"
+                value={name}
+                onChange={edit(setName)}
+                aria-invalid={tried && !nameOk}
+              />
+              {tried && !nameOk && <span className="ui-error">{t('nameError')}</span>}
             </div>
-          )}
-          {saveFailed && <div style={s('margin-top: 12px; font-size: 14px; line-height: 1.5; color: #a03a2c')}>{t('saveError')}</div>}
-        </div>
-
-        <div style={s('border-top: 1px solid #ece6dc; margin-top: 24px; padding-top: 20px')}>
-          <div style={s('font-size: 15px; font-weight: 600; margin-bottom: 4px')}>{t('passwordTitle')}</div>
-          <p style={s('font-size: 14px; line-height: 1.55; color: #5f5a52; margin: 0 0 14px')}>{t('passwordHelp')}</p>
-          {resetAt === null ? (
-            <button
-              type="button"
-              onClick={sendReset}
-              disabled={resetting}
-              {...x(
-                "width: 100%; background: #fff; color: #14202b; border: 1px solid #14202b; border-radius: 999px; padding: 15px; font-family: 'Manrope', system-ui, sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.04em; cursor: pointer",
-                { hover: 'background: #f6f0e4' },
-              )}
-            >
-              {t('reset')}
-            </button>
-          ) : (
-            <div
-              role="status"
-              style={s('display: flex; gap: 8px; align-items: flex-start; background: #eef4ef; border-radius: 12px; padding: 13px 15px; font-size: 14px; line-height: 1.5; color: #2f5a3e')}
-            >
-              <Check />
-              <span>{t.rich('resetSent', { email: lead.email, time: resetAt, ...richTags })}</span>
+            <div>
+              <label htmlFor="portal-details-email" className="ui-label">
+                {t('email')}
+              </label>
+              <input
+                id="portal-details-email"
+                className="ui-input"
+                type="email"
+                dir="ltr"
+                readOnly
+                value={lead.email}
+                aria-describedby="portal-details-email-note"
+                style={{ textAlign: 'left' }}
+              />
+              <span id="portal-details-email-note" className="ui-hint">
+                {t('emailNote')}
+              </span>
             </div>
-          )}
-          {resetFailed && <div style={s('margin-top: 10px; font-size: 14px; line-height: 1.5; color: #a03a2c')}>{t('resetError')}</div>}
+            <div>
+              <label htmlFor="portal-details-phone" className="ui-label">
+                {t('phone')}
+              </label>
+              <input
+                id="portal-details-phone"
+                className="ui-input"
+                type="tel"
+                dir="ltr"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={edit(setPhone)}
+                aria-invalid={tried && !phoneOk}
+                style={{ textAlign: 'left' }}
+              />
+              {tried && !phoneOk && <span className="ui-error">{t('phoneError')}</span>}
+            </div>
+          </div>
+
+          <button type="button" onClick={save} disabled={saving} className="ui-btn ui-btn-primary ui-btn-lg ui-btn-block" style={saved ? { opacity: 0.6 } : undefined}>
+            {saving ? t('saving') : saved ? t('saved') : t('save')}
+          </button>
+          <div role="status" aria-live="polite">
+            {saved && (
+              <div className="ui-note ui-note-ok" style={{ marginTop: 12 }}>
+                <IconCheck size={16} strokeWidth={2.2} style={{ color: 'var(--ui-ok)' }} />
+                <span>{t('savedLine')}</span>
+              </div>
+            )}
+            {saveFailed && <p className="ui-error">{t('saveError')}</p>}
+          </div>
+
+          <div className="ui-modal-section">
+            <div className="ui-row" style={{ marginBottom: 4 }}>
+              <IconLock size={17} style={{ color: 'var(--ui-gold)' }} />
+              <span style={{ fontSize: 15, fontWeight: 700 }}>{t('passwordTitle')}</span>
+            </div>
+            <p className="ui-small" style={{ fontSize: 14, margin: '0 0 14px' }}>
+              {t('passwordHelp')}
+            </p>
+            {resetAt === null ? (
+              <button type="button" onClick={sendReset} disabled={resetting} className="ui-btn ui-btn-block">
+                {t('reset')}
+              </button>
+            ) : (
+              <div role="status" className="ui-note ui-note-ok">
+                <IconCheck size={16} strokeWidth={2.2} style={{ color: 'var(--ui-ok)' }} />
+                <span>{t.rich('resetSent', { email: lead.email, time: resetAt, ...richTags })}</span>
+              </div>
+            )}
+            {resetFailed && <p className="ui-error">{t('resetError')}</p>}
+          </div>
         </div>
       </div>
     </div>
